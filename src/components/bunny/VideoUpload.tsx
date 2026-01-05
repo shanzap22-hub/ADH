@@ -50,26 +50,25 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
             setUploadProgress(0);
             onUploadStart?.();
 
-            // Get upload URL from Bunny.net via our API
-            const response = await fetch("/api/bunny/upload-url", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    fileName: file.name,
-                    fileSize: file.size,
-                }),
-            });
+            // Get signed upload URL from server action
+            const { getBunnyUploadSignature } = await import("@/actions/get-bunny-signature");
+            const signature = await getBunnyUploadSignature(file.name);
 
-            if (!response.ok) {
-                throw new Error("Failed to get upload URL from Bunny.net");
-            }
+            console.log("[BUNNY_UPLOAD] Got signature for video:", signature.videoId);
 
-            const { uploadUrl, videoId: bunnyVideoId } = await response.json();
+            // Construct TUS upload endpoint
+            const uploadUrl = `https://video.bunnycdn.com/library/${signature.libraryId}/videos/${signature.videoId}`;
 
-            // Upload using TUS protocol
+            // Upload using TUS protocol with signature authentication
             const upload = new tus.Upload(file, {
                 endpoint: uploadUrl,
                 retryDelays: [0, 3000, 5000, 10000, 20000],
+                headers: {
+                    "AuthorizationSignature": signature.authorizationSignature,
+                    "AuthorizationExpire": signature.authorizationExpire,
+                    "VideoId": signature.videoId,
+                    "LibraryId": signature.libraryId,
+                },
                 metadata: {
                     filename: file.name,
                     filetype: file.type,
@@ -85,13 +84,13 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                     setUploadProgress(percentage);
                 },
                 onSuccess: () => {
-                    console.log("[BUNNY_UPLOAD] Upload complete:", bunnyVideoId);
-                    setVideoId(bunnyVideoId);
+                    console.log("[BUNNY_UPLOAD] Upload complete:", signature.videoId);
+                    setVideoId(signature.videoId);
                     setUploadStatus("processing");
                     setUploading(false);
 
                     // Wait for video processing
-                    checkVideoStatus(bunnyVideoId);
+                    checkVideoStatus(signature.videoId);
                 },
             });
 
