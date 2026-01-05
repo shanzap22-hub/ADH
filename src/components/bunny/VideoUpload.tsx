@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useRef } from "react";
-import * as tus from "tus-js-client";
 import { Upload, X, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { createBunnyVideo, getBunnyVideoStatus } from "@/actions/bunny";
 
 interface VideoUploadProps {
     onUploadComplete: (videoId: string) => void;
@@ -19,7 +19,7 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
     const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "processing" | "success" | "error">("idle");
     const [videoId, setVideoId] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const uploadRef = useRef<tus.Upload | null>(null);
+    const xhrRef = useRef<XMLHttpRequest | null>(null);
 
     const handleFileSelect = (selectedFile: File) => {
         // Validate file type
@@ -50,55 +50,63 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
             setUploadProgress(0);
             onUploadStart?.();
 
-            // Get signed upload URL from server action
-            const { getBunnyUploadSignature } = await import("@/actions/get-bunny-signature");
-            const signature = await getBunnyUploadSignature(file.name);
+            // Step 1: Create video in Bunny.net (server action)
+            console.log("[UPLOAD] Creating video entry...");
+            const { videoId: newVideoId } = await createBunnyVideo(file.name);
+            setVideoId(newVideoId);
 
-            console.log("[BUNNY_UPLOAD] Got signature for video:", signature.videoId);
+            console.log("[UPLOAD] Video created, uploading file...", newVideoId);
 
-            // Construct TUS upload endpoint
-            const uploadUrl = `https://video.bunnycdn.com/library/${signature.libraryId}/videos/${signature.videoId}`;
+            // Step 2: Upload file through our API proxy (with progress tracking)
+            const xhr = new XMLHttpRequest();
+            xhrRef.current = xhr;
 
-            // Upload using TUS protocol with signature authentication
-            const upload = new tus.Upload(file, {
-                endpoint: uploadUrl,
-                retryDelays: [0, 3000, 5000, 10000, 20000],
-                headers: {
-                    "AuthorizationSignature": signature.authorizationSignature,
-                    "AuthorizationExpire": signature.authorizationExpire,
-                    "VideoId": signature.videoId,
-                    "LibraryId": signature.libraryId,
-                },
-                metadata: {
-                    filename: file.name,
-                    filetype: file.type,
-                },
-                onError: (error) => {
-                    console.error("[BUNNY_UPLOAD] Upload failed:", error);
+            // Track upload progress
+            xhr.upload.addEventListener("progress", (event) => {
+                if (event.lengthComputable) {
+                    const percentage = Math.round((event.loaded / event.total) * 100);
+                    setUploadProgress(percentage);
+                }
+            });
+
+            // Handle upload completion
+            xhr.addEventListener("load", () => {
+                if (xhr.status === 200) {
+                    console.log("[UPLOAD] Upload complete, checking status...");
+                    setUploadStatus("processing");
+                    setUploadProgress(100);
+                    setUploading(false);
+
+                    // Check video processing status
+                    checkVideoStatus(newVideoId);
+                } else {
+                    console.error("[UPLOAD] Upload failed:", xhr.statusText);
                     setUploadStatus("error");
                     setUploading(false);
                     toast.error("Upload failed. Please try again.");
-                },
-                onProgress: (bytesUploaded, bytesTotal) => {
-                    const percentage = Math.round((bytesUploaded / bytesTotal) * 100);
-                    setUploadProgress(percentage);
-                },
-                onSuccess: () => {
-                    console.log("[BUNNY_UPLOAD] Upload complete:", signature.videoId);
-                    setVideoId(signature.videoId);
-                    setUploadStatus("processing");
-                    setUploading(false);
-
-                    // Wait for video processing
-                    checkVideoStatus(signature.videoId);
-                },
+                }
             });
 
-            uploadRef.current = upload;
-            upload.start();
+            // Handle errors
+            xhr.addEventListener("error", () => {
+                console.error("[UPLOAD] Network error during upload");
+                setUploadStatus("error");
+                setUploading(false);
+                toast.error("Network error. Please check your connection.");
+            });
+
+            xhr.addEventListener("abort", () => {
+                console.log("[UPLOAD] Upload cancelled");
+                setUploadStatus("idle");
+                setUploading(false);
+            });
+
+            // Make the upload request to our API proxy
+            xhr.open("PUT", `/api/bunny/upload/${newVideoId}`);
+            xhr.send(file);
 
         } catch (error: any) {
-            console.error("[BUNNY_UPLOAD] Error:", error);
+            console.error("[UPLOAD] Error:", error);
             setUploadStatus("error");
             setUploading(false);
             toast.error(error.message || "Failed to start upload");
@@ -107,35 +115,29 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
 
     const checkVideoStatus = async (bunnyVideoId: string) => {
         try {
-            const response = await fetch(`/api/bunny/video-status?videoId=${bunnyVideoId}`);
+            const status = await getBunnyVideoStatus(bunnyVideoId);
 
-            if (!response.ok) {
-                throw new Error("Failed to check video status");
-            }
-
-            const data = await response.json();
-
-            if (data.status === "ready") {
+            if (status.status === "ready") {
                 setUploadStatus("success");
                 toast.success("Video uploaded and processed successfully!");
                 onUploadComplete(bunnyVideoId);
-            } else if (data.status === "processing") {
+            } else if (status.status === "processing") {
                 // Check again in 3 seconds
                 setTimeout(() => checkVideoStatus(bunnyVideoId), 3000);
-            } else if (data.status === "failed") {
+            } else {
                 setUploadStatus("error");
                 toast.error("Video processing failed");
             }
         } catch (error) {
-            console.error("[BUNNY_UPLOAD] Status check error:", error);
-            setUploadStatus("error");
-            toast.error("Failed to verify video status");
+            console.error("[UPLOAD] Status check error:", error);
+            // Don't fail immediately, keep checking
+            setTimeout(() => checkVideoStatus(bunnyVideoId), 5000);
         }
     };
 
     const cancelUpload = () => {
-        if (uploadRef.current) {
-            uploadRef.current.abort();
+        if (xhrRef.current) {
+            xhrRef.current.abort();
         }
         setFile(null);
         setUploading(false);
@@ -281,33 +283,35 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                         onClick={reset}
                         variant="outline"
                         size="sm"
-                    >
-                        Upload Another Video
                     </Button>
-                </div>
+                        Upload Another Video
+        </Button>
+                </div >
             )}
 
-            {/* Error */}
-            {uploadStatus === "error" && (
-                <div className="border border-red-300 dark:border-red-700 rounded-lg p-4 bg-red-50 dark:bg-red-900/10">
-                    <div className="flex items-center gap-2 mb-2">
-                        <AlertCircle className="h-5 w-5 text-red-600" />
-                        <span className="text-sm font-medium text-red-900 dark:text-red-100">
-                            Upload failed
-                        </span>
-                    </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
-                        Something went wrong. Please try again.
-                    </p>
-                    <Button
-                        onClick={reset}
-                        variant="outline"
-                        size="sm"
-                    >
-                        Try Again
-                    </Button>
-                </div>
-            )}
+{/* Error */ }
+{
+    uploadStatus === "error" && (
+        <div className="border border-red-300 dark:border-red-700 rounded-lg p-4 bg-red-50 dark:bg-red-900/10">
+            <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="h-5 w-5 text-red-600" />
+                <span className="text-sm font-medium text-red-900 dark:text-red-100">
+                    Upload failed
+                </span>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+                Something went wrong. Please try again.
+            </p>
+            <Button
+                onClick={reset}
+                variant="outline"
+                size="sm"
+            >
+                Try Again
+            </Button>
         </div>
+    )
+}
+        </div >
     );
 };
