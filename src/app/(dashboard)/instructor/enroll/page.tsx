@@ -1,0 +1,51 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { UserPlus } from "lucide-react";
+import { ManualEnrollmentForm } from "./_components/manual-enrollment-form";
+
+export default async function EnrollPage() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return redirect("/login");
+    }
+
+    // Get all published courses
+    const { data: courses } = await supabase
+        .from("courses")
+        .select("id, title")
+        .eq("is_published", true)
+        .order("title");
+
+    return (
+        <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-6 space-y-6">
+            {/* Header */}
+            <div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 bg-clip-text text-transparent">
+                    Manual Enrollment
+                </h1>
+                <p className="text-slate-400 mt-1">Grant course access to students without payment</p>
+            </div>
+
+            {/* Enrollment Form */}
+            <div className="max-w-2xl">
+                <Card className="bg-slate-900/50 border-slate-700/50 backdrop-blur-sm">
+                    <CardHeader>
+                        <CardTitle className="text-white flex items-center gap-2">
+                            <UserPlus className="h-5 w-5" />
+                            Enroll Student
+                        </CardTitle>
+                        <CardDescription>
+                            Manually grant a student access to a course
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ManualEnrollmentForm courses={courses || []} />
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    );
+}
