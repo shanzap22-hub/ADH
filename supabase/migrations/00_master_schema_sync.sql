@@ -129,8 +129,14 @@ ON public.courses FOR SELECT
 USING (
     instructor_id = auth.uid()
 );
-
--- ============================================
+-- ===========================================
+-- 5. STUDENT POLICY FOR COURSES
+-- Allows students to read only published courses
+DROP POLICY IF EXISTS "Students can view published courses" ON public.courses;
+CREATE POLICY "Students can view published courses"
+ON public.courses FOR SELECT
+USING (is_published = true);
+-- ===========================================
 -- 5. VERIFICATION QUERIES
 -- ============================================
 

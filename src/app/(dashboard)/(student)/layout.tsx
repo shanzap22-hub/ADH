@@ -1,5 +1,6 @@
 import { StudentSidebar } from "@/components/dashboard/StudentSidebar";
 import { StudentMobileSidebar } from "@/components/dashboard/StudentMobileSidebar";
+import { BottomNav } from "@/components/dashboard/BottomNav";
 
 export default function StudentDashboardLayout({
     children,
@@ -19,9 +20,11 @@ export default function StudentDashboardLayout({
             <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-50">
                 <StudentSidebar />
             </div>
-            <main className="md:pl-56 pt-[80px] h-full">
+            <main className="md:pl-56 pt-[80px] pb-16 md:pb-0 h-full">
                 {children}
             </main>
+            {/* Bottom Navigation - Mobile Only */}
+            <BottomNav />
         </div>
     );
 }
