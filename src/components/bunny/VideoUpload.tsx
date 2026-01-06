@@ -22,15 +22,13 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
     const xhrRef = useRef<XMLHttpRequest | null>(null);
 
     const handleFileSelect = (selectedFile: File) => {
-        // Validate file type
         const validTypes = ["video/mp4", "video/quicktime", "video/x-msvideo", "video/webm"];
         if (!validTypes.includes(selectedFile.type)) {
             toast.error("Please upload a valid video file (MP4, MOV, AVI, WEBM)");
             return;
         }
 
-        // Validate file size (max 2GB)
-        const maxSize = 2 * 1024 * 1024 * 1024; // 2GB
+        const maxSize = 2 * 1024 * 1024 * 1024;
         if (selectedFile.size > maxSize) {
             toast.error("File size must be less than 2GB");
             return;
@@ -50,18 +48,15 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
             setUploadProgress(0);
             onUploadStart?.();
 
-            // Step 1: Create video in Bunny.net (server action)
             console.log("[UPLOAD] Creating video entry...");
             const { videoId: newVideoId } = await createBunnyVideo(file.name);
             setVideoId(newVideoId);
 
             console.log("[UPLOAD] Video created, uploading file...", newVideoId);
 
-            // Step 2: Upload file through our API proxy (with progress tracking)
             const xhr = new XMLHttpRequest();
             xhrRef.current = xhr;
 
-            // Track upload progress
             xhr.upload.addEventListener("progress", (event) => {
                 if (event.lengthComputable) {
                     const percentage = Math.round((event.loaded / event.total) * 100);
@@ -69,15 +64,12 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                 }
             });
 
-            // Handle upload completion
             xhr.addEventListener("load", () => {
                 if (xhr.status === 200) {
                     console.log("[UPLOAD] Upload complete, checking status...");
                     setUploadStatus("processing");
                     setUploadProgress(100);
                     setUploading(false);
-
-                    // Check video processing status
                     checkVideoStatus(newVideoId);
                 } else {
                     console.error("[UPLOAD] Upload failed:", xhr.statusText);
@@ -87,7 +79,6 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                 }
             });
 
-            // Handle errors
             xhr.addEventListener("error", () => {
                 console.error("[UPLOAD] Network error during upload");
                 setUploadStatus("error");
@@ -101,7 +92,6 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                 setUploading(false);
             });
 
-            // Make the upload request to our API proxy
             xhr.open("PUT", `/api/bunny/upload/${newVideoId}`);
             xhr.send(file);
 
@@ -122,7 +112,6 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                 toast.success("Video uploaded and processed successfully!");
                 onUploadComplete(bunnyVideoId);
             } else if (status.status === "processing") {
-                // Check again in 3 seconds
                 setTimeout(() => checkVideoStatus(bunnyVideoId), 3000);
             } else {
                 setUploadStatus("error");
@@ -130,7 +119,6 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
             }
         } catch (error) {
             console.error("[UPLOAD] Status check error:", error);
-            // Don't fail immediately, keep checking
             setTimeout(() => checkVideoStatus(bunnyVideoId), 5000);
         }
     };
@@ -157,7 +145,6 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
 
     return (
         <div className="space-y-4">
-            {/* File Input / Drag & Drop */}
             {!file && uploadStatus !== "success" && (
                 <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-8 text-center hover:border-orange-400 dark:hover:border-orange-500 transition">
                     <input
@@ -170,7 +157,6 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                             if (selectedFile) handleFileSelect(selectedFile);
                         }}
                     />
-
                     <div
                         className="cursor-pointer"
                         onClick={() => fileInputRef.current?.click()}
@@ -196,7 +182,6 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                 </div>
             )}
 
-            {/* Selected File */}
             {file && uploadStatus === "idle" && (
                 <div className="border border-slate-300 dark:border-slate-700 rounded-lg p-4">
                     <div className="flex items-center justify-between">
@@ -211,15 +196,10 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                                 </p>
                             </div>
                         </div>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setFile(null)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => setFile(null)}>
                             <X className="h-4 w-4" />
                         </Button>
                     </div>
-
                     <Button
                         onClick={startUpload}
                         className="w-full mt-4 bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700"
@@ -229,7 +209,6 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                 </div>
             )}
 
-            {/* Upload Progress */}
             {uploadStatus === "uploading" && (
                 <div className="border border-orange-300 dark:border-orange-700 rounded-lg p-4 bg-orange-50 dark:bg-orange-900/10">
                     <div className="flex items-center justify-between mb-3">
@@ -237,24 +216,17 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                             <Loader2 className="h-4 w-4 animate-spin text-orange-600" />
                             <span className="text-sm font-medium">Uploading...</span>
                         </div>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={cancelUpload}
-                        >
+                        <Button variant="ghost" size="sm" onClick={cancelUpload}>
                             Cancel
                         </Button>
                     </div>
-
                     <Progress value={uploadProgress} className="h-2" />
-
                     <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
                         {uploadProgress}% complete
                     </p>
                 </div>
             )}
 
-            {/* Processing */}
             {uploadStatus === "processing" && (
                 <div className="border border-blue-300 dark:border-blue-700 rounded-lg p-4 bg-blue-50 dark:bg-blue-900/10">
                     <div className="flex items-center gap-2">
@@ -267,7 +239,6 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                 </div>
             )}
 
-            {/* Success */}
             {uploadStatus === "success" && videoId && (
                 <div className="border border-green-300 dark:border-green-700 rounded-lg p-4 bg-green-50 dark:bg-green-900/10">
                     <div className="flex items-center gap-2 mb-2">
@@ -279,39 +250,28 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                     <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
                         Video ID: {videoId}
                     </p>
-                    <Button
-                        onClick={reset}
-                        variant="outline"
-                        size="sm"
-                    </Button>
+                    <Button onClick={reset} variant="outline" size="sm">
                         Upload Another Video
-        </Button>
-                </div >
+                    </Button>
+                </div>
             )}
 
-{/* Error */ }
-{
-    uploadStatus === "error" && (
-        <div className="border border-red-300 dark:border-red-700 rounded-lg p-4 bg-red-50 dark:bg-red-900/10">
-            <div className="flex items-center gap-2 mb-2">
-                <AlertCircle className="h-5 w-5 text-red-600" />
-                <span className="text-sm font-medium text-red-900 dark:text-red-100">
-                    Upload failed
-                </span>
-            </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
-                Something went wrong. Please try again.
-            </p>
-            <Button
-                onClick={reset}
-                variant="outline"
-                size="sm"
-            >
-                Try Again
-            </Button>
+            {uploadStatus === "error" && (
+                <div className="border border-red-300 dark:border-red-700 rounded-lg p-4 bg-red-50 dark:bg-red-900/10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <AlertCircle className="h-5 w-5 text-red-600" />
+                        <span className="text-sm font-medium text-red-900 dark:text-red-100">
+                            Upload failed
+                        </span>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+                        Something went wrong. Please try again.
+                    </p>
+                    <Button onClick={reset} variant="outline" size="sm">
+                        Try Again
+                    </Button>
+                </div>
+            )}
         </div>
-    )
-}
-        </div >
     );
 };
