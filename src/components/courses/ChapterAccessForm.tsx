@@ -5,19 +5,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
 
 import {
     Form,
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
-    FormDescription,
 } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 
 interface ChapterAccessFormProps {
     initialData: {
@@ -25,6 +22,7 @@ interface ChapterAccessFormProps {
     };
     courseId: string;
     chapterId: string;
+    onChange: (is_free: boolean) => void; // NEW: Emit changes to parent
 }
 
 const formSchema = z.object({
@@ -34,41 +32,26 @@ const formSchema = z.object({
 export const ChapterAccessForm = ({
     initialData,
     courseId,
-    chapterId
+    chapterId,
+    onChange // NEW
 }: ChapterAccessFormProps) => {
     const [isEditing, setIsEditing] = useState(false);
-    const router = useRouter();
-    const supabase = createClient();
 
     const toggleEdit = () => setIsEditing((current) => !current);
 
     const form = useForm<z.infer<typeof formSchema>>({
-        // @ts-ignore
         resolver: zodResolver(formSchema),
         defaultValues: {
-            is_free: !!initialData.is_free
+            is_free: !!initialData?.is_free
         },
     });
 
     const { isSubmitting, isValid } = form.formState;
 
-    const onSubmit = async (values: any) => {
-        try {
-            const { error } = await supabase
-                .from("chapters")
-                .update(values)
-                .eq("id", chapterId);
-
-            if (error) {
-                toast.error("Something went wrong", { description: error.message });
-            } else {
-                toast.success("Chapter updated");
-                toggleEdit();
-                router.refresh();
-            }
-        } catch {
-            toast.error("Something went wrong");
-        }
+    const onSubmit = async (values: z.infer<typeof formSchema>) => {
+        // Emit change to parent instead of saving directly
+        onChange(values.is_free);
+        toggleEdit();
     }
 
     return (
@@ -87,11 +70,11 @@ export const ChapterAccessForm = ({
                 </Button>
             </div>
             {!isEditing && (
-                <p className="text-sm mt-2 text-slate-500 italic">
+                <p className="text-sm mt-2">
                     {initialData.is_free ? (
-                        <>This chapter is free for preview.</>
+                        <>This chapter is free for preview</>
                     ) : (
-                        <>This chapter is not free.</>
+                        <>This chapter is not free</>
                     )}
                 </p>
             )}
@@ -99,7 +82,7 @@ export const ChapterAccessForm = ({
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
                         <FormField
-                            control={form.control as any}
+                            control={form.control}
                             name="is_free"
                             render={({ field }) => (
                                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
@@ -122,7 +105,7 @@ export const ChapterAccessForm = ({
                                 disabled={!isValid || isSubmitting}
                                 type="submit"
                             >
-                                Save
+                                Update
                             </Button>
                         </div>
                     </form>

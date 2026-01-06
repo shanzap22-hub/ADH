@@ -180,7 +180,9 @@ export const ChapterVideoForm = ({
                                 endpoint="chapter-videos"
                                 onChange={(url) => {
                                     if (url) {
-                                        onSubmit({ video_url: url });
+                                        // Emit change to parent instead of saving
+                                        onChange(url);
+                                        toggleEdit();
                                     }
                                 }}
                             />

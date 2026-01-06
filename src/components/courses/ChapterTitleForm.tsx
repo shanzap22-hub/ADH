@@ -5,9 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
 
 import {
     Form,
@@ -25,6 +22,7 @@ interface ChapterTitleFormProps {
     };
     courseId: string;
     chapterId: string;
+    onChange: (title: string) => void; // NEW: Emit changes to parent
 }
 
 const formSchema = z.object({
@@ -34,11 +32,10 @@ const formSchema = z.object({
 export const ChapterTitleForm = ({
     initialData,
     courseId,
-    chapterId
+    chapterId,
+    onChange // NEW
 }: ChapterTitleFormProps) => {
     const [isEditing, setIsEditing] = useState(false);
-    const router = useRouter();
-    const supabase = createClient();
 
     const toggleEdit = () => setIsEditing((current) => !current);
 
@@ -50,22 +47,9 @@ export const ChapterTitleForm = ({
     const { isSubmitting, isValid } = form.formState;
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
-        try {
-            const { error } = await supabase
-                .from("chapters")
-                .update(values)
-                .eq("id", chapterId);
-
-            if (error) {
-                toast.error("Something went wrong", { description: error.message });
-            } else {
-                toast.success("Chapter updated");
-                toggleEdit();
-                router.refresh();
-            }
-        } catch {
-            toast.error("Something went wrong");
-        }
+        // Emit change to parent instead of saving directly
+        onChange(values.title);
+        toggleEdit();
     }
 
     return (
@@ -112,7 +96,7 @@ export const ChapterTitleForm = ({
                                 disabled={!isValid || isSubmitting}
                                 type="submit"
                             >
-                                Save
+                                Update
                             </Button>
                         </div>
                     </form>
