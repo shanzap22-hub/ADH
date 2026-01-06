@@ -81,6 +81,8 @@ export async function getBunnySignature(
 
 /**
  * Check video processing status
+ * Bunny.net status codes:
+ * 0 = Created, 1 = Uploading, 2 = Uploaded, 3 = Processing, 4 = Finished, 5 = Failed
  */
 export async function getBunnyVideoStatus(videoId: string) {
     try {
@@ -94,13 +96,32 @@ export async function getBunnyVideoStatus(videoId: string) {
         );
 
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error("[BUNNY] Status check failed:", errorText);
             throw new Error("Failed to fetch video status");
         }
 
         const data = await response.json();
 
+        console.log("[BUNNY] Video status response:", {
+            videoId: data.guid,
+            status: data.status,
+            title: data.title,
+            thumbnailFileName: data.thumbnailFileName
+        });
+
+        // Map Bunny status codes to our status
+        let status: "ready" | "processing" | "failed";
+        if (data.status === 4) {
+            status = "ready";
+        } else if (data.status === 0 || data.status === 1 || data.status === 2 || data.status === 3) {
+            status = "processing";
+        } else {
+            status = "failed";
+        }
+
         return {
-            status: data.status === 4 ? "ready" : data.status === 3 ? "processing" : "failed",
+            status,
             videoId: data.guid,
             thumbnail: data.thumbnailFileName,
         };
