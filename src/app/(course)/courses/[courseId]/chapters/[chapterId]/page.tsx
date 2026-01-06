@@ -9,204 +9,209 @@ export default async function ChapterDetailPage({
 }: {
     params: Promise<{ courseId: string; chapterId: string }>
 }) {
-    const { courseId, chapterId } = await params;
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+        const { courseId, chapterId } = await params;
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
 
-    // Fetch chapter details
-    const { data: chapter } = await supabase
-        .from("chapters")
-        .select(`
-            *,
-            courses (
-                id,
-                title,
-                is_published
-            )
-        `)
-        .eq("id", chapterId)
-        .single();
-
-    if (!chapter || !chapter.courses) {
-        return redirect(`/courses/${courseId}`);
-    }
-
-    // Check enrollment
-    let isEnrolled = false;
-    if (user) {
-        const { data: enrollment } = await supabase
-            .from("purchases")
-            .select("*")
-            .eq("user_id", user.id)
-            .eq("course_id", courseId)
+        // Fetch chapter details
+        const { data: chapter, error: chapterError } = await supabase
+            .from("chapters")
+            .select(`
+                *,
+                courses (
+                    id,
+                    title,
+                    is_published
+                )
+            `)
+            .eq("id", chapterId)
             .single();
 
-        if (enrollment) {
-            isEnrolled = true;
+        if (chapterError || !chapter) {
+            console.error("[CHAPTER_PAGE] Error fetching chapter:", chapterError);
+            return redirect(`/courses/${courseId}`);
         }
-    }
 
-    // Fetch chapters for this course (NOT units - units table doesn't exist!)
-    // The schema uses chapters table with video_url field
-    const { data: chapters } = await supabase
-        .from("chapters")
-        .select("*")
-        .eq("course_id", courseId)
-        .eq("is_published", true)
-        .order("position", { ascending: true });
+        // Check enrollment
+        let isEnrolled = false;
+        if (user) {
+            try {
+                const { data: enrollment } = await supabase
+                    .from("purchases")
+                    .select("*")
+                    .eq("user_id", user.id)
+                    .eq("course_id", courseId)
+                    .single();
 
-    // Get completion status for each chapter
-    const chaptersWithProgress = await Promise.all(
-        (chapters || []).map(async (chapter) => {
-            let isCompleted = false;
-
-            if (user) {
-                try {
-                    const { data: progress } = await supabase
-                        .from("user_progress")
-                        .select("*")
-                        .eq("user_id", user.id)
-                        .eq("chapter_id", chapter.id)
-                        .eq("is_completed", true)
-                        .single();
-
-                    if (progress) {
-                        isCompleted = true;
-                    }
-                } catch (error) {
-                    // user_progress table may not exist yet, ignore error
-                    console.log("[CHAPTER_PAGE] Progress tracking not available:", error);
+                if (enrollment) {
+                    isEnrolled = true;
                 }
+            } catch (error) {
+                // Not enrolled, that's okay
+                console.log("[CHAPTER_PAGE] User not enrolled");
             }
+        }
 
-            return {
-                ...chapter,
-                isCompleted,
-                isLocked: !isEnrolled && !chapter.is_free,
-            };
-        })
-    );
+        // Fetch chapters for this course
+        const { data: chapters } = await supabase
+            .from("chapters")
+            .select("*")
+            .eq("course_id", courseId)
+            .eq("is_published", true)
+            .order("position", { ascending: true });
 
-    return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-            <div className="max-w-5xl mx-auto p-6 space-y-6">
-                {/* Breadcrumb */}
-                <div className="flex items-center gap-2 text-sm">
-                    <Link
-                        href={`/courses/${courseId}`}
-                        className="text-orange-600 dark:text-orange-400 hover:underline flex items-center gap-1"
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                        {chapter.courses?.title || "Course"}
-                    </Link>
-                    <span className="text-slate-400">/</span>
-                    <span className="text-slate-600 dark:text-slate-400">{chapter.title}</span>
-                </div>
+        // Get completion status for each chapter
+        const chaptersWithProgress = await Promise.all(
+            (chapters || []).map(async (chap) => {
+                let isCompleted = false;
 
-                {/* Chapter Header */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4">
-                    <div className="flex items-start justify-between">
-                        <div className="space-y-2">
-                            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-                                {chapter.title}
-                            </h1>
-                            {chapter.description && (
-                                <p className="text-lg text-slate-600 dark:text-slate-400">
-                                    {chapter.description}
-                                </p>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                            <BookOpen className="h-5 w-5" />
-                            <span>{unitsWithProgress.length} lessons</span>
-                        </div>
+                if (user) {
+                    try {
+                        const { data: progress } = await supabase
+                            .from("user_progress")
+                            .select("*")
+                            .eq("user_id", user.id)
+                            .eq("chapter_id", chap.id)
+                            .eq("is_completed", true)
+                            .single();
+
+                        if (progress) {
+                            isCompleted = true;
+                        }
+                    } catch (error) {
+                        // Progress tracking not available
+                    }
+                }
+
+                return {
+                    ...chap,
+                    isCompleted,
+                    isLocked: !isEnrolled && !chap.is_free,
+                };
+            })
+        );
+
+        return (
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+                <div className="max-w-5xl mx-auto p-6 space-y-6">
+                    {/* Breadcrumb */}
+                    <div className="flex items-center gap-2 text-sm">
+                        <Link
+                            href={`/courses/${courseId}`}
+                            className="text-orange-600 dark:text-orange-400 hover:underline flex items-center gap-1"
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                            {chapter.courses?.title || "Course"}
+                        </Link>
+                        <span className="text-slate-400">/</span>
+                        <span className="text-slate-600 dark:text-slate-400">{chapter.title}</span>
                     </div>
 
-                    {/* Progress */}
-                    {isEnrolled && (
-                        <div className="flex items-center gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-                            <span className="text-sm text-slate-600 dark:text-slate-400">
-                                Progress:
-                            </span>
-                            <div className="flex-1 max-w-xs">
-                                <div className="flex items-center gap-2">
-                                    <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-gradient-to-r from-orange-500 to-pink-600 transition-all"
-                                            style={{
-                                                width: `${(unitsWithProgress.filter(u => u.isCompleted).length / unitsWithProgress.length) * 100}%`
-                                            }}
-                                        />
-                                    </div>
-                                    <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">
-                                        {unitsWithProgress.filter(u => u.isCompleted).length}/{unitsWithProgress.length}
-                                    </span>
-                                </div>
+                    {/* Chapter Header */}
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-2">
+                                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+                                    {chapter.title}
+                                </h1>
+                                {chapter.description && (
+                                    <p className="text-lg text-slate-600 dark:text-slate-400">
+                                        {chapter.description}
+                                    </p>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                                <BookOpen className="h-5 w-5" />
+                                <span>{unitsWithProgress.length} lessons</span>
                             </div>
                         </div>
-                    )}
-                </div>
 
-                {/* Chapters List - Show videos directly */}
-                <div className="space-y-4">
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                        Lessons in this Chapter
-                    </h2>
-
-                    {chaptersWithProgress.length === 0 ? (
-                        <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-                            <BookOpen className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                            <p className="text-slate-600 dark:text-slate-400">
-                                No lessons available yet
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {chaptersWithProgress.map((chapter) => (
-                                <div
-                                    key={chapter.id}
-                                    className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800"
-                                >
-                                    <h3 className="font-semibold text-lg mb-2">{chapter.title}</h3>
-                                    {chapter.description && (
-                                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-                                            {chapter.description}
-                                        </p>
-                                    )}
-                                    {chapter.video_url ? (
-                                        <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                                            <iframe
-                                                src={chapter.video_url}
-                                                className="w-full h-full"
-                                                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
-                                                allowFullScreen
+                        {/* Progress */}
+                        {isEnrolled && (
+                            <div className="flex items-center gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                                <span className="text-sm text-slate-600 dark:text-slate-400">
+                                    Progress:
+                                </span>
+                                <div className="flex-1 max-w-xs">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-gradient-to-r from-orange-500 to-pink-600 transition-all"
+                                                style={{
+                                                    width: `${(unitsWithProgress.filter(u => u.isCompleted).length / unitsWithProgress.length) * 100}%`
+                                                }}
                                             />
                                         </div>
-                                    ) : (
-                                        <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
-                                            <p className="text-slate-500">No video uploaded yet</p>
-                                        </div>
-                                    )}
+                                        <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">
+                                            {unitsWithProgress.filter(u => u.isCompleted).length}/{unitsWithProgress.length}
+                                        </span>
+                                    </div>
                                 </div>
-                            ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Chapters List - Show videos directly */}
+                    <div className="space-y-4">
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                            Lessons in this Chapter
+                        </h2>
+
+                        {chaptersWithProgress.length === 0 ? (
+                            <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+                                <BookOpen className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                                <p className="text-slate-600 dark:text-slate-400">
+                                    No lessons available yet
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {chaptersWithProgress.map((chapter) => (
+                                    <div
+                                        key={chapter.id}
+                                        className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800"
+                                    >
+                                        <h3 className="font-semibold text-lg mb-2">{chapter.title}</h3>
+                                        {chapter.description && (
+                                            <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                                                {chapter.description}
+                                            </p>
+                                        )}
+                                        {chapter.video_url ? (
+                                            <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                                                <iframe
+                                                    src={chapter.video_url}
+                                                    className="w-full h-full"
+                                                    allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                                                    allowFullScreen
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
+                                                <p className="text-slate-500">No video uploaded yet</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Not Enrolled Message */}
+                    {!isEnrolled && (
+                        <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-6 text-center">
+                            <p className="text-orange-900 dark:text-orange-100 mb-4">
+                                Enroll in this course to access all lessons
+                            </p>
+                            <Link href={`/courses/${courseId}`}>
+                                <Button className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700">
+                                    Go to Course Page
+                                </Button>
+                            </Link>
                         </div>
                     )}
                 </div>
-
-                {/* Not Enrolled Message */}
-                {!isEnrolled && (
-                    <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-6 text-center">
-                        <p className="text-orange-900 dark:text-orange-100 mb-4">
-                            Enroll in this course to access all lessons
-                        </p>
-                        <Link href={`/courses/${courseId}`}>
-                            <Button className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700">
-                                Go to Course Page
-                            </Button>
-                        </Link>
-                    </div>
-                )}
             </div>
-        </div>
-    );
-}
+        );
+    }
