@@ -214,4 +214,8 @@ export default async function ChapterDetailPage({
                 </div>
             </div>
         );
+    } catch (error) {
+        console.error("[CHAPTER_PAGE] Fatal error:", error);
+        return redirect(`/courses/${courseId}`);
     }
+}
