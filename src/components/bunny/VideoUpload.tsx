@@ -5,7 +5,7 @@ import { Upload, X, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { createBunnyVideo, getBunnyVideoStatus } from "@/actions/bunny";
+import { createBunnyVideoWithSignature, getBunnyVideoStatus } from "@/actions/bunny";
 
 interface VideoUploadProps {
     onUploadComplete: (videoId: string) => void;
@@ -48,12 +48,15 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
             setUploadProgress(0);
             onUploadStart?.();
 
-            console.log("[UPLOAD] Creating video entry...");
-            const { videoId: newVideoId } = await createBunnyVideo(file.name);
-            setVideoId(newVideoId);
+            console.log("[UPLOAD] Getting upload signature...");
 
-            console.log("[UPLOAD] Video created, uploading file...", newVideoId);
+            // Get signature from server action (no file sent to Next.js)
+            const signature = await createBunnyVideoWithSignature(file.name);
+            setVideoId(signature.videoId);
 
+            console.log("[UPLOAD] Uploading directly to Bunny.net...", signature.videoId);
+
+            // Upload DIRECTLY to Bunny.net (browser -> Bunny)
             const xhr = new XMLHttpRequest();
             xhrRef.current = xhr;
 
@@ -65,14 +68,14 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
             });
 
             xhr.addEventListener("load", () => {
-                if (xhr.status === 200) {
+                if (xhr.status === 200 || xhr.status === 201) {
                     console.log("[UPLOAD] Upload complete, checking status...");
                     setUploadStatus("processing");
                     setUploadProgress(100);
                     setUploading(false);
-                    checkVideoStatus(newVideoId);
+                    checkVideoStatus(signature.videoId);
                 } else {
-                    console.error("[UPLOAD] Upload failed:", xhr.statusText);
+                    console.error("[UPLOAD] Upload failed:", xhr.status, xhr.statusText);
                     setUploadStatus("error");
                     setUploading(false);
                     toast.error("Upload failed. Please try again.");
@@ -92,7 +95,12 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                 setUploading(false);
             });
 
-            xhr.open("PUT", `/api/bunny/upload/${newVideoId}`);
+            // Direct upload to Bunny.net with signature
+            xhr.open("PUT", signature.uploadUrl);
+            xhr.setRequestHeader("AuthorizationSignature", signature.authorizationSignature);
+            xhr.setRequestHeader("AuthorizationExpire", signature.authorizationExpire.toString());
+            xhr.setRequestHeader("VideoId", signature.videoId);
+            xhr.setRequestHeader("LibraryId", signature.libraryId);
             xhr.send(file);
 
         } catch (error: any) {

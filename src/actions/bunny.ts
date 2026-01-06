@@ -1,9 +1,6 @@
 "use server";
 
-/**
- * Bunny.net Video Upload Server Actions
- * Handles video creation and upload using server-side API authentication
- */
+import { createHash } from "crypto";
 
 const BUNNY_API_KEY = process.env.BUNNY_API_KEY;
 const BUNNY_LIBRARY_ID = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID;
@@ -12,22 +9,19 @@ if (!BUNNY_API_KEY || !BUNNY_LIBRARY_ID) {
     throw new Error("Bunny.net environment variables not configured");
 }
 
-interface CreateVideoResponse {
-    guid: string;
-    libraryId: string;
-    videoLibraryId: number;
-}
-
-interface UploadUrlResponse {
+interface BunnySignature {
     videoId: string;
+    libraryId: string;
+    authorizationSignature: string;
+    authorizationExpire: number;
     uploadUrl: string;
 }
 
 /**
- * Create a new video in Bunny.net library
- * Returns video ID and direct upload URL
+ * Create video and generate upload signature for direct browser-to-Bunny upload
+ * Returns signature that client uses to upload directly to Bunny.net
  */
-export async function createBunnyVideo(title: string): Promise<UploadUrlResponse> {
+export async function createBunnyVideoWithSignature(title: string): Promise<BunnySignature> {
     try {
         // Step 1: Create video entry in Bunny.net
         const createResponse = await fetch(
@@ -48,53 +42,31 @@ export async function createBunnyVideo(title: string): Promise<UploadUrlResponse
             throw new Error("Failed to create video in Bunny.net");
         }
 
-        const videoData: CreateVideoResponse = await createResponse.json();
+        const videoData = await createResponse.json();
         const videoId = videoData.guid;
 
-        console.log("[BUNNY] Video created:", videoId);
+        // Step 2: Generate authorization signature for direct upload
+        const expirationTime = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
 
-        // Step 2: Return upload URL for direct upload
+        // Signature: SHA256(library_id + api_key + expiration_time + video_id)
+        const signatureString = `${BUNNY_LIBRARY_ID}${BUNNY_API_KEY}${expirationTime}${videoId}`;
+        const authorizationSignature = createHash("sha256")
+            .update(signatureString)
+            .digest("hex");
+
         const uploadUrl = `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${videoId}`;
+
+        console.log("[BUNNY] Video created with signature:", videoId);
 
         return {
             videoId,
+            libraryId: BUNNY_LIBRARY_ID,
+            authorizationSignature,
+            authorizationExpire: expirationTime,
             uploadUrl,
         };
     } catch (error) {
-        console.error("[BUNNY] Error creating video:", error);
-        throw error;
-    }
-}
-
-/**
- * Upload video file directly to Bunny.net
- * Uses server-side authentication for secure upload
- */
-export async function uploadVideoToBunny(
-    videoId: string,
-    fileData: Buffer | Blob
-): Promise<void> {
-    try {
-        const uploadUrl = `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${videoId}`;
-
-        const uploadResponse = await fetch(uploadUrl, {
-            method: "PUT",
-            headers: {
-                "AccessKey": BUNNY_API_KEY,
-                "Content-Type": "application/octet-stream",
-            },
-            body: fileData,
-        });
-
-        if (!uploadResponse.ok) {
-            const error = await uploadResponse.text();
-            console.error("[BUNNY] Upload failed:", error);
-            throw new Error("Failed to upload video to Bunny.net");
-        }
-
-        console.log("[BUNNY] Upload complete:", videoId);
-    } catch (error) {
-        console.error("[BUNNY] Error uploading video:", error);
+        console.error("[BUNNY] Error:", error);
         throw error;
     }
 }
