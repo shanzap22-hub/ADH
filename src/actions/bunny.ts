@@ -14,16 +14,22 @@ interface BunnySignature {
     libraryId: string;
     authorizationSignature: string;
     authorizationExpire: number;
-    uploadUrl: string;
 }
 
 /**
- * Create video and generate upload signature for direct browser-to-Bunny upload
- * Returns signature that client uses to upload directly to Bunny.net
+ * Create video in Bunny.net and generate TUS upload signature
+ * STEP 1: Create video object
+ * STEP 2: Get videoId (guid)
+ * STEP 3: Generate SHA256 signature
  */
-export async function createBunnyVideoWithSignature(title: string): Promise<BunnySignature> {
+export async function getBunnySignature(
+    filename: string,
+    filetype: string
+): Promise<BunnySignature> {
     try {
-        // Step 1: Create video entry in Bunny.net
+        console.log("[BUNNY] Creating video object for:", filename);
+
+        // STEP 1: Create video object in Bunny.net
         const createResponse = await fetch(
             `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos`,
             {
@@ -32,41 +38,43 @@ export async function createBunnyVideoWithSignature(title: string): Promise<Bunn
                     "AccessKey": BUNNY_API_KEY,
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ title }),
+                body: JSON.stringify({
+                    title: filename,
+                }),
             }
         );
 
         if (!createResponse.ok) {
-            const error = await createResponse.text();
-            console.error("[BUNNY] Create video failed:", error);
+            const errorText = await createResponse.text();
+            console.error("[BUNNY] Failed to create video:", errorText);
             throw new Error("Failed to create video in Bunny.net");
         }
 
         const videoData = await createResponse.json();
+
+        // STEP 2: Get videoId (guid)
         const videoId = videoData.guid;
+        console.log("[BUNNY] Video created with ID:", videoId);
 
-        // Step 2: Generate authorization signature for direct upload
-        const expirationTime = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
-
-        // Signature: SHA256(library_id + api_key + expiration_time + video_id)
+        // STEP 3: Generate SHA256 signature
+        // Formula: SHA256(libraryId + apiKey + expirationTime + videoId)
+        const expirationTime = Math.floor(Date.now() / 1000) + 3600; // 1 hour
         const signatureString = `${BUNNY_LIBRARY_ID}${BUNNY_API_KEY}${expirationTime}${videoId}`;
+
         const authorizationSignature = createHash("sha256")
             .update(signatureString)
             .digest("hex");
 
-        const uploadUrl = `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${videoId}`;
-
-        console.log("[BUNNY] Video created with signature:", videoId);
+        console.log("[BUNNY] Generated signature for video:", videoId);
 
         return {
             videoId,
             libraryId: BUNNY_LIBRARY_ID,
             authorizationSignature,
             authorizationExpire: expirationTime,
-            uploadUrl,
         };
     } catch (error) {
-        console.error("[BUNNY] Error:", error);
+        console.error("[BUNNY] Error in getBunnySignature:", error);
         throw error;
     }
 }
