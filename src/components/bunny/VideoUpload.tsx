@@ -62,7 +62,7 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
             // STEP 2: Upload using TUS protocol to Bunny.net
             const upload = new tus.Upload(file, {
                 endpoint: "https://video.bunnycdn.com/tusupload",
-                retryDelays: [0, 3000, 5000, 10000, 20000],
+                retryDelays: [0, 3000, 5000, 10000, 20000, 60000, 60000],
                 headers: {
                     "AuthorizationSignature": signature.authorizationSignature,
                     "AuthorizationExpire": signature.authorizationExpire.toString(),
@@ -70,8 +70,8 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                     "LibraryId": signature.libraryId,
                 },
                 metadata: {
-                    filename: file.name,
                     filetype: file.type,
+                    title: file.name,
                 },
                 onError: (error) => {
                     console.error("[UPLOAD] TUS upload failed:", error);
