@@ -62,16 +62,21 @@ export default async function ChapterDetailPage({
             let isCompleted = false;
 
             if (user) {
-                const { data: progress } = await supabase
-                    .from("user_progress")
-                    .select("*")
-                    .eq("user_id", user.id)
-                    .eq("chapter_id", chapter.id)
-                    .eq("is_completed", true)
-                    .single();
+                try {
+                    const { data: progress } = await supabase
+                        .from("user_progress")
+                        .select("*")
+                        .eq("user_id", user.id)
+                        .eq("chapter_id", chapter.id)
+                        .eq("is_completed", true)
+                        .single();
 
-                if (progress) {
-                    isCompleted = true;
+                    if (progress) {
+                        isCompleted = true;
+                    }
+                } catch (error) {
+                    // user_progress table may not exist yet, ignore error
+                    console.log("[CHAPTER_PAGE] Progress tracking not available:", error);
                 }
             }
 
