@@ -53,42 +53,13 @@ export default async function CourseIdPage({
         }
     }
 
-    // Get unit counts and progress for each chapter
-    const chaptersWithUnits = await Promise.all(
-        (course.chapters || []).map(async (chapter) => {
-            // Get units count
-            const { count: unitsCount } = await supabase
-                .from("units")
-                .select("*", { count: "exact", head: true })
-                .eq("chapter_id", chapter.id);
-
-            // Get progress if enrolled
-            let progress = 0;
-            if (isEnrolled && user) {
-                const { data: completedUnits } = await supabase
-                    .from("user_progress")
-                    .select("unit_id")
-                    .eq("user_id", user.id)
-                    .eq("is_completed", true)
-                    .in("unit_id",
-                        supabase
-                            .from("units")
-                            .select("id")
-                            .eq("chapter_id", chapter.id)
-                    );
-
-                if (completedUnits && unitsCount) {
-                    progress = (completedUnits.length / unitsCount) * 100;
-                }
-            }
-
-            return {
-                ...chapter,
-                unitsCount: unitsCount || 0,
-                progress,
-            };
-        })
-    );
+    // Chapters ARE the lessons (no units table exists)
+    // Just use the chapters directly
+    const chaptersWithUnits = (course.chapters || []).map((chapter) => ({
+        ...chapter,
+        unitsCount: 1, // Each chapter is one lesson
+        progress: 0,   // Progress tracking not implemented yet
+    }));
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
