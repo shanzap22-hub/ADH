@@ -47,16 +47,18 @@ export default async function ChapterDetailPage({
         }
     }
 
-    // Fetch units for this chapter
-    const { data: units } = await supabase
-        .from("units")
+    // Fetch chapters for this course (NOT units - units table doesn't exist!)
+    // The schema uses chapters table with video_url field
+    const { data: chapters } = await supabase
+        .from("chapters")
         .select("*")
-        .eq("chapter_id", chapterId)
+        .eq("course_id", courseId)
+        .eq("is_published", true)
         .order("position", { ascending: true });
 
-    // Get completion status for each unit
-    const unitsWithProgress = await Promise.all(
-        (units || []).map(async (unit) => {
+    // Get completion status for each chapter
+    const chaptersWithProgress = await Promise.all(
+        (chapters || []).map(async (chapter) => {
             let isCompleted = false;
 
             if (user) {
@@ -64,7 +66,7 @@ export default async function ChapterDetailPage({
                     .from("user_progress")
                     .select("*")
                     .eq("user_id", user.id)
-                    .eq("unit_id", unit.id)
+                    .eq("chapter_id", chapter.id)
                     .eq("is_completed", true)
                     .single();
 
@@ -74,9 +76,9 @@ export default async function ChapterDetailPage({
             }
 
             return {
-                ...unit,
+                ...chapter,
                 isCompleted,
-                isLocked: !isEnrolled && !unit.is_free_preview,
+                isLocked: !isEnrolled && !chapter.is_free,
             };
         })
     );
@@ -141,13 +143,13 @@ export default async function ChapterDetailPage({
                     )}
                 </div>
 
-                {/* Units List */}
+                {/* Chapters List */}
                 <div className="space-y-4">
                     <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                         Lessons in this Chapter
                     </h2>
 
-                    {unitsWithProgress.length === 0 ? (
+                    {chaptersWithProgress.length === 0 ? (
                         <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
                             <BookOpen className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                             <p className="text-slate-600 dark:text-slate-400">
@@ -156,14 +158,14 @@ export default async function ChapterDetailPage({
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {unitsWithProgress.map((unit) => (
+                            {chaptersWithProgress.map((chapter) => (
                                 <UnitCard
-                                    key={unit.id}
+                                    key={chapter.id}
                                     courseId={courseId}
                                     chapterId={chapterId}
-                                    unit={unit}
-                                    isCompleted={unit.isCompleted}
-                                    isLocked={unit.isLocked}
+                                    unit={chapter}
+                                    isCompleted={chapter.isCompleted}
+                                    isLocked={chapter.isLocked}
                                 />
                             ))}
                         </div>
