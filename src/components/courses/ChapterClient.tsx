@@ -19,6 +19,7 @@ interface ChapterData {
     description: string | null;
     video_url: string | null;
     is_free: boolean;
+    is_published: boolean;
 }
 
 interface ChapterClientProps {
@@ -43,7 +44,8 @@ export function ChapterClient({ initialChapter, attachments, courseId, chapterId
             chapterData.title !== initialChapter.title ||
             chapterData.description !== initialChapter.description ||
             chapterData.video_url !== initialChapter.video_url ||
-            chapterData.is_free !== initialChapter.is_free;
+            chapterData.is_free !== initialChapter.is_free ||
+            chapterData.is_published !== initialChapter.is_published;
 
         setHasUnsavedChanges(hasChanges);
     }, [chapterData, initialChapter]);
@@ -74,6 +76,7 @@ export function ChapterClient({ initialChapter, attachments, courseId, chapterId
                     description: chapterData.description,
                     video_url: chapterData.video_url,
                     is_free: chapterData.is_free,
+                    is_published: chapterData.is_published,
                 })
                 .eq("id", chapterId)
                 .select()
@@ -145,23 +148,34 @@ export function ChapterClient({ initialChapter, attachments, courseId, chapterId
                     </Link>
                 </div>
 
-                <Button
-                    onClick={saveChapter}
-                    disabled={!hasUnsavedChanges || isSaving}
-                    className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700"
-                >
-                    {isSaving ? (
-                        <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Saving...
-                        </>
-                    ) : (
-                        <>
-                            <Save className="h-4 w-4 mr-2" />
-                            {hasUnsavedChanges ? "Save Chapter" : "No Changes"}
-                        </>
-                    )}
-                </Button>
+                <div className="flex items-center gap-2">
+                    {/* Publish Toggle */}
+                    <Button
+                        onClick={() => setChapterData(prev => ({ ...prev, is_published: !prev.is_published }))}
+                        variant={chapterData.is_published ? "default" : "outline"}
+                        className={chapterData.is_published ? "bg-green-600 hover:bg-green-700" : ""}
+                    >
+                        {chapterData.is_published ? "✓ Published" : "Publish"}
+                    </Button>
+
+                    <Button
+                        onClick={saveChapter}
+                        disabled={!hasUnsavedChanges || isSaving}
+                        className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700"
+                    >
+                        {isSaving ? (
+                            <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Saving...
+                            </>
+                        ) : (
+                            <>
+                                <Save className="h-4 w-4 mr-2" />
+                                {hasUnsavedChanges ? "Save Chapter" : "No Changes"}
+                            </>
+                        )}
+                    </Button>
+                </div>
             </div>
 
             {/* Unsaved Changes Warning */}
