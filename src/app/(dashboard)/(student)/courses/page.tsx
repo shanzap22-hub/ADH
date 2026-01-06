@@ -157,12 +157,12 @@ export default async function CoursesPage() {
                         <p className="text-sm text-red-600">
                             Check browser console for details
                         </p>
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="mt-6 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                        <a
+                            href="/dashboard"
+                            className="mt-6 inline-block px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                         >
-                            Reload Page
-                        </button>
+                            Go to Dashboard
+                        </a>
                     </div>
                 </div>
             </div>
