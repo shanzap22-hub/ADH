@@ -38,24 +38,32 @@ export const ChapterVideoForm = ({
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         try {
-            const { error } = await supabase
+            console.log("[CHAPTER_VIDEO] Saving video URL:", values.video_url);
+
+            const { error, data } = await supabase
                 .from("chapters")
                 .update(values)
-                .eq("id", chapterId);
+                .eq("id", chapterId)
+                .select();
 
             if (error) {
-                toast.error("Something went wrong", { description: error.message });
-            } else {
-                toast.success("Chapter updated");
-                toggleEdit();
-                router.refresh();
+                console.error("[CHAPTER_VIDEO] Database error:", error);
+                toast.error("Failed to save video", { description: error.message });
+                return;
             }
-        } catch {
-            toast.error("Something went wrong");
+
+            console.log("[CHAPTER_VIDEO] Video saved successfully:", data);
+            toast.success("Video saved successfully!");
+            toggleEdit();
+            router.refresh();
+        } catch (error: any) {
+            console.error("[CHAPTER_VIDEO] Save error:", error);
+            toast.error("Something went wrong", { description: error.message });
         }
     };
 
     const handleBunnyUploadComplete = async (videoId: string) => {
+        console.log("[CHAPTER_VIDEO] Bunny upload complete, videoId:", videoId);
         // Save Bunny video ID with bunny:// prefix
         await onSubmit({ video_url: `bunny://${videoId}` });
     };
