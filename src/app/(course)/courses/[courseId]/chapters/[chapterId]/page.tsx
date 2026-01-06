@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ChevronLeft, BookOpen } from "lucide-react";
-import { UnitCard } from "@/components/course/UnitCard";
 import { Button } from "@/components/ui/button";
 
 export default async function ChapterDetailPage({
@@ -148,7 +147,7 @@ export default async function ChapterDetailPage({
                     )}
                 </div>
 
-                {/* Chapters List */}
+                {/* Chapters List - Show videos directly */}
                 <div className="space-y-4">
                     <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                         Lessons in this Chapter
@@ -164,14 +163,31 @@ export default async function ChapterDetailPage({
                     ) : (
                         <div className="space-y-3">
                             {chaptersWithProgress.map((chapter) => (
-                                <UnitCard
+                                <div
                                     key={chapter.id}
-                                    courseId={courseId}
-                                    chapterId={chapterId}
-                                    unit={chapter}
-                                    isCompleted={chapter.isCompleted}
-                                    isLocked={chapter.isLocked}
-                                />
+                                    className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800"
+                                >
+                                    <h3 className="font-semibold text-lg mb-2">{chapter.title}</h3>
+                                    {chapter.description && (
+                                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                                            {chapter.description}
+                                        </p>
+                                    )}
+                                    {chapter.video_url ? (
+                                        <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                                            <iframe
+                                                src={chapter.video_url}
+                                                className="w-full h-full"
+                                                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                                                allowFullScreen
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
+                                            <p className="text-slate-500">No video uploaded yet</p>
+                                        </div>
+                                    )}
+                                </div>
                             ))}
                         </div>
                     )}
