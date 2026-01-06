@@ -48,7 +48,8 @@ DROP POLICY IF EXISTS "Instructors can manage attachments for their courses" ON 
 
 -- CHAPTERS: Add instructor view policy
 -- This is CRITICAL - instructors need to see their own unpublished chapters!
-CREATE POLICY IF NOT EXISTS "Instructors can view own chapters"
+DROP POLICY IF EXISTS "Instructors can view own chapters" ON public.chapters;
+CREATE POLICY "Instructors can view own chapters"
 ON public.chapters FOR SELECT
 USING (
     EXISTS (
@@ -59,6 +60,7 @@ USING (
 );
 
 -- ATTACHMENTS: Instructors can view attachments for their courses
+DROP POLICY IF EXISTS "Instructors can view own course attachments" ON public.chapter_attachments;
 CREATE POLICY "Instructors can view own course attachments"
 ON public.chapter_attachments FOR SELECT
 USING (
@@ -71,6 +73,7 @@ USING (
 );
 
 -- ATTACHMENTS: Students can view published chapter attachments
+DROP POLICY IF EXISTS "Students can view published attachments" ON public.chapter_attachments;
 CREATE POLICY "Students can view published attachments"
 ON public.chapter_attachments FOR SELECT
 USING (
@@ -90,6 +93,7 @@ USING (
 );
 
 -- ATTACHMENTS: Instructors can insert attachments
+DROP POLICY IF EXISTS "Instructors can insert attachments" ON public.chapter_attachments;
 CREATE POLICY "Instructors can insert attachments"
 ON public.chapter_attachments FOR INSERT
 WITH CHECK (
@@ -102,6 +106,7 @@ WITH CHECK (
 );
 
 -- ATTACHMENTS: Instructors can delete attachments
+DROP POLICY IF EXISTS "Instructors can delete attachments" ON public.chapter_attachments;
 CREATE POLICY "Instructors can delete attachments"
 ON public.chapter_attachments FOR DELETE
 USING (
@@ -118,7 +123,8 @@ USING (
 -- ============================================
 
 -- Instructors need to see their own unpublished courses
-CREATE POLICY IF NOT EXISTS "Instructors can view own courses"
+DROP POLICY IF EXISTS "Instructors can view own courses" ON public.courses;
+CREATE POLICY "Instructors can view own courses"
 ON public.courses FOR SELECT
 USING (
     instructor_id = auth.uid()
