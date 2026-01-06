@@ -81,11 +81,28 @@ export function ChapterClient({ initialChapter, attachments, courseId, chapterId
 
             if (error) {
                 console.error("[CHAPTER_SAVE] Error:", error);
-                toast.error("Failed to save chapter", { description: error.message });
+
+                // User-friendly error messages
+                if (error.code === '42703') {
+                    toast.error("Database configuration error", {
+                        description: "Missing column in database. Please contact support."
+                    });
+                } else if (error.code === '23505') {
+                    toast.error("Duplicate entry", {
+                        description: "This content already exists."
+                    });
+                } else {
+                    toast.error("Failed to save chapter", { description: error.message });
+                }
                 return;
             }
 
             console.log("[CHAPTER_SAVE] Saved successfully:", data);
+
+            // CRITICAL FIX: Update the chapter state with saved data
+            // This clears the dirty state and makes future comparisons accurate
+            setChapterData(data);
+
             toast.success("Chapter saved successfully!");
             setHasUnsavedChanges(false);
             router.refresh();
