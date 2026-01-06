@@ -19,7 +19,7 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
     const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "processing" | "success" | "error">("idle");
     const [videoId, setVideoId] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const xhrRef = useRef<XMLHttpRequest | null>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     const handleFileSelect = (selectedFile: File) => {
         const validTypes = ["video/mp4", "video/quicktime", "video/x-msvideo", "video/webm"];
@@ -48,42 +48,49 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
             setUploadProgress(0);
             onUploadStart?.();
 
-            console.log("[UPLOAD] Getting upload signature...");
+            console.log("[UPLOAD] Getting signature from server...");
 
-            // Get signature from server action (no file sent to Next.js)
+            // Step 1: Get signature from server action (NO FILE SENT)
             const signature = await createBunnyVideoWithSignature(file.name);
             setVideoId(signature.videoId);
 
-            console.log("[UPLOAD] Uploading directly to Bunny.net...", signature.videoId);
+            console.log("[UPLOAD] Got signature, uploading DIRECTLY to Bunny.net:", signature.videoId);
+            console.log("[UPLOAD] Upload URL:", signature.uploadUrl);
 
-            // Upload DIRECTLY to Bunny.net (browser -> Bunny)
+            // Step 2: Upload DIRECTLY to Bunny.net using fetch with progress
+            const abortController = new AbortController();
+            abortControllerRef.current = abortController;
+
+            // Use XMLHttpRequest for progress tracking
             const xhr = new XMLHttpRequest();
-            xhrRef.current = xhr;
 
             xhr.upload.addEventListener("progress", (event) => {
                 if (event.lengthComputable) {
                     const percentage = Math.round((event.loaded / event.total) * 100);
                     setUploadProgress(percentage);
+                    console.log(`[UPLOAD] Progress: ${percentage}%`);
                 }
             });
 
             xhr.addEventListener("load", () => {
+                console.log("[UPLOAD] XHR Load event, status:", xhr.status);
+
                 if (xhr.status === 200 || xhr.status === 201) {
-                    console.log("[UPLOAD] Upload complete, checking status...");
+                    console.log("[UPLOAD] Upload successful!");
                     setUploadStatus("processing");
                     setUploadProgress(100);
                     setUploading(false);
                     checkVideoStatus(signature.videoId);
                 } else {
-                    console.error("[UPLOAD] Upload failed:", xhr.status, xhr.statusText);
+                    console.error("[UPLOAD] Failed:", xhr.status, xhr.statusText, xhr.responseText);
                     setUploadStatus("error");
                     setUploading(false);
-                    toast.error("Upload failed. Please try again.");
+                    toast.error(`Upload failed: ${xhr.statusText || "Unknown error"}`);
                 }
             });
 
-            xhr.addEventListener("error", () => {
-                console.error("[UPLOAD] Network error during upload");
+            xhr.addEventListener("error", (event) => {
+                console.error("[UPLOAD] XHR Error:", event);
                 setUploadStatus("error");
                 setUploading(false);
                 toast.error("Network error. Please check your connection.");
@@ -95,16 +102,22 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                 setUploading(false);
             });
 
-            // Direct upload to Bunny.net with signature
-            xhr.open("PUT", signature.uploadUrl);
+            // Open PUT request to Bunny.net (DIRECT - no Next.js API)
+            xhr.open("PUT", signature.uploadUrl, true);
+
+            // Set Bunny.net authentication headers
             xhr.setRequestHeader("AuthorizationSignature", signature.authorizationSignature);
             xhr.setRequestHeader("AuthorizationExpire", signature.authorizationExpire.toString());
             xhr.setRequestHeader("VideoId", signature.videoId);
             xhr.setRequestHeader("LibraryId", signature.libraryId);
+
+            console.log("[UPLOAD] Sending file to Bunny.net...");
+
+            // Send the file DIRECTLY to Bunny.net
             xhr.send(file);
 
         } catch (error: any) {
-            console.error("[UPLOAD] Error:", error);
+            console.error("[UPLOAD] Error in startUpload:", error);
             setUploadStatus("error");
             setUploading(false);
             toast.error(error.message || "Failed to start upload");
@@ -113,7 +126,10 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
 
     const checkVideoStatus = async (bunnyVideoId: string) => {
         try {
+            console.log("[UPLOAD] Checking video status...");
             const status = await getBunnyVideoStatus(bunnyVideoId);
+
+            console.log("[UPLOAD] Status:", status.status);
 
             if (status.status === "ready") {
                 setUploadStatus("success");
@@ -127,13 +143,14 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
             }
         } catch (error) {
             console.error("[UPLOAD] Status check error:", error);
+            // Keep retrying for a while
             setTimeout(() => checkVideoStatus(bunnyVideoId), 5000);
         }
     };
 
     const cancelUpload = () => {
-        if (xhrRef.current) {
-            xhrRef.current.abort();
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
         }
         setFile(null);
         setUploading(false);
@@ -222,7 +239,7 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin text-orange-600" />
-                            <span className="text-sm font-medium">Uploading...</span>
+                            <span className="text-sm font-medium">Uploading to Bunny.net...</span>
                         </div>
                         <Button variant="ghost" size="sm" onClick={cancelUpload}>
                             Cancel
@@ -230,7 +247,7 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                     </div>
                     <Progress value={uploadProgress} className="h-2" />
                     <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
-                        {uploadProgress}% complete
+                        {uploadProgress}% complete • Direct browser → Bunny.net
                     </p>
                 </div>
             )}
@@ -273,7 +290,7 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                         </span>
                     </div>
                     <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
-                        Something went wrong. Please try again.
+                        Check the browser console for details. Ensure your Bunny.net API key and library ID are correct.
                     </p>
                     <Button onClick={reset} variant="outline" size="sm">
                         Try Again
