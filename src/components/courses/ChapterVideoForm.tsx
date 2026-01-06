@@ -19,6 +19,7 @@ interface ChapterVideoFormProps {
     };
     courseId: string;
     chapterId: string;
+    onChange: (video_url: string | null) => void;
 }
 
 const formSchema = z.object({
@@ -28,7 +29,8 @@ const formSchema = z.object({
 export const ChapterVideoForm = ({
     initialData,
     courseId,
-    chapterId
+    chapterId,
+    onChange
 }: ChapterVideoFormProps) => {
     const [isEditing, setIsEditing] = useState(false);
     const router = useRouter();
@@ -64,8 +66,9 @@ export const ChapterVideoForm = ({
 
     const handleBunnyUploadComplete = async (videoId: string) => {
         console.log("[CHAPTER_VIDEO] Bunny upload complete, videoId:", videoId);
-        // Save Bunny video ID with bunny:// prefix
-        await onSubmit({ video_url: `bunny://${videoId}` });
+        // Emit change to parent with bunny:// prefix
+        onChange(`bunny://${videoId}`);
+        toggleEdit();
     };
 
     // Detect video type
