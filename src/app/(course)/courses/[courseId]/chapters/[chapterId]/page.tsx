@@ -123,7 +123,7 @@ export default async function ChapterDetailPage({
                             </div>
                             <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                                 <BookOpen className="h-5 w-5" />
-                                <span>{unitsWithProgress.length} lessons</span>
+                                <span>{chaptersWithProgress.length} lessons</span>
                             </div>
                         </div>
 
@@ -139,12 +139,12 @@ export default async function ChapterDetailPage({
                                             <div
                                                 className="h-full bg-gradient-to-r from-orange-500 to-pink-600 transition-all"
                                                 style={{
-                                                    width: `${(unitsWithProgress.filter(u => u.isCompleted).length / unitsWithProgress.length) * 100}%`
+                                                    width: `${(chaptersWithProgress.filter(u => u.isCompleted).length / chaptersWithProgress.length) * 100}%`
                                                 }}
                                             />
                                         </div>
                                         <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">
-                                            {unitsWithProgress.filter(u => u.isCompleted).length}/{unitsWithProgress.length}
+                                            {chaptersWithProgress.filter(u => u.isCompleted).length}/{chaptersWithProgress.length}
                                         </span>
                                     </div>
                                 </div>
