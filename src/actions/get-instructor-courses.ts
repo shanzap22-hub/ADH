@@ -16,7 +16,18 @@ export const getInstructorCourses = async (userId: string): Promise<InstructorCo
         console.log("[GET_INSTRUCTOR_COURSES] Fetching courses for user:", userId);
         const supabase = await createClient();
 
-        const { data: courses, error } = await supabase
+        // Check if user is super admin
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', userId)
+            .single();
+
+        const isSuperAdmin = profile?.role === 'super_admin';
+        console.log("[GET_INSTRUCTOR_COURSES] User role:", profile?.role, "Is super admin:", isSuperAdmin);
+
+        // Build query - super admin sees ALL courses, instructors see only their own
+        let query = supabase
             .from("courses")
             .select(`
                 id,
@@ -26,12 +37,19 @@ export const getInstructorCourses = async (userId: string): Promise<InstructorCo
                 price,
                 is_published,
                 created_at,
+                instructor_id,
                 chapters (
                     id
                 )
             `)
-            .eq("instructor_id", userId)
             .order("created_at", { ascending: false });
+
+        // Only filter by instructor_id if NOT super admin
+        if (!isSuperAdmin) {
+            query = query.eq("instructor_id", userId);
+        }
+
+        const { data: courses, error } = await query;
 
         if (error) {
             console.error("[GET_INSTRUCTOR_COURSES] Supabase error:", error);
