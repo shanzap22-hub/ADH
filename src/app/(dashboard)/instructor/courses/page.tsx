@@ -6,19 +6,38 @@ import { createClient } from "@/lib/supabase/server";
 import { getInstructorCourses } from "@/actions/get-instructor-courses";
 import { InstructorCourseCard } from "@/components/instructor-course-card";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function CoursesPage() {
     try {
+        console.log("[COURSES_PAGE] Starting page render");
         const supabase = await createClient();
+
+        console.log("[COURSES_PAGE] Getting user");
         const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-        if (authError || !user) {
-            console.error("[INSTRUCTOR_COURSES] Auth error:", authError);
+        if (authError) {
+            console.error("[COURSES_PAGE] Auth error:", authError);
             return redirect("/login");
         }
 
+        if (!user) {
+            console.log("[COURSES_PAGE] No user found, redirecting");
+            return redirect("/login");
+        }
+
+        console.log("[COURSES_PAGE] User found:", user.id);
+        console.log("[COURSES_PAGE] Fetching courses");
+
         const courses = await getInstructorCourses(user.id);
+
+        console.log("[COURSES_PAGE] Courses fetched:", courses.length);
+
         const publishedCount = courses.filter(c => c.is_published).length;
         const draftCount = courses.length - publishedCount;
+
+        console.log("[COURSES_PAGE] Rendering page");
 
         return (
             <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-6 space-y-8">
@@ -115,7 +134,9 @@ export default async function CoursesPage() {
             </div>
         );
     } catch (error) {
-        console.error("[INSTRUCTOR_COURSES] Error fetching courses:", error);
+        console.error("[COURSES_PAGE] Fatal error:", error);
+        console.error("[COURSES_PAGE] Error details:", error instanceof Error ? error.message : 'Unknown error');
+        console.error("[COURSES_PAGE] Error stack:", error instanceof Error ? error.stack : 'No stack');
         return redirect("/login");
     }
 }
