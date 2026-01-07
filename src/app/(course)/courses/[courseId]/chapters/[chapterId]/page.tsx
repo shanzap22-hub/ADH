@@ -53,44 +53,35 @@ export default async function ChapterDetailPage({
             }
         }
 
-        // Fetch chapters for this course
-        const { data: chapters } = await supabase
-            .from("chapters")
-            .select("*")
-            .eq("course_id", courseId)
-            .eq("is_published", true)
-            .order("position", { ascending: true });
 
-        // Get completion status for each chapter
-        const chaptersWithProgress = await Promise.all(
-            (chapters || []).map(async (chap) => {
-                let isCompleted = false;
+        // The current chapter is already fetched above as 'chapter'
+        // We just need to check if it's completed
+        let isCompleted = false;
+        if (user) {
+            try {
+                const { data: progress } = await supabase
+                    .from("user_progress")
+                    .select("*")
+                    .eq("user_id", user.id)
+                    .eq("chapter_id", chapterId)
+                    .eq("is_completed", true)
+                    .single();
 
-                if (user) {
-                    try {
-                        const { data: progress } = await supabase
-                            .from("user_progress")
-                            .select("*")
-                            .eq("user_id", user.id)
-                            .eq("chapter_id", chap.id)
-                            .eq("is_completed", true)
-                            .single();
-
-                        if (progress) {
-                            isCompleted = true;
-                        }
-                    } catch (error) {
-                        // Progress tracking not available
-                    }
+                if (progress) {
+                    isCompleted = true;
                 }
+            } catch (error) {
+                // Progress tracking not available
+            }
+        }
 
-                return {
-                    ...chap,
-                    isCompleted,
-                    isLocked: !isEnrolled && !chap.is_free,
-                };
-            })
-        );
+        // Prepare current chapter data
+        const currentChapterWithProgress = {
+            ...chapter,
+            isCompleted,
+            isLocked: !isEnrolled && !chapter.is_free,
+        };
+
 
         return (
             <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -152,48 +143,30 @@ export default async function ChapterDetailPage({
                         )}
                     </div>
 
-                    {/* Chapters List - Show videos directly */}
+                    {/* Current Chapter Video - Show videos directly */}
                     <div className="space-y-4">
                         <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                            Lessons in this Chapter
+                            {currentChapterWithProgress.title}
                         </h2>
 
-                        {chaptersWithProgress.length === 0 ? (
-                            <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-                                <BookOpen className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                                <p className="text-slate-600 dark:text-slate-400">
-                                    No lessons available yet
-                                </p>
+                        {currentChapterWithProgress.description && (
+                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                                {currentChapterWithProgress.description}
+                            </p>
+                        )}
+
+                        {currentChapterWithProgress.video_url ? (
+                            <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                                <iframe
+                                    src={currentChapterWithProgress.video_url}
+                                    className="w-full h-full"
+                                    allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                                    allowFullScreen
+                                />
                             </div>
                         ) : (
-                            <div className="space-y-3">
-                                {chaptersWithProgress.map((chapter) => (
-                                    <div
-                                        key={chapter.id}
-                                        className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800"
-                                    >
-                                        <h3 className="font-semibold text-lg mb-2">{chapter.title}</h3>
-                                        {chapter.description && (
-                                            <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-                                                {chapter.description}
-                                            </p>
-                                        )}
-                                        {chapter.video_url ? (
-                                            <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                                                <iframe
-                                                    src={chapter.video_url}
-                                                    className="w-full h-full"
-                                                    allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
-                                                    allowFullScreen
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
-                                                <p className="text-slate-500">No video uploaded yet</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
+                            <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
+                                <p className="text-slate-500">No video uploaded yet</p>
                             </div>
                         )}
                     </div>
