@@ -14,7 +14,7 @@ const navItems = [
     {
         label: "Courses",
         icon: BookOpen,
-        href: "/dashboard/courses",
+        href: "/courses",
     },
     {
         label: "Live",
