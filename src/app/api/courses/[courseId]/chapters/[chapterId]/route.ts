@@ -16,7 +16,7 @@ export async function DELETE(
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        // Verify user owns this course
+        // Verify user owns this course OR is super admin
         const { data: course, error: courseError } = await supabase
             .from("courses")
             .select("id, instructor_id")
@@ -27,7 +27,17 @@ export async function DELETE(
             return new NextResponse("Course not found", { status: 404 });
         }
 
-        if (course.instructor_id !== user.id) {
+        // Check if user is super admin
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        const isSuperAdmin = profile?.role === 'super_admin';
+
+        // Allow if user owns course OR is super admin
+        if (course.instructor_id !== user.id && !isSuperAdmin) {
             return new NextResponse("Unauthorized", { status: 403 });
         }
 
