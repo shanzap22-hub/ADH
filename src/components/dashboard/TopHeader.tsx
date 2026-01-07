@@ -18,9 +18,9 @@ import {
 
 const navItems = [
     { label: "Feed", icon: Home, href: "/dashboard" },
-    { label: "Courses", icon: BookOpen, href: "/dashboard/courses" },
-    { label: "Live", icon: Video, href: "/dashboard/live" },
-    { label: "Profile", icon: UserIcon, href: "/dashboard/profile" },
+    { label: "Courses", icon: BookOpen, href: "/courses" },
+    { label: "Live", icon: Video, href: "/live" },
+    { label: "Profile", icon: UserIcon, href: "/profile" },
 ];
 
 export const TopHeader = () => {

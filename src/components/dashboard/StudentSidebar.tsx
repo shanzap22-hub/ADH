@@ -11,7 +11,7 @@ const routes = [
     {
         label: "Browse",
         icon: Compass,
-        href: "/search",
+        href: "/courses",
         color: "text-sky-500",
     },
     {
