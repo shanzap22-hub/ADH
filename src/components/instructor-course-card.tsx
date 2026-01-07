@@ -33,15 +33,8 @@ export const InstructorCourseCard = ({
                                 className="object-cover group-hover:scale-110 transition-transform duration-500"
                                 alt={title}
                                 src={imageUrl}
-                                onError={(e) => {
-                                    // Hide broken image, show fallback
-                                    e.currentTarget.style.display = 'none';
-                                }}
                             />
-                        ) : null}
-
-                        {/* Fallback icon for missing/broken images */}
-                        {!imageUrl && (
+                        ) : (
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <BookOpen className="h-16 w-16 text-slate-600" />
                             </div>
