@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { Separator } from "@/components/ui/separator";
-import { CourseEnrollButton } from "@/components/course-enroll-button";
 import { ChapterCard } from "@/components/course/ChapterCard";
 import { BookOpen } from "lucide-react";
 
@@ -94,7 +93,7 @@ export default async function CourseIdPage({
                             </div>
                         </div>
 
-                        {/* Course Image & Enrollment */}
+                        {/* Course Image */}
                         <div className="space-y-4">
                             <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-800">
                                 {course.image_url ? (
@@ -109,23 +108,6 @@ export default async function CourseIdPage({
                                         <BookOpen className="h-16 w-16" />
                                     </div>
                                 )}
-                            </div>
-
-                            <div className="flex flex-col gap-3">
-                                <p className="text-3xl font-bold text-slate-900 dark:text-white">
-                                    {course.price === 0
-                                        ? "Free"
-                                        : new Intl.NumberFormat("en-IN", {
-                                            style: "currency",
-                                            currency: "INR"
-                                        }).format(course.price!)
-                                    }
-                                </p>
-                                <CourseEnrollButton
-                                    courseId={courseId}
-                                    price={course.price!}
-                                    isEnrolled={isEnrolled}
-                                />
                             </div>
                         </div>
                     </div>
