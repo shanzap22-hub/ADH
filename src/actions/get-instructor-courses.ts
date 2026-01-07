@@ -13,6 +13,7 @@ export type InstructorCourse = {
 
 export const getInstructorCourses = async (userId: string): Promise<InstructorCourse[]> => {
     try {
+        console.log("[GET_INSTRUCTOR_COURSES] Fetching courses for user:", userId);
         const supabase = await createClient();
 
         const { data: courses, error } = await supabase
@@ -33,13 +34,17 @@ export const getInstructorCourses = async (userId: string): Promise<InstructorCo
             .order("created_at", { ascending: false });
 
         if (error) {
-            console.error("[GET_INSTRUCTOR_COURSES]", error);
+            console.error("[GET_INSTRUCTOR_COURSES] Supabase error:", error);
+            console.error("[GET_INSTRUCTOR_COURSES] Error details:", JSON.stringify(error, null, 2));
             return [];
         }
 
         if (!courses) {
+            console.log("[GET_INSTRUCTOR_COURSES] No courses found");
             return [];
         }
+
+        console.log("[GET_INSTRUCTOR_COURSES] Found courses:", courses.length);
 
         // Map courses with chapter count
         const coursesWithCount = courses.map((course: any) => ({
@@ -55,7 +60,8 @@ export const getInstructorCourses = async (userId: string): Promise<InstructorCo
 
         return coursesWithCount;
     } catch (error) {
-        console.error("[GET_INSTRUCTOR_COURSES]", error);
+        console.error("[GET_INSTRUCTOR_COURSES] Fatal error:", error);
+        console.error("[GET_INSTRUCTOR_COURSES] Error stack:", error instanceof Error ? error.stack : 'No stack trace');
         return [];
     }
 };
