@@ -2,7 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ["utfs.io"],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'idlvnncaqmiixwnyleci.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
   },
   typescript: {
     ignoreBuildErrors: true,
