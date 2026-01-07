@@ -28,13 +28,27 @@ export const CourseCard = ({
         <Link href={`/courses/${id}`}>
             <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900/50 via-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50 hover:border-orange-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-orange-500/10 h-full">
                 {/* Image with gradient overlay */}
-                <div className="relative w-full aspect-video rounded-t-2xl overflow-hidden">
-                    <Image
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-500"
-                        alt={title}
-                        src={imageUrl}
-                    />
+                <div className="relative w-full aspect-video rounded-t-2xl overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900">
+                    {imageUrl ? (
+                        <Image
+                            fill
+                            className="object-cover group-hover:scale-110 transition-transform duration-500"
+                            alt={title}
+                            src={imageUrl}
+                            onError={(e) => {
+                                // Hide broken image, show fallback
+                                e.currentTarget.style.display = 'none';
+                            }}
+                        />
+                    ) : null}
+
+                    {/* Fallback icon for missing/broken images */}
+                    {!imageUrl && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <BookOpen className="h-20 w-20 text-slate-600" />
+                        </div>
+                    )}
+
                     {/* Gradient overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-60" />
 
