@@ -114,7 +114,7 @@ export default async function ChapterDetailPage({
                             </div>
                             <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                                 <BookOpen className="h-5 w-5" />
-                                <span>{chaptersWithProgress.length} lessons</span>
+                                <span>1 lesson</span>
                             </div>
                         </div>
 
@@ -122,22 +122,18 @@ export default async function ChapterDetailPage({
                         {isEnrolled && (
                             <div className="flex items-center gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
                                 <span className="text-sm text-slate-600 dark:text-slate-400">
-                                    Progress:
+                                    Status:
                                 </span>
-                                <div className="flex-1 max-w-xs">
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-orange-500 to-pink-600 transition-all"
-                                                style={{
-                                                    width: `${(chaptersWithProgress.filter(u => u.isCompleted).length / chaptersWithProgress.length) * 100}%`
-                                                }}
-                                            />
-                                        </div>
-                                        <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">
-                                            {chaptersWithProgress.filter(u => u.isCompleted).length}/{chaptersWithProgress.length}
+                                <div className="flex items-center gap-2">
+                                    {currentChapterWithProgress.isCompleted ? (
+                                        <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                                            ✓ Completed
                                         </span>
-                                    </div>
+                                    ) : (
+                                        <span className="px-3 py-1 text-xs font-semibold rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">
+                                            In Progress
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         )}

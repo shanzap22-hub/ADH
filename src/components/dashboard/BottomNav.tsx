@@ -24,7 +24,7 @@ const navItems = [
     {
         label: "Profile",
         icon: User,
-        href: "/dashboard/profile",
+        href: "/profile",  // Fixed: was /dashboard/profile (404), now /profile (works!)
     },
 ];
 
