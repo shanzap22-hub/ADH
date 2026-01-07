@@ -19,7 +19,7 @@ const navItems = [
     {
         label: "Live",
         icon: Video,
-        href: "/dashboard/live",
+        href: "/live",
     },
     {
         label: "Profile",
