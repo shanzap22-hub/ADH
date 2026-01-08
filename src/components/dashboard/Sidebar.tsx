@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutDashboard, Compass, Radio, Users, Settings, Eye, UserPlus, LogOut } from "lucide-react";
+import { LayoutDashboard, Compass, Radio, Users, Settings, Eye, UserPlus, LogOut, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -37,9 +37,15 @@ const routes = [
         icon: Settings,
         href: "/instructor/settings",
     },
-];
+]
 
-export const Sidebar = () => {
+    ;
+
+interface SidebarProps {
+    is_super_admin?: boolean;
+}
+
+export const Sidebar = ({ is_super_admin }: SidebarProps) => {
     const router = useRouter();
     const supabase = createClient();
 
@@ -74,8 +80,20 @@ export const Sidebar = () => {
                 {/* Spacer to push logout to bottom */}
                 <div className="flex-1" />
 
+                {/* Admin Mode Button (if user is super_admin) */}
+                {is_super_admin && (
+                    <div className="p-6 border-t">
+                        <Link href="/admin">
+                            <Button variant="outline" className="w-full" size="sm">
+                                <Shield className="h-4 w-4 mr-2" />
+                                Admin Mode
+                            </Button>
+                        </Link>
+                    </div>
+                )}
+
                 {/* Student Mode Button */}
-                <div className="p-6 border-t">
+                <div className={cn("p-6", is_super_admin && "pt-0", !is_super_admin && "border-t")}>
                     <Link href="/dashboard">
                         <Button variant="outline" className="w-full" size="sm">
                             <Eye className="h-4 w-4 mr-2" />
@@ -85,7 +103,7 @@ export const Sidebar = () => {
                 </div>
 
                 {/* Logout Button */}
-                <div className="p-6 pt-0">
+                <div className={cn("p-6 pt-0")}>
                     <Button
                         variant="ghost"
                         className="w-full justify-start text-slate-600 hover:text-slate-900 hover:bg-slate-100"
