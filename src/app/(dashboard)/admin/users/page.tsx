@@ -2,6 +2,8 @@ import { getAllUsers } from "@/actions/admin/get-all-users";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserRoleSelector } from "@/components/admin/UserRoleSelector";
+import { UserTierSelector } from "@/components/admin/UserTierSelector";
+import { MembershipBadge } from "@/components/membership/MembershipBadge";
 import { Users, Mail, Calendar } from "lucide-react";
 
 export default async function AdminUsersPage() {
@@ -15,7 +17,7 @@ export default async function AdminUsersPage() {
         <div className="p-6 space-y-6">
             <div>
                 <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-                <p className="text-gray-600 mt-1">Manage all users and their roles</p>
+                <p className="text-gray-600 mt-1">Manage all users, their roles, and membership tiers</p>
             </div>
 
             {/* Stats */}
@@ -72,6 +74,7 @@ export default async function AdminUsersPage() {
                                         >
                                             {user.role}
                                         </Badge>
+                                        <MembershipBadge tier={user.membership_tier || 'bronze'} size="sm" />
                                     </div>
                                     <div className="flex items-center gap-4 text-sm text-gray-500">
                                         <div className="flex items-center gap-1">
@@ -84,7 +87,16 @@ export default async function AdminUsersPage() {
                                         </div>
                                     </div>
                                 </div>
-                                <UserRoleSelector userId={user.id} currentRole={user.role} />
+                                <div className="flex items-center gap-3">
+                                    <div className="text-right">
+                                        <div className="text-xs text-gray-500 mb-1">Role</div>
+                                        <UserRoleSelector userId={user.id} currentRole={user.role} />
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-xs text-gray-500 mb-1">Membership Tier</div>
+                                        <UserTierSelector userId={user.id} currentTier={user.membership_tier || 'bronze'} />
+                                    </div>
+                                </div>
                             </div>
                         ))}
                     </div>
