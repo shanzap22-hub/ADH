@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutDashboard, Compass, GraduationCap, LogOut } from "lucide-react";
+import { LayoutDashboard, Compass, GraduationCap, LogOut, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -24,9 +24,10 @@ const routes = [
 
 interface StudentSidebarProps {
     is_instructor?: boolean;
+    is_super_admin?: boolean;
 }
 
-export const StudentSidebar = ({ is_instructor }: StudentSidebarProps) => {
+export const StudentSidebar = ({ is_instructor, is_super_admin }: StudentSidebarProps) => {
     const router = useRouter();
     const supabase = createClient();
 
@@ -61,9 +62,21 @@ export const StudentSidebar = ({ is_instructor }: StudentSidebarProps) => {
                 {/* Spacer */}
                 <div className="flex-1" />
 
+                {/* Admin Mode (if user is super_admin) */}
+                {is_super_admin && (
+                    <div className="p-6 border-t">
+                        <Link href="/admin">
+                            <Button variant="outline" className="w-full" size="sm">
+                                <Shield className="h-4 w-4 mr-2" />
+                                Admin Mode
+                            </Button>
+                        </Link>
+                    </div>
+                )}
+
                 {/* Instructor Mode (if user is instructor) */}
                 {is_instructor && (
-                    <div className="p-6 border-t">
+                    <div className={cn("p-6", is_super_admin && "pt-0", !is_super_admin && "border-t")}>
                         <Link href="/instructor/courses">
                             <Button variant="outline" className="w-full" size="sm">
                                 <GraduationCap className="h-4 w-4 mr-2" />
@@ -74,7 +87,7 @@ export const StudentSidebar = ({ is_instructor }: StudentSidebarProps) => {
                 )}
 
                 {/* Logout Button */}
-                <div className={cn("p-6", is_instructor && "pt-0")}>
+                <div className={cn("p-6", (is_instructor || is_super_admin) && "pt-0")}>
                     <Button
                         variant="ghost"
                         className="w-full justify-start text-slate-600 hover:text-slate-900 hover:bg-slate-100"
