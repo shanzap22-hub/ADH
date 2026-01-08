@@ -126,18 +126,14 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
 
             console.log(`[getUserAccessibleCourses] Course "${course.title}":`, {
                 courseId: course.id,
-                allowedTiers: allowedTiers || "none (accessible to all)",
+                allowedTiers: allowedTiers || "none (course will be hidden)",
                 userTierHierarchy: tierHierarchy
             });
 
-            // If no tier restrictions, course is accessible to all
+            // If no tier restrictions, HIDE the course (admin must assign tiers)
             if (!allowedTiers || allowedTiers.length === 0) {
-                console.log(`[getUserAccessibleCourses] ✓ Course "${course.title}" has no tier restrictions - accessible to all`);
-                accessibleCourses.push({
-                    ...transformCourse(course),
-                    isLocked: false,
-                });
-                continue;
+                console.log(`[getUserAccessibleCourses] ✗ Course "${course.title}" has no tier assignments - hiding from students`);
+                continue; // Skip this course entirely
             }
 
             // Check if user's tier hierarchy includes any of the allowed tiers
