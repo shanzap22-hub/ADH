@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { User } from "lucide-react";
+import { MembershipBadge } from "@/components/membership/MembershipBadge";
+import { Button } from "@/components/ui/button";
 
 export default async function ProfilePage() {
     const supabase = await createClient();
@@ -9,6 +12,13 @@ export default async function ProfilePage() {
     if (!user || error) {
         return redirect("/");
     }
+
+    // Fetch profile data for membership tier
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("membership_tier, role")
+        .eq("id", user.id)
+        .single();
 
     return (
         <div className="p-6 space-y-6">
@@ -41,6 +51,29 @@ export default async function ProfilePage() {
                     <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Account Created</label>
                     <p className="text-sm text-slate-500">
                         {new Date(user.created_at).toLocaleDateString()}
+                    </p>
+                </div>
+
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <label className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2 block">
+                        Membership Tier
+                    </label>
+                    <div className="flex items-center justify-between">
+                        <MembershipBadge tier={profile?.membership_tier || "bronze"} size="lg" />
+                        <Link href="/pricing">
+                            <Button variant="outline" size="sm">
+                                Upgrade Membership
+                            </Button>
+                        </Link>
+                    </div>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
+                        {profile?.membership_tier === "diamond"
+                            ? "You have access to all courses"
+                            : profile?.membership_tier === "gold"
+                                ? "You have access to 11 courses"
+                                : profile?.membership_tier === "silver"
+                                    ? "You have access to 8 courses"
+                                    : "You have access to 1 course"}
                     </p>
                 </div>
             </div>

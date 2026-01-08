@@ -33,6 +33,12 @@ const routes = [
         color: "text-blue-600",
     },
     {
+        label: "Course Tiers",
+        icon: Settings,
+        href: "/admin/course-tiers",
+        color: "text-purple-600",
+    },
+    {
         label: "Analytics",
         icon: BarChart3,
         href: "/admin/analytics",

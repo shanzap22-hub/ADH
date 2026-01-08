@@ -14,6 +14,8 @@ interface CourseCardProps {
     price: number;
     progress: number | null;
     category: string;
+    isLocked?: boolean;
+    requiredTier?: string;
 }
 
 export const CourseCard = ({
@@ -22,7 +24,9 @@ export const CourseCard = ({
     imageUrl,
     chaptersLength,
     progress,
-    category
+    category,
+    isLocked = false,
+    requiredTier
 }: CourseCardProps) => {
     return (
         <Link href={`/courses/${id}`}>
@@ -65,6 +69,18 @@ export const CourseCard = ({
                             {category}
                         </span>
                     </div>
+
+                    {/* Locked overlay */}
+                    {isLocked && (
+                        <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center">
+                            <div className="text-center space-y-2">
+                                <div className="text-4xl">🔒</div>
+                                <div className="text-sm font-semibold text-white">
+                                    Requires {requiredTier} tier
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Content with glassmorphism */}
@@ -83,7 +99,13 @@ export const CourseCard = ({
                     </div>
 
                     {/* Progress Section */}
-                    {progress !== null ? (
+                    {isLocked ? (
+                        <div className="pt-2">
+                            <span className="inline-block px-4 py-2 text-sm font-bold rounded-lg bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30">
+                                🔒 Upgrade to {requiredTier}
+                            </span>
+                        </div>
+                    ) : progress !== null ? (
                         <div className="space-y-2">
                             <div className="flex items-center justify-between text-xs">
                                 <span className="text-slate-400">Progress</span>

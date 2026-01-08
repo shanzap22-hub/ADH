@@ -18,31 +18,11 @@ export default async function CoursesPage() {
         let courses: any[] = [];
         let fetchError: string | null = null;
 
-        // Fetch courses
+        // Fetch courses with tier-based access
         try {
-            const { data, error } = await supabase
-                .from("courses")
-                .select(`
-                    id,
-                    title,
-                    description,
-                    image_url,
-                    price,
-                    chapters (
-                        id
-                    )
-                `)
-                .eq("is_published", true)
-                .order("created_at", { ascending: false });
-
-            console.log("[COURSES_PAGE] Query:", { count: data?.length, error: error?.message });
-
-            if (error) {
-                fetchError = error.message;
-                courses = [];
-            } else {
-                courses = data || [];
-            }
+            const { getUserAccessibleCourses } = await import("@/actions/get-user-accessible-courses");
+            courses = await getUserAccessibleCourses(user.id);
+            console.log("[COURSES_PAGE] Fetched courses:", { count: courses.length });
         } catch (error: any) {
             console.error("[COURSES_PAGE] Exception:", error);
             fetchError = error.message;
@@ -56,9 +36,11 @@ export default async function CoursesPage() {
             description: course.description,
             image_url: course.image_url,
             price: course.price,
-            category: null,
-            chapters: Array.isArray(course.chapters) ? course.chapters : [],
-            progress: null,
+            category: course.category,
+            chapters: course.chapters,
+            progress: course.progress,
+            isLocked: course.isLocked || false,
+            requiredTier: course.requiredTier,
         }));
 
         // Render (NO MobileLayout - already in student layout!)
