@@ -20,6 +20,8 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
     try {
         const supabase = await createClient();
 
+        console.log("[getUserAccessibleCourses] Starting for user:", userId);
+
         // Get user's tier and role
         const { data: profile, error: profileError } = await supabase
             .from("profiles")
@@ -35,8 +37,11 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
         const userTier = profile.membership_tier || "bronze";
         const userRole = profile.role;
 
+        console.log("[getUserAccessibleCourses] User profile:", { userTier, userRole });
+
         // Super admins and instructors see all courses
         if (userRole === "super_admin" || userRole === "instructor") {
+            console.log("[getUserAccessibleCourses] User is admin/instructor - fetching all courses");
             const { data: allCourses, error } = await supabase
                 .from("courses")
                 .select(`
@@ -56,11 +61,13 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
                 return [];
             }
 
+            console.log("[getUserAccessibleCourses] Admin courses count:", allCourses?.length || 0);
             return transformCourses(allCourses || []);
         }
 
         // Get tier hierarchy (e.g., silver user can access bronze + silver)
         const tierHierarchy = getTierHierarchy(userTier);
+        console.log("[getUserAccessibleCourses] Tier hierarchy:", tierHierarchy);
 
         // Get all published courses
         const { data: courses, error: coursesError } = await supabase
@@ -82,7 +89,10 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
             return [];
         }
 
+        console.log("[getUserAccessibleCourses] Total published courses:", courses?.length || 0);
+
         if (!courses || courses.length === 0) {
+            console.log("[getUserAccessibleCourses] No published courses found");
             return [];
         }
 
@@ -95,6 +105,8 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
             console.error("[getUserAccessibleCourses] Tier access error:", tierError);
         }
 
+        console.log("[getUserAccessibleCourses] Tier access records:", tierAccess?.length || 0);
+
         // Create a map of course_id -> allowed tiers
         const courseAccessMap = new Map<string, string[]>();
         if (tierAccess) {
@@ -106,14 +118,23 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
             });
         }
 
+        console.log("[getUserAccessibleCourses] Course access map:", Object.fromEntries(courseAccessMap));
+
         // Filter and mark courses
         const accessibleCourses: Course[] = [];
 
         for (const course of courses) {
             const allowedTiers = courseAccessMap.get(course.id);
 
+            console.log(`[getUserAccessibleCourses] Course "${course.title}":`, {
+                courseId: course.id,
+                allowedTiers: allowedTiers || "none (accessible to all)",
+                userTierHierarchy: tierHierarchy
+            });
+
             // If no tier restrictions, course is accessible to all
             if (!allowedTiers || allowedTiers.length === 0) {
+                console.log(`[getUserAccessibleCourses] ✓ Course "${course.title}" has no tier restrictions - accessible to all`);
                 accessibleCourses.push({
                     ...transformCourse(course),
                     isLocked: false,
@@ -125,6 +146,7 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
             const hasAccess = allowedTiers.some((tier) => tierHierarchy.includes(tier));
 
             if (hasAccess) {
+                console.log(`[getUserAccessibleCourses] ✓ Course "${course.title}" accessible - user tier matches`);
                 accessibleCourses.push({
                     ...transformCourse(course),
                     isLocked: false,
@@ -132,6 +154,7 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
             } else {
                 // Include locked courses so user can see upgrade prompts
                 const requiredTier = getMinimumRequiredTier(allowedTiers);
+                console.log(`[getUserAccessibleCourses] ✗ Course "${course.title}" locked - requires ${requiredTier}`);
                 accessibleCourses.push({
                     ...transformCourse(course),
                     isLocked: true,
@@ -140,6 +163,7 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
             }
         }
 
+        console.log("[getUserAccessibleCourses] Final accessible courses:", accessibleCourses.length);
         return accessibleCourses;
     } catch (error) {
         console.error("[getUserAccessibleCourses] Exception:", error);
