@@ -50,7 +50,6 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
                     description,
                     image_url,
                     price,
-                    category_id,
                     chapters (id)
                 `)
                 .eq("is_published", true)
@@ -78,7 +77,6 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
                 description,
                 image_url,
                 price,
-                category_id,
                 chapters (id)
             `)
             .eq("is_published", true)
@@ -213,7 +211,7 @@ function transformCourse(course: any): Course {
         description: course.description,
         image_url: course.image_url,
         price: course.price,
-        category: course.category_id,
+        category: null, // Category system not yet implemented
         chapters: Array.isArray(course.chapters) ? course.chapters : [],
         progress: null,
     };
