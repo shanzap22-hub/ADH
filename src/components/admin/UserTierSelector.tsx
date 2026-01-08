@@ -11,19 +11,11 @@ import {
 } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { getTierInfo } from "@/lib/membership/check-course-access";
 
 interface UserTierSelectorProps {
     userId: string;
     currentTier: string;
 }
-
-const tiers = [
-    { value: "bronze", label: "Bronze 🥉", price: "Free" },
-    { value: "silver", label: "Silver 🥈", price: "₹4,999" },
-    { value: "gold", label: "Gold 🥇", price: "₹9,999" },
-    { value: "diamond", label: "Diamond 💎", price: "₹14,999" },
-];
 
 export function UserTierSelector({ userId, currentTier }: UserTierSelectorProps) {
     const [tier, setTier] = useState(currentTier || "bronze");
@@ -44,10 +36,13 @@ export function UserTierSelector({ userId, currentTier }: UserTierSelectorProps)
                 toast.error("Failed to update tier", { description: error.message });
             } else {
                 setTier(newTier);
-                const tierInfo = getTierInfo(newTier);
-                toast.success(`Tier updated to ${tierInfo.name}!`, {
-                    description: `User now has access to ${tierInfo.name} tier courses.`,
-                });
+                const tierNames: Record<string, string> = {
+                    bronze: "Bronze",
+                    silver: "Silver",
+                    gold: "Gold",
+                    diamond: "Diamond"
+                };
+                toast.success(`Tier updated to ${tierNames[newTier]}!`);
                 router.refresh();
             }
         } catch (error) {
@@ -57,35 +52,16 @@ export function UserTierSelector({ userId, currentTier }: UserTierSelectorProps)
         }
     };
 
-    const currentTierInfo = getTierInfo(tier);
-
     return (
         <Select value={tier} onValueChange={handleTierChange} disabled={loading}>
-            <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Select tier">
-                    <div className="flex items-center gap-2">
-                        <span>{currentTierInfo.icon}</span>
-                        <span>{currentTierInfo.name}</span>
-                    </div>
-                </SelectValue>
+            <SelectTrigger className="w-[180px]">
+                <SelectValue />
             </SelectTrigger>
             <SelectContent>
-                {tiers.map((tierOption) => {
-                    const tierInfo = getTierInfo(tierOption.value);
-                    return (
-                        <SelectItem key={tierOption.value} value={tierOption.value}>
-                            <div className="flex items-center justify-between gap-3 w-full">
-                                <div className="flex items-center gap-2">
-                                    <span>{tierInfo.icon}</span>
-                                    <span className="font-medium">{tierInfo.name}</span>
-                                </div>
-                                <span className="text-xs text-muted-foreground">
-                                    {tierOption.price}
-                                </span>
-                            </div>
-                        </SelectItem>
-                    );
-                })}
+                <SelectItem value="bronze">🥉 Bronze (Free)</SelectItem>
+                <SelectItem value="silver">🥈 Silver (₹4,999)</SelectItem>
+                <SelectItem value="gold">🥇 Gold (₹9,999)</SelectItem>
+                <SelectItem value="diamond">💎 Diamond (₹14,999)</SelectItem>
             </SelectContent>
         </Select>
     );
