@@ -5,15 +5,16 @@ import { CourseSidebar } from "@/components/course/CourseSidebar";
 import { LessonViewer } from "@/components/course/LessonViewer";
 import { LessonNavigation } from "@/components/course/LessonNavigation";
 
-id: string;
-title: string;
-description: string | null;
-video_url: string | null;
-position: number;
-isCompleted ?: boolean;
-isLocked ?: boolean;
-lastPlayedSecond ?: number;
-attachments ?: { id: string; name: string; url: string }[];
+interface Chapter {
+    id: string;
+    title: string;
+    description: string | null;
+    video_url: string | null;
+    position: number;
+    isCompleted?: boolean;
+    isLocked?: boolean;
+    lastPlayedSecond?: number;
+    attachments?: { id: string; name: string; url: string }[];
 }
 
 interface LearnPageClientProps {
