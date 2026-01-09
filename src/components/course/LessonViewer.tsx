@@ -138,6 +138,13 @@ export const LessonViewer = ({
                                     videoId={bunnyVideoId}
                                     title={title}
                                     initialTime={lastPlayedSecond}
+                                    onEnd={() => {
+                                        if (courseId && chapterId && !isCompleted) {
+                                            updateChapterProgress(courseId, chapterId, { isCompleted: true });
+                                            toast.success("Lesson completed!");
+                                            if (onComplete) onComplete();
+                                        }
+                                    }}
                                 />
                             </div>
                         ) : isExternalEmbed ? (
@@ -168,44 +175,42 @@ export const LessonViewer = ({
                 )}
             </div>
 
-            {/* Lesson Description */}
-            {description && (
-                <div className="p-6 space-y-6">
-                    {description && (
-                        <div>
-                            <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
-                                About this lesson
-                            </h2>
-                            <div className="prose dark:prose-invert max-w-none">
-                                <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                                    {description}
-                                </p>
-                            </div>
+            {/* Lesson Description & Attachments */}
+            <div className="p-6 space-y-6">
+                {description && (
+                    <div>
+                        <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
+                            About this lesson
+                        </h2>
+                        <div className="prose dark:prose-invert max-w-none">
+                            <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                                {description}
+                            </p>
                         </div>
-                    )}
+                    </div>
+                )}
 
-                    {attachments.length > 0 && (
-                        <div>
-                            <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
-                                Attachments
-                            </h2>
-                            <div className="space-y-2">
-                                {attachments.map((attachment) => (
-                                    <a
-                                        href={attachment.url}
-                                        target="_blank"
-                                        key={attachment.id}
-                                        className="flex items-center p-3 w-full bg-slate-100 dark:bg-slate-800 border text-slate-700 dark:text-slate-300 rounded-md hover:underline"
-                                    >
-                                        <File className="h-4 w-4 mr-2 flex-shrink-0" />
-                                        <p className="line-clamp-1">{attachment.name}</p>
-                                    </a>
-                                ))}
-                            </div>
+                {attachments.length > 0 && (
+                    <div>
+                        <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
+                            Attachments
+                        </h2>
+                        <div className="space-y-2">
+                            {attachments.map((attachment) => (
+                                <a
+                                    href={attachment.url}
+                                    target="_blank"
+                                    key={attachment.id}
+                                    className="flex items-center p-3 w-full bg-slate-100 dark:bg-slate-800 border text-slate-700 dark:text-slate-300 rounded-md hover:underline"
+                                >
+                                    <File className="h-4 w-4 mr-2 flex-shrink-0" />
+                                    <p className="line-clamp-1">{attachment.name}</p>
+                                </a>
+                            ))}
                         </div>
-                    )}
-                </div>
-            )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
