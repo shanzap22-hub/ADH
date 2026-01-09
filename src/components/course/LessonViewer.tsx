@@ -143,6 +143,7 @@ export const LessonViewer = ({
                                             updateChapterProgress(courseId, chapterId, { isCompleted: true });
                                             toast.success("Lesson completed!");
                                             if (onComplete) onComplete();
+                                            router.refresh(); // Refresh to show green tick immediately
                                         }
                                     }}
                                 />
