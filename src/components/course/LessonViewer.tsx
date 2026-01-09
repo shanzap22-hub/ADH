@@ -138,12 +138,17 @@ export const LessonViewer = ({
                                     videoId={bunnyVideoId}
                                     title={title}
                                     initialTime={lastPlayedSecond}
-                                    onEnd={() => {
+                                    onEnd={async () => {
                                         if (courseId && chapterId && !isCompleted) {
-                                            updateChapterProgress(courseId, chapterId, { isCompleted: true });
-                                            toast.success("Lesson completed!");
-                                            if (onComplete) onComplete();
-                                            router.refresh(); // Refresh to show green tick immediately
+                                            try {
+                                                await updateChapterProgress(courseId, chapterId, { isCompleted: true });
+                                                toast.success("Lesson completed!");
+                                                if (onComplete) onComplete();
+                                                router.refresh(); // Refresh ONLY after DB update is confirmed
+                                            } catch (error) {
+                                                console.error("Failed to update progress:", error);
+                                                toast.error("Could not mark as complete");
+                                            }
                                         }
                                     }}
                                 />
