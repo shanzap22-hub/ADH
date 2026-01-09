@@ -166,20 +166,12 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
 }
 
 /**
- * Get tier hierarchy for a given tier
+ * Get exact tier match (NO HIERARCHY)
+ * Users only see courses assigned to their specific tier
  */
 function getTierHierarchy(tier: string): string[] {
-    switch (tier) {
-        case "diamond":
-            return ["bronze", "silver", "gold", "diamond"];
-        case "gold":
-            return ["bronze", "silver", "gold"];
-        case "silver":
-            return ["bronze", "silver"];
-        case "bronze":
-        default:
-            return ["bronze"];
-    }
+    // Return only the user's exact tier - NO hierarchy
+    return [tier];
 }
 
 /**

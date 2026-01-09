@@ -84,17 +84,8 @@ export async function POST(
 
 // Helper functions
 function getTierHierarchy(tier: string): string[] {
-    switch (tier) {
-        case "diamond":
-            return ["bronze", "silver", "gold", "diamond"];
-        case "gold":
-            return ["bronze", "silver", "gold"];
-        case "silver":
-            return ["bronze", "silver"];
-        case "bronze":
-        default:
-            return ["bronze"];
-    }
+    // Return only the user's exact tier - NO hierarchy
+    return [tier];
 }
 
 function getMinimumRequiredTier(allowedTiers: string[]): string {
