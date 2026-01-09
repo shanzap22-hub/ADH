@@ -1,181 +1,143 @@
 "use client";
 
 import * as z from "zod";
+import axios from "axios";
+import { PlusCircle, File, Loader2, X } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { File as FileIcon, Loader2, PlusCircle, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FileUpload } from "@/components/file-upload";
+
+interface Attachment {
+    id: string;
+    name: string;
+    url: string; // Changed from file_url to url to match database
+}
 
 interface ChapterAttachmentsFormProps {
-    initialData: {
-        id: string;
-    };
+    initialData: any;
     courseId: string;
     chapterId: string;
-    attachments: { id: string; name: string; file_url: string }[];
+    attachments: Attachment[];
 }
+
+const formSchema = z.object({
+    url: z.string().min(1),
+});
 
 export const ChapterAttachmentsForm = ({
     initialData,
     courseId,
     chapterId,
-    attachments,
+    attachments
 }: ChapterAttachmentsFormProps) => {
-    const [isUploading, setIsUploading] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    const toggleEdit = () => setIsEditing((current) => !current);
+
     const router = useRouter();
-    const supabase = createClient();
 
-    const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        const file = formData.get("file") as File;
-
-        if (!file) {
-            toast.error("Please select a file");
-            return;
-        }
-
+    const onSubmit = async (url: string) => {
         try {
-            setIsUploading(true);
+            // Determine name from URL or default
+            const name = url.split('/').pop() || "Attachment";
 
-            // Upload to Supabase Storage
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${chapterId}-${Date.now()}.${fileExt}`;
-
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from("course-attachments")
-                .upload(fileName, file);
-
-            if (uploadError) {
-                throw uploadError;
-            }
-
-            // Get public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from("course-attachments")
-                .getPublicUrl(fileName);
-
-            // Save to database
-            const { error: dbError } = await supabase
-                .from("chapter_attachments")
-                .insert({
-                    chapter_id: chapterId,
-                    name: file.name,
-                    file_url: publicUrl,
-                    file_size: file.size,
-                    file_type: file.type,
-                });
-
-            if (dbError) {
-                throw dbError;
-            }
-
-            toast.success("File uploaded successfully");
+            await axios.post(`/api/courses/${courseId}/chapters/${chapterId}/attachments`, {
+                url: url,
+                name: name
+            });
+            toast.success("Attachment added");
+            toggleEdit();
             router.refresh();
-            (e.target as HTMLFormElement).reset();
-        } catch (error: any) {
-            toast.error(error.message || "Failed to upload file");
-        } finally {
-            setIsUploading(false);
+        } catch {
+            toast.error("Something went wrong");
         }
-    };
+    }
 
-    const onDelete = async (attachmentId: string, fileUrl: string) => {
+    const onDelete = async (id: string) => {
         try {
-            setDeletingId(attachmentId);
-
-            // Delete from storage
-            const fileName = fileUrl.split('/').pop();
-            if (fileName) {
-                await supabase.storage
-                    .from("course-attachments")
-                    .remove([fileName]);
-            }
-
-            // Delete from database
-            const { error } = await supabase
-                .from("chapter_attachments")
-                .delete()
-                .eq("id", attachmentId);
-
-            if (error) throw error;
-
+            setDeletingId(id);
+            await axios.delete(`/api/courses/${courseId}/chapters/${chapterId}/attachments/${id}`);
             toast.success("Attachment deleted");
             router.refresh();
-        } catch (error: any) {
-            toast.error("Failed to delete attachment");
+        } catch {
+            toast.error("Something went wrong");
         } finally {
             setDeletingId(null);
         }
-    };
+    }
 
     return (
-        <div className="mt-6 border bg-slate-100 rounded-md p-4">
-            <div className="font-medium flex items-center justify-between mb-4">
-                Chapter Attachments
-            </div>
-
-            {/* Upload Form */}
-            <form onSubmit={onSubmit} className="space-y-4 mb-4">
-                <Input
-                    type="file"
-                    name="file"
-                    disabled={isUploading}
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.rar"
-                />
-                <Button type="submit" disabled={isUploading} size="sm">
-                    {isUploading ? (
-                        <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Uploading...
-                        </>
-                    ) : (
+        <div className="mt-6 border bg-slate-100 dark:bg-slate-800 rounded-md p-4">
+            <div className="font-medium flex items-center justify-between mb-2 text-slate-900 dark:text-slate-100">
+                Chapter attachments
+                <Button onClick={toggleEdit} variant="ghost">
+                    {isEditing && (
+                        <>Cancel</>
+                    )}
+                    {!isEditing && (
                         <>
                             <PlusCircle className="h-4 w-4 mr-2" />
-                            Upload File
+                            Add a file
                         </>
                     )}
                 </Button>
-            </form>
-
-            {/* Attachments List */}
-            {attachments.length > 0 ? (
-                <div className="space-y-2">
-                    {attachments.map((attachment) => (
-                        <div
-                            key={attachment.id}
-                            className="flex items-center p-3 w-full bg-sky-100 border-sky-200 border text-sky-700 rounded-md"
-                        >
-                            <FileIcon className="h-4 w-4 mr-2 flex-shrink-0" />
-                            <p className="text-xs line-clamp-1 flex-1">
-                                {attachment.name}
-                            </p>
-                            <Button
-                                onClick={() => onDelete(attachment.id, attachment.file_url)}
-                                disabled={deletingId === attachment.id}
-                                size="sm"
-                                variant="ghost"
-                                className="ml-auto hover:bg-sky-200"
-                            >
-                                {deletingId === attachment.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                    <X className="h-4 w-4" />
-                                )}
-                            </Button>
+            </div>
+            {!isEditing && (
+                <>
+                    {attachments.length === 0 && (
+                        <p className="text-sm mt-2 text-slate-500 italic">
+                            No attachments yet
+                        </p>
+                    )}
+                    {attachments.length > 0 && (
+                        <div className="space-y-2">
+                            {attachments.map((attachment) => (
+                                <div
+                                    key={attachment.id}
+                                    className="flex items-center p-3 w-full bg-slate-200 dark:bg-slate-700 border-slate-200 border text-slate-700 dark:text-slate-300 rounded-md"
+                                >
+                                    <File className="h-4 w-4 mr-2 flex-shrink-0" />
+                                    <p className="text-xs line-clamp-1">
+                                        {attachment.name}
+                                    </p>
+                                    {deletingId === attachment.id && (
+                                        <div className="ml-auto">
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        </div>
+                                    )}
+                                    {deletingId !== attachment.id && (
+                                        <button
+                                            onClick={() => onDelete(attachment.id)}
+                                            className="ml-auto hover:opacity-75 transition"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
                         </div>
-                    ))}
+                    )}
+                </>
+            )}
+            {isEditing && (
+                <div>
+                    <FileUpload
+                        endpoint="course-attachments"
+                        onChange={(url) => {
+                            if (url) {
+                                onSubmit(url);
+                            }
+                        }}
+                    />
+                    <div className="text-xs text-muted-foreground mt-4">
+                        Add anything your students might need to complete the chapter.
+                    </div>
                 </div>
-            ) : (
-                <p className="text-sm text-slate-500 italic">
-                    No attachments yet
-                </p>
             )}
         </div>
     );
-};
+}

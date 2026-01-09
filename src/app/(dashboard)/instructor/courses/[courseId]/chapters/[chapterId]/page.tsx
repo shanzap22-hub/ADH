@@ -26,16 +26,16 @@ export default async function ChapterIdPage({
     }
 
     // Get chapter attachments
-    const { data: attachments } = await supabase
-        .from("chapter_attachments")
-        .select("id, name, file_url")
+    const { data: attachmentsData } = await supabase
+        .from("attachments")
+        .select("id, name, url") // url, not file_url
         .eq("chapter_id", chapterId)
         .order("created_at", { ascending: true });
 
     return (
         <ChapterClient
             initialChapter={chapter}
-            attachments={attachments || []}
+            attachments={attachmentsData || []}
             courseId={courseId}
             chapterId={chapterId}
         />

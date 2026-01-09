@@ -62,13 +62,23 @@ export default async function LearnPage({
         .eq("user_id", user.id)
         .in("chapter_id", course.chapters.map((ch: any) => ch.id));
 
-    // Prepare chapters with completion status
+    // Get attachments for all chapters
+    const { data: attachmentsData } = await supabase
+        .from("attachments")
+        .select("*")
+        .in("chapter_id", course.chapters.map((ch: any) => ch.id));
+
+    // Prepare chapters with completion status and attachments
     const chaptersWithStatus = course.chapters.map((chapter: any) => {
         const progress = progressData?.find(p => p.chapter_id === chapter.id);
+        const attachments = attachmentsData?.filter(a => a.chapter_id === chapter.id) || [];
+
         return {
             ...chapter,
             isCompleted: progress?.is_completed || false,
-            isLocked: false // All chapters unlocked for enrolled students
+            lastPlayedSecond: progress?.last_played_second || 0,
+            isLocked: false, // All chapters unlocked for enrolled students
+            attachments
         };
     });
 

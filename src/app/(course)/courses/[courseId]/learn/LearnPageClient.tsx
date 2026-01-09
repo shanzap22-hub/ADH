@@ -5,14 +5,15 @@ import { CourseSidebar } from "@/components/course/CourseSidebar";
 import { LessonViewer } from "@/components/course/LessonViewer";
 import { LessonNavigation } from "@/components/course/LessonNavigation";
 
-interface Chapter {
-    id: string;
-    title: string;
-    description: string | null;
-    video_url: string | null;
-    position: number;
-    isCompleted?: boolean;
-    isLocked?: boolean;
+id: string;
+title: string;
+description: string | null;
+video_url: string | null;
+position: number;
+isCompleted ?: boolean;
+isLocked ?: boolean;
+lastPlayedSecond ?: number;
+attachments ?: { id: string; name: string; url: string }[];
 }
 
 interface LearnPageClientProps {
@@ -61,21 +62,24 @@ export default function LearnPageClient({
 
     return (
         <div className="h-screen flex overflow-hidden bg-slate-50 dark:bg-slate-950">
-            {/* Sidebar */}
-            <CourseSidebar
-                courseId={courseId}
-                chapters={chapters}
-                currentChapterId={currentChapter.id}
-            />
+            {/* Sidebar is handled by layout.tsx */}
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto">
                     <LessonViewer
+                        courseId={courseId}
+                        chapterId={currentChapter.id}
                         title={currentChapter.title}
                         description={currentChapter.description}
                         videoUrl={currentChapter.video_url}
                         lessonNumber={lessonNumber}
+                        isCompleted={!!currentChapter.isCompleted}
+                        lastPlayedSecond={currentChapter.lastPlayedSecond}
+                        attachments={currentChapter.attachments || []}
+                        onComplete={() => {
+                            router.refresh();
+                        }}
                     />
                 </div>
 

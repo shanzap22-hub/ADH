@@ -40,24 +40,46 @@ export default async function CourseLayout({
         return redirect("/");
     }
 
-    // Sort chapters
+    // Get user progress
+    const { data: progressData } = await supabase
+        .from("user_progress")
+        .select("chapter_id, is_completed")
+        .eq("user_id", user.id)
+        .in("chapter_id", course.chapters.map((ch: any) => ch.id));
+
+    // Sort chapters and add progress
     course.chapters.sort((a: any, b: any) => a.position - b.position);
+
+    // Merge progress into chapters
+    const chaptersWithProgress = course.chapters.map((chapter: any) => ({
+        ...chapter,
+        isCompleted: progressData?.find((p: any) => p.chapter_id === chapter.id)?.is_completed || false
+    }));
 
     // Mock progress count
     const progressCount = 0;
 
     return (
         <div className="h-full">
-            <div className="hidden md:flex h-full w-80 flex-col fixed inset-y-0 z-50">
-                <CourseSidebar
-                    course={course}
-                    progressCount={progressCount}
-                />
+    // Merge progress into chapters
+    const chaptersWithProgress = course.chapters.map((chapter: any) => ({
+                ...chapter,
+                isCompleted: progressData?.find((p: any) => p.chapter_id === chapter.id)?.is_completed || false
+    }));
+
+            return (
+            <div className="h-full">
+                <div className="hidden md:flex h-full w-80 flex-col fixed inset-y-0 z-50">
+                    <CourseSidebar
+                        course={course}
+                        progressCount={progressCount}
+                    />
+                </div>
+                <main className="md:pl-80 h-full pt-[80px]">
+                    <main className="md:pl-80 h-full pt-[80px]">
+                        {/* Added padding top for header if we add one, or 0 if not */}
+                        {children}
+                    </main>
             </div>
-            <main className="md:pl-80 h-full pt-[80px]">
-                {/* Added padding top for header if we add one, or 0 if not */}
-                {children}
-            </main>
-        </div>
-    )
+            )
 }

@@ -9,6 +9,7 @@ interface BunnyVideoPlayerProps {
     title?: string;
     onEnd?: () => void;
     className?: string;
+    initialTime?: number;
 }
 
 export const BunnyVideoPlayer = ({
@@ -16,6 +17,7 @@ export const BunnyVideoPlayer = ({
     title,
     onEnd,
     className,
+    initialTime = 0,
 }: BunnyVideoPlayerProps) => {
     const [isReady, setIsReady] = useState(false);
 
@@ -32,7 +34,7 @@ export const BunnyVideoPlayer = ({
 
     // Construct Bunny.net iframe URL
     const libraryId = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID;
-    const embedUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true`;
+    const embedUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&t=${initialTime}`;
 
     // Debug logging
     console.log('🐰 [BunnyVideoPlayer] Initializing:', {

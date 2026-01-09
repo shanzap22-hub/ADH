@@ -3,13 +3,13 @@
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
-import { UploadCloud, X } from "lucide-react";
+import { UploadCloud, X, File } from "lucide-react";
 import Image from "next/image";
 
 import { createClient } from "@/lib/supabase/client";
 
 interface FileUploadProps {
-    endpoint: "course-thumbnails" | "chapter-videos";
+    endpoint: "course-thumbnails" | "chapter-videos" | "course-attachments";
     onChange: (url?: string) => void;
     value?: string;
     disabled?: boolean;
@@ -61,65 +61,66 @@ export const FileUpload = ({
         }
     }, [endpoint, onChange, supabase.storage]);
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
-        onDrop,
+    onDrop,
         maxFiles: 1,
-        disabled: disabled || isUploading,
-        accept: endpoint === "course-thumbnails"
-            ? { 'image/*': [] }
-            : { 'video/*': [] }
-    });
+            disabled: disabled || isUploading,
+                accept: endpoint === "course-thumbnails"
+                    ? { 'image/*': [] }
+                    : endpoint === "chapter-videos"
+                        ? { 'video/*': [] }
+                        : undefined // Accept all files for attachments
+});
 
-    if (value && endpoint === "course-thumbnails") {
-        return (
-            <div className="relative aspect-video w-full h-full">
-                <Image
-                    fill
-                    src={value}
-                    alt="Upload"
-                    className="object-cover rounded-md"
-                />
-                <button
-                    onClick={() => onChange("")}
-                    className="bg-rose-500 text-white p-1 rounded-full absolute top-1 right-1 shadow-sm"
-                    type="button"
-                    disabled={disabled}
-                >
-                    <X className="h-4 w-4" />
-                </button>
-            </div>
-        )
-    }
-
-    if (value && endpoint === "chapter-videos") {
-        return (
-            <div className="relative aspect-video mt-2">
-                Video uploaded:
-                <a href={value} target="_blank" className="text-sky-500 underline ml-2 text-sm break-all">
-                    {value}
-                </a>
-                <button
-                    onClick={() => onChange("")}
-                    className="bg-rose-500 text-white p-1 rounded-full absolute -top-2 -right-2 shadow-sm"
-                    type="button"
-                    disabled={disabled}
-                >
-                    <X className="h-4 w-4" />
-                </button>
-            </div>
-        )
-    }
-
+if (value && endpoint === "course-thumbnails") {
     return (
-        <div {...getRootProps()} className="border-2 border-dashed border-slate-300 rounded-md p-10 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100/50 transition bg-slate-50">
-            <input {...getInputProps()} />
-            <UploadCloud className="h-10 w-10 text-slate-500 mb-2" />
-            <p className="text-sm text-slate-500">
-                {isUploading ? "Uploading..." : "Drag & drop or click to select"}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-                {endpoint === "course-thumbnails" ? "Images only" : "Videos only"}
-            </p>
+        <div className="relative aspect-video w-full h-full">
+            <Image
+                fill
+                src={value}
+                alt="Upload"
+                className="object-cover rounded-md"
+            />
+            <button
+                onClick={() => onChange("")}
+                className="bg-rose-500 text-white p-1 rounded-full absolute top-1 right-1 shadow-sm"
+                type="button"
+                disabled={disabled}
+            >
+                <X className="h-4 w-4" />
+            </button>
         </div>
     )
+}
+
+if (value && endpoint === "chapter-videos") {
+    return (
+        <div className="relative aspect-video mt-2">
+            Video uploaded:
+            <a href={value} target="_blank" className="text-sky-500 underline ml-2 text-sm break-all">
+                {value}
+            </a>
+            <button
+                onClick={() => onChange("")}
+                className="bg-rose-500 text-white p-1 rounded-full absolute -top-2 -right-2 shadow-sm"
+                type="button"
+                disabled={disabled}
+            >
+                <X className="h-4 w-4" />
+            </button>
+        </div>
+    )
+}
+
+return (
+    <div {...getRootProps()} className="border-2 border-dashed border-slate-300 rounded-md p-10 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100/50 transition bg-slate-50">
+        <input {...getInputProps()} />
+        <UploadCloud className="h-10 w-10 text-slate-500 mb-2" />
+        <p className="text-sm text-slate-500">
+            {isUploading ? "Uploading..." : "Drag & drop or click to select"}
+        </p>
+        <p className="text-xs text-muted-foreground mt-2">
+            {endpoint === "course-thumbnails" ? "Images only" : "Videos only"}
+        </p>
+    </div>
+)
 }
