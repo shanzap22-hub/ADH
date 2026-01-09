@@ -45,7 +45,6 @@ export const getDashboardCourses = async (userId: string): Promise<DashboardCour
                 description,
                 price,
                 image_url,
-                category_id,
                 chapters (
                     id,
                     is_published
@@ -75,7 +74,7 @@ export const getDashboardCourses = async (userId: string): Promise<DashboardCour
                     description: course.description,
                     price: course.price,
                     image_url: course.image_url,
-                    category: course.category_id ? { name: course.category_id } : null,
+                    category: null, // Category removed - field doesn't exist
                     chaptersCount: publishedChapters.length,
                     chapters: publishedChapters,
                     progress,
