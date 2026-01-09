@@ -19,6 +19,15 @@ export const getDashboardCourses = async (userId: string): Promise<DashboardCour
     try {
         const supabase = await createClient();
 
+        // Get user's tier first
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("membership_tier")
+            .eq("id", userId)
+            .single();
+
+        const userTier = profile?.membership_tier || "bronze";
+
         // Fetch purchased courses for this user
         const { data: purchases, error: purchasesError } = await supabase
             .from("purchases")
@@ -62,9 +71,34 @@ export const getDashboardCourses = async (userId: string): Promise<DashboardCour
             return [];
         }
 
-        // Calculate progress for each course
+        // Get tier access for all courses
+        const { data: tierAccess } = await supabase
+            .from("course_tier_access")
+            .select("course_id, tier");
+
+        // Create a map of course_id -> allowed tiers
+        const courseAccessMap = new Map<string, string[]>();
+        if (tierAccess) {
+            tierAccess.forEach((access) => {
+                if (!courseAccessMap.has(access.course_id)) {
+                    courseAccessMap.set(access.course_id, []);
+                }
+                courseAccessMap.get(access.course_id)!.push(access.tier);
+            });
+        }
+
+        // Calculate progress for each course AND filter by tier
         const coursesWithProgress = await Promise.all(
             courses.map(async (course: any) => {
+                // Check if user's tier matches course tier
+                const allowedTiers = courseAccessMap.get(course.id);
+
+                // If no tier assignments OR user's tier doesn't match, return null
+                if (!allowedTiers || !allowedTiers.includes(userTier)) {
+                    console.log(`[GET_DASHBOARD_COURSES] Filtering out "${course.title}" - not assigned to tier "${userTier}"`);
+                    return null;
+                }
+
                 const progress = await getCourseProgress(userId, course.id);
                 const publishedChapters = course.chapters?.filter((ch: any) => ch.is_published) || [];
 
@@ -82,7 +116,8 @@ export const getDashboardCourses = async (userId: string): Promise<DashboardCour
             })
         );
 
-        return coursesWithProgress;
+        // Filter out null values (courses not assigned to user's tier)
+        return coursesWithProgress.filter((course): course is DashboardCourse => course !== null);
     } catch (error) {
         console.error("[GET_DASHBOARD_COURSES]", error);
         return [];

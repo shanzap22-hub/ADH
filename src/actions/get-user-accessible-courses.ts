@@ -136,24 +136,19 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
                 continue; // Skip this course entirely
             }
 
-            // Check if user's tier hierarchy includes any of the allowed tiers
-            const hasAccess = allowedTiers.some((tier) => tierHierarchy.includes(tier));
+            // Check if user's tier EXACTLY matches any allowed tier
+            const hasAccess = allowedTiers.includes(userTier);
 
             if (hasAccess) {
-                console.log(`[getUserAccessibleCourses] ✓ Course "${course.title}" accessible - user tier matches`);
+                console.log(`[getUserAccessibleCourses] ✓ Course "${course.title}" accessible - user tier "${userTier}" matches`);
                 accessibleCourses.push({
                     ...transformCourse(course),
                     isLocked: false,
                 });
             } else {
-                // Include locked courses so user can see upgrade prompts
-                const requiredTier = getMinimumRequiredTier(allowedTiers);
-                console.log(`[getUserAccessibleCourses] ✗ Course "${course.title}" locked - requires ${requiredTier}`);
-                accessibleCourses.push({
-                    ...transformCourse(course),
-                    isLocked: true,
-                    requiredTier,
-                });
+                // DO NOT show locked courses - only show what admin assigned to this tier
+                console.log(`[getUserAccessibleCourses] ✗ Course "${course.title}" NOT assigned to tier "${userTier}" - hiding completely`);
+                // Skip this course - don't add to accessibleCourses at all
             }
         }
 
