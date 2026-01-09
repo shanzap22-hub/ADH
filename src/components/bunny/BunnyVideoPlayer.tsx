@@ -23,6 +23,14 @@ export const BunnyVideoPlayer = ({
     const libraryId = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID;
     const embedUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true`;
 
+    // Debug logging
+    console.log('🐰 [BunnyVideoPlayer] Initializing:', {
+        videoId,
+        libraryId,
+        embedUrl,
+        title
+    });
+
     return (
         <div className={cn("relative aspect-video bg-slate-900 rounded-lg overflow-hidden", className)}>
             {!isReady && (
