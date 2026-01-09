@@ -4,6 +4,7 @@ import { CourseHero } from "@/components/course/CourseHero";
 import { CourseProgress } from "@/components/course/CourseProgress";
 import { CourseStartButton } from "@/components/course/CourseStartButton";
 import { CourseTOCPreview } from "@/components/course/CourseTOCPreview";
+import { CourseEnrollButton } from "@/components/course-enroll-button";
 
 export default async function CourseIdPage({
     params
@@ -127,7 +128,11 @@ export default async function CourseIdPage({
                         <p className="text-orange-100 mb-6">
                             Get access to all {totalLessons} lessons in this course
                         </p>
-                        {/* Add enrollment button here */}
+                        <CourseEnrollButton
+                            courseId={courseId}
+                            price={course.price}
+                            isEnrolled={isEnrolled}
+                        />
                     </div>
                 )}
 
