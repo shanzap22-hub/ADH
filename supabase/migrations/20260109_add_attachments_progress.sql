@@ -13,6 +13,7 @@ create table if not exists public.attachments (
 alter table public.attachments enable row level security;
 
 -- Policies for Attachments
+drop policy if exists "Attachments are viewable by everyone if course is published" on public.attachments;
 create policy "Attachments are viewable by everyone if course is published"
   on public.attachments for select
   using ( 
@@ -22,6 +23,7 @@ create policy "Attachments are viewable by everyone if course is published"
     )
   );
 
+drop policy if exists "Instructors can insert attachments" on public.attachments;
 create policy "Instructors can insert attachments"
   on public.attachments for insert
   with check ( 
@@ -31,6 +33,7 @@ create policy "Instructors can insert attachments"
     )
   );
 
+drop policy if exists "Instructors can delete attachments" on public.attachments;
 create policy "Instructors can delete attachments"
   on public.attachments for delete
   using ( 

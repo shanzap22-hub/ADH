@@ -22,7 +22,8 @@ export const BunnyVideoPlayer = ({
     const [isReady, setIsReady] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const hasEndedRef = useRef(false);
-    const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const lastTimeRef = useRef(0);
+    const durationRef = useRef(0);
 
     // Timeout fallback to ensure loader disappears
     useEffect(() => {
@@ -35,46 +36,55 @@ export const BunnyVideoPlayer = ({
         return () => clearTimeout(timer);
     }, [isReady]);
 
-    // Polling mechanism to check video progress via iframe communication
+    // Subscribe to Bunny Stream events when iframe is ready
     useEffect(() => {
-        if (!onEnd || !iframeRef.current) return;
+        if (!iframeRef.current || !onEnd) return;
 
-        console.log('🐰 [BunnyVideoPlayer] Setting up polling for video completion');
+        const iframe = iframeRef.current;
 
-        // Start polling after iframe loads
-        const startPolling = () => {
-            if (checkIntervalRef.current) return; // Already polling
+        // Wait for iframe to load, then subscribe to events
+        const setupEventSubscription = () => {
+            console.log('🐰 [BunnyVideoPlayer] Setting up event subscriptions');
 
-            checkIntervalRef.current = setInterval(() => {
-                if (!iframeRef.current || hasEndedRef.current) return;
+            try {
+                // Subscribe to timeupdate events for progress tracking
+                iframe.contentWindow?.postMessage(
+                    JSON.stringify({
+                        method: 'addEventListener',
+                        value: 'timeupdate'
+                    }),
+                    '*'
+                );
 
-                try {
-                    // Request current time from iframe
-                    iframeRef.current.contentWindow?.postMessage(
-                        JSON.stringify({ method: 'getCurrentTime' }),
-                        '*'
-                    );
-                    iframeRef.current.contentWindow?.postMessage(
-                        JSON.stringify({ method: 'getDuration' }),
-                        '*'
-                    );
-                } catch (error) {
-                    console.error('🐰 [BunnyVideoPlayer] Polling error:', error);
-                }
-            }, 2000); // Check every 2 seconds
-        };
+                // Subscribe to ended event
+                iframe.contentWindow?.postMessage(
+                    JSON.stringify({
+                        method: 'addEventListener',
+                        value: 'ended'
+                    }),
+                    '*'
+                );
 
-        // Start polling after a delay
-        const pollingTimer = setTimeout(startPolling, 3000);
+                // Subscribe to loadedmetadata to get duration
+                iframe.contentWindow?.postMessage(
+                    JSON.stringify({
+                        method: 'addEventListener',
+                        value: 'loadedmetadata'
+                    }),
+                    '*'
+                );
 
-        return () => {
-            clearTimeout(pollingTimer);
-            if (checkIntervalRef.current) {
-                clearInterval(checkIntervalRef.current);
-                checkIntervalRef.current = null;
+                console.log('✅ [BunnyVideoPlayer] Event subscriptions sent');
+            } catch (error) {
+                console.error('🐰 [BunnyVideoPlayer] Subscription error:', error);
             }
         };
-    }, [onEnd]);
+
+        // Setup subscriptions after iframe loads
+        const timer = setTimeout(setupEventSubscription, 2000);
+
+        return () => clearTimeout(timer);
+    }, [onEnd, videoId]);
 
     // Listen for postMessage events from Bunny iframe
     useEffect(() => {
@@ -87,40 +97,60 @@ export const BunnyVideoPlayer = ({
             try {
                 const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
 
-                console.log('🐰 [BunnyVideoPlayer] Received message:', data);
+                // Log all events for debugging
+                if (data.event) {
+                    console.log('🐰 [BunnyVideoPlayer] Event received:', data.event, data);
+                }
 
-                // Check for ended event
-                if ((data.event === 'ended' || data.method === 'ended') && !hasEndedRef.current) {
+                // Handle ended event
+                if (data.event === 'ended' && !hasEndedRef.current) {
                     console.log('✅ [BunnyVideoPlayer] Video ENDED - triggering completion');
                     hasEndedRef.current = true;
                     onEnd();
                     return;
                 }
 
-                // Check for time update with progress calculation
-                if (data.event === 'timeupdate' || data.method === 'timeupdate') {
-                    const currentTime = data.value?.currentTime || data.currentTime;
-                    const duration = data.value?.duration || data.duration;
+                // Handle loadedmetadata to get duration
+                if (data.event === 'loadedmetadata') {
+                    if (data.duration) {
+                        durationRef.current = data.duration;
+                        console.log(`📊 [BunnyVideoPlayer] Duration set: ${data.duration}s`);
+                    }
+                }
 
-                    if (currentTime && duration) {
-                        const percentComplete = (currentTime / duration) * 100;
-                        console.log(`🎬 [BunnyVideoPlayer] Progress: ${percentComplete.toFixed(1)}%`);
+                // Handle timeupdate for progress tracking
+                if (data.event === 'timeupdate') {
+                    const currentTime = data.currentTime;
 
-                        if (percentComplete >= 95 && !hasEndedRef.current) {
-                            console.log('✅ [BunnyVideoPlayer] 95% complete - triggering completion');
-                            hasEndedRef.current = true;
-                            onEnd();
+                    if (currentTime !== undefined) {
+                        lastTimeRef.current = currentTime;
+
+                        // Update duration if available
+                        if (data.duration) {
+                            durationRef.current = data.duration;
+                        }
+
+                        // Calculate progress if we have duration
+                        if (durationRef.current > 0) {
+                            const percentComplete = (currentTime / durationRef.current) * 100;
+
+                            // Log every 10% progress
+                            if (Math.floor(percentComplete) % 10 === 0 && Math.floor(percentComplete) > 0) {
+                                console.log(`🎬 [BunnyVideoPlayer] Progress: ${percentComplete.toFixed(1)}%`);
+                            }
+
+                            // Trigger completion at 95%
+                            if (percentComplete >= 95 && !hasEndedRef.current) {
+                                console.log('✅ [BunnyVideoPlayer] 95% complete - triggering completion');
+                                hasEndedRef.current = true;
+                                onEnd();
+                            }
                         }
                     }
                 }
 
-                // Handle getCurrentTime response
-                if (data.method === 'getCurrentTime' && data.value !== undefined) {
-                    console.log(`⏱️ [BunnyVideoPlayer] Current time: ${data.value}s`);
-                }
-
             } catch (error) {
-                // Ignore parsing errors
+                // Silently ignore parsing errors
             }
         };
 
@@ -128,9 +158,11 @@ export const BunnyVideoPlayer = ({
         return () => window.removeEventListener('message', handleMessage);
     }, [onEnd]);
 
-    // Reset hasEnded when video changes
+    // Reset state when video changes
     useEffect(() => {
         hasEndedRef.current = false;
+        lastTimeRef.current = 0;
+        durationRef.current = 0;
     }, [videoId]);
 
     // Construct Bunny.net iframe URL with API enabled
@@ -140,7 +172,7 @@ export const BunnyVideoPlayer = ({
     console.log('🐰 [BunnyVideoPlayer] Initializing:', {
         videoId,
         libraryId,
-        embedUrl,
+        initialTime,
         title,
         hasOnEndCallback: !!onEnd
     });
