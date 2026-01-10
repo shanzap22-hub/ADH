@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { CourseSidebar } from "@/components/course/CourseSidebar";
 import { LessonViewer } from "@/components/course/LessonViewer";
 import { LessonNavigation } from "@/components/course/LessonNavigation";
 
