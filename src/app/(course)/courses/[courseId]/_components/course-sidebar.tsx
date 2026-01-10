@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { CourseSidebarItem } from "./course-sidebar-item";
 
 interface CourseSidebarProps {
-    course: any; // Type strictly later
+    course: any;
     progressCount: number;
 }
 
@@ -14,26 +14,26 @@ export const CourseSidebar = async ({
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Fetch user progress for chapters to mark completion
-    // This logic allows us to pass isCompleted to items
-    // For MVP we might just fetch all progress records for this user/course
+    // Optimized progress fetching
+    let completedChapters = new Set<string>();
 
-    // Simplification: We will do this inside the map if data is small, or fetch once.
-    // Fetching once is better.
-    let completedChapters = new Set();
-    if (user) {
-        const { data: progress } = await supabase
-            .from("user_progress")
-            .select("chapter_id")
-            .eq("user_id", user.id)
-            .eq("is_completed", true);
+    if (user && course?.chapters) {
+        // Get all chapter IDs for this course
+        const chapterIds = course.chapters.map((c: any) => c.id);
 
-        progress?.forEach(p => completedChapters.add(p.chapter_id));
+        if (chapterIds.length > 0) {
+            const { data: progress } = await supabase
+                .from("user_progress")
+                .select("chapter_id")
+                .eq("user_id", user.id)
+                .in("chapter_id", chapterIds)
+                .eq("is_completed", true);
+
+            progress?.forEach(p => completedChapters.add(p.chapter_id));
+        }
     }
 
     // Check purchase to determine locks
-    // If we call this component, we assume parent checked purchase or we check here?
-    // Parent layout usually handles "can view course", but specific chapter locks depend.
     let hasPurchase = false;
     if (user) {
         const { data: purchase } = await supabase
@@ -44,7 +44,6 @@ export const CourseSidebar = async ({
             .single();
         hasPurchase = !!purchase;
     }
-
 
     return (
         <div className="h-full border-r flex flex-col overflow-y-auto shadow-sm">
