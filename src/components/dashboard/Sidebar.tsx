@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutDashboard, Compass, Radio, Users, Settings, Eye, UserPlus, LogOut, Shield } from "lucide-react";
+import { LayoutDashboard, Compass, Radio, Users, Settings, Eye, UserPlus, LogOut, Shield, Calendar as CalendarIcon, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -19,6 +19,18 @@ const routes = [
         icon: LayoutDashboard,
         href: "/instructor/analytics",
         color: "text-violet-500",
+    },
+    {
+        label: "Availability",
+        icon: Clock,
+        href: "/instructor/availability",
+        color: "text-orange-500",
+    },
+    {
+        label: "Calendar",
+        icon: CalendarIcon,
+        href: "/instructor/calendar",
+        color: "text-pink-500",
     },
     {
         label: "Enroll Students",

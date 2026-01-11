@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutDashboard, Compass, GraduationCap, LogOut, Shield } from "lucide-react";
+import { LayoutDashboard, Compass, GraduationCap, LogOut, Shield, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";

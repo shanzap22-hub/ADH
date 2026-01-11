@@ -4,6 +4,13 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Add global declaration for playerjs
+declare global {
+    interface Window {
+        playerjs: any;
+    }
+}
+
 interface BunnyVideoPlayerProps {
     videoId: string;
     title?: string;
@@ -21,112 +28,114 @@ export const BunnyVideoPlayer = ({
 }: BunnyVideoPlayerProps) => {
     const [isReady, setIsReady] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement>(null);
+    const playerRef = useRef<any>(null);
+
+    // Use refs for callbacks to avoid stale closures in event listeners
+    const onEndRef = useRef(onEnd);
     const hasEndedRef = useRef(false);
-    const durationRef = useRef<number>(0);
-    const currentTimeRef = useRef<number>(0);
 
-    // To handle initial seek only once
-    const initialSeekAttempted = useRef(false);
+    useEffect(() => {
+        onEndRef.current = onEnd;
+    }, [onEnd]);
 
-    // Reset state when video changes
+    // Reset loop ref when video changes
     useEffect(() => {
         hasEndedRef.current = false;
-        durationRef.current = 0;
-        currentTimeRef.current = 0;
-        initialSeekAttempted.current = false;
         setIsReady(false);
     }, [videoId]);
 
-    // Function to trigger completion
-    const triggerCompletion = useCallback(() => {
+    const handleCompletion = useCallback(() => {
         if (!hasEndedRef.current) {
+            console.log("[BunnyPlayer] Video completed via SDK event");
             hasEndedRef.current = true;
-            if (onEnd) onEnd();
-        }
-    }, [onEnd]);
-
-    // Handle messages from the iframe
-    const handleMessage = useCallback((event: MessageEvent) => {
-        // Parse data safely
-        let data = event.data;
-        if (typeof data === 'string') {
-            try {
-                data = JSON.parse(data);
-            } catch (e) {
-                return; // Ignore non-JSON messages
-            }
-        }
-
-        if (!data) return;
-
-        // 1. Ready / Playing
-        if (data.event === 'ready' || data.event === 'video.playing') {
-            if (!isReady) setIsReady(true);
-
-            // Handle initial seek
-            if (initialTime > 0 && !initialSeekAttempted.current && iframeRef.current) {
-                iframeRef.current.contentWindow?.postMessage(JSON.stringify({
-                    command: 'seek',
-                    value: initialTime
-                }), '*');
-                initialSeekAttempted.current = true;
-            }
-        }
-
-        // 2. Duration
-        if (data.event === 'duration') {
-            durationRef.current = Number(data.value);
-        }
-
-        // 3. Time Update / Progress
-        if (data.event === 'timeupdate' || (data.event === 'current_time' && data.value)) {
-            const time = Number(data.value) || Number(data.currentTime);
-
-            if (!isNaN(time) && time > 0) {
-                currentTimeRef.current = time;
-
-                // Calculate percentage
-                if (durationRef.current > 0) {
-                    const percent = (currentTimeRef.current / durationRef.current) * 100;
-
-                    // Trigger at 95%
-                    if (percent >= 95) {
-                        triggerCompletion();
-                    }
+            if (onEndRef.current) {
+                try {
+                    onEndRef.current();
+                } catch (err) {
+                    console.error("[BunnyPlayer] Error in onEnd callback:", err);
                 }
             }
         }
-
-        // 4. Create explicit ended handler
-        if (data.event === 'ended') {
-            triggerCompletion();
-        }
-
-    }, [initialTime, triggerCompletion, isReady]);
-
-    // Attach global message listener
-    useEffect(() => {
-        window.addEventListener('message', handleMessage);
-        return () => window.removeEventListener('message', handleMessage);
-    }, [handleMessage]);
-
-    // Polling mechanism (Fallback)
-    // We explicitly ask for time and duration every second to ensure reliability
-    useEffect(() => {
-        const interval = setInterval(() => {
-            if (iframeRef.current?.contentWindow) {
-                iframeRef.current.contentWindow.postMessage(JSON.stringify({ command: 'getDuration' }), '*');
-                iframeRef.current.contentWindow.postMessage(JSON.stringify({ command: 'getCurrentTime' }), '*');
-            }
-        }, 1000); // 1 second interval
-
-        return () => clearInterval(interval);
     }, []);
 
-    // Construct Embed URL
+    // Load player.js script and initialize player
+    useEffect(() => {
+        const scriptId = "bunny-player-sdk";
+        let script = document.getElementById(scriptId) as HTMLScriptElement;
+
+        if (!script) {
+            script = document.createElement("script");
+            script.id = scriptId;
+            script.src = "https://assets.mediadelivery.net/playerjs/player-0.1.0.min.js";
+            script.async = true;
+            document.body.appendChild(script);
+        }
+
+        const initPlayer = () => {
+            if (window.playerjs && iframeRef.current) {
+                // Initialize player only if not already initialized or if iframe changed
+                // Check if playerRef.current is null OR if the iframe source has changed (implies new videoId)
+                if (!playerRef.current || playerRef.current.element !== iframeRef.current) {
+                    try {
+                        const player = new window.playerjs.Player(iframeRef.current);
+                        playerRef.current = player;
+
+                        player.on('ready', () => {
+                            console.log("[BunnyPlayer] SDK Ready");
+                            setIsReady(true);
+                            if (initialTime > 0) {
+                                player.setCurrentTime(initialTime);
+                            }
+                        });
+
+                        player.on('timeupdate', (data: any) => {
+                            // data.seconds and data.duration
+                            if (data.seconds && data.duration) {
+                                const percent = (data.seconds / data.duration) * 100;
+                                if (percent >= 95) {
+                                    handleCompletion();
+                                }
+                            }
+                        });
+
+                        player.on('ended', () => {
+                            console.log("[BunnyPlayer] SDK Ended event");
+                            handleCompletion();
+                        });
+
+                        player.on('error', (error: any) => {
+                            console.error("[BunnyPlayer] SDK Error:", error);
+                        });
+
+                    } catch (e) {
+                        console.error("[BunnyPlayer] Initialization failed:", e);
+                    }
+                }
+            }
+        };
+
+        if (window.playerjs) {
+            initPlayer();
+        } else {
+            script.addEventListener("load", initPlayer);
+        }
+
+        return () => {
+            script.removeEventListener("load", initPlayer);
+            // We generally don't destroy the player instance explicitly as per lightweight usage, 
+            // but setting ref to null handles React strict mode cleanup partially.
+            // If the component unmounts, we should ensure the player instance is cleaned up.
+            if (playerRef.current) {
+                // player.js doesn't have a direct 'destroy' method, but removing listeners is good practice.
+                // For a full cleanup, one might need to remove the iframe itself or ensure its source is cleared.
+                playerRef.current = null;
+            }
+        };
+    }, [videoId, initialTime, handleCompletion]);
+
     const libraryId = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID;
-    // api=1 is CRITICAL for postMessage support
-    const embedUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&api=1`;
+    // Removed api=1 as SDK handles it, but keeping contexts is fine.
+    const embedUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&context=adh-player`;
 
     return (
         <div className={cn("relative aspect-video bg-slate-900 rounded-lg overflow-hidden", className)}>
@@ -141,7 +150,7 @@ export const BunnyVideoPlayer = ({
                 src={embedUrl}
                 title={title || "Video player"}
                 className="absolute top-0 left-0 w-full h-full border-0"
-                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; clipboard-write"
                 allowFullScreen
             />
         </div>

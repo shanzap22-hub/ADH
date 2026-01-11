@@ -7,12 +7,13 @@ export async function POST(req: Request) {
         console.log("[FINALIZE_ENROLLMENT] === Starting Enrollment Process ===");
 
         const body = await req.json();
-        const { fullName, email, contactNumber, whatsappNumber, paymentId } = body;
+        const { fullName, email, contactNumber, whatsappNumber, paymentId, password } = body;
 
         console.log("[FINALIZE_ENROLLMENT] Received data:", {
             fullName,
             email,
-            hasPaymentId: !!paymentId
+            hasPaymentId: !!paymentId,
+            hasPassword: !!password
         });
 
         // Validate required fields
@@ -61,7 +62,11 @@ export async function POST(req: Request) {
             // Update their profile
             const { error: updateError } = await supabaseAdmin
                 .from("profiles")
-                .update({ full_name: fullName })
+                .update({
+                    full_name: fullName,
+                    contact_number: contactNumber, // Should we allow updating this? Yes for now.
+                    // We might not have a whatsapp_number column in profile yet, checking schema next might be good.
+                })
                 .eq("id", userId);
 
             if (updateError) {
@@ -69,15 +74,14 @@ export async function POST(req: Request) {
             }
         } else {
             // User doesn't exist - create new user with admin privileges
-            console.log("[FINALIZE_ENROLLMENT] Creating new user account with admin.createUser...");
+            console.log("[FINALIZE_ENROLLMENT] Creating new user account...");
 
-            // Generate secure random password
-            const tempPassword = `Temp${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}!A1`;
+            const userPassword = password || `Temp${Math.random().toString(36).slice(2)}!A1`; // Fallback if no password provided (should not happen with new modal)
 
             const { data: authData, error: createError } = await supabaseAdmin.auth.admin.createUser({
                 email: email,
-                password: tempPassword,
-                email_confirm: true, // Auto-confirm email
+                password: userPassword,
+                email_confirm: false, // Require email verification
                 user_metadata: {
                     full_name: fullName,
                 },
@@ -160,9 +164,12 @@ export async function POST(req: Request) {
             }
         }
 
-        // STEP 4: Clean up temp payment record
-        console.log("[FINALIZE_ENROLLMENT] Cleaning up temp payment...");
-        await supabaseAdmin.from("payments_temp").delete().eq("payment_id", paymentId);
+        // STEP 4: Update payment status (instead of deleting) for transaction history
+        console.log("[FINALIZE_ENROLLMENT] Updating payment status to completed...");
+        await supabaseAdmin
+            .from("payments_temp")
+            .update({ status: 'completed' })
+            .eq("payment_id", paymentId);
 
         // STEP 5: Create a session for the user to auto-login
         console.log("[FINALIZE_ENROLLMENT] Creating user session...");

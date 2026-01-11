@@ -29,7 +29,21 @@ export async function GET(request: Request) {
                             .eq('id', user.id)
                             .single()
 
-                        if (profile && profile.role) {
+                        if (profile) {
+                            // SECURITY CHECK: If student, ensure they have purchases
+                            if (profile.role === 'student' || !profile.role) {
+                                const { count } = await supabase
+                                    .from('purchases')
+                                    .select('*', { count: 'exact', head: true })
+                                    .eq('user_id', user.id);
+
+                                if (count === 0) {
+                                    console.log("Access Denied: Student with no purchases tried to login via Google");
+                                    await supabase.auth.signOut();
+                                    return NextResponse.redirect(`${origin}/?error=unauthorized_purchase_required`);
+                                }
+                            }
+
                             // Redirect based on role
                             if (profile.role === 'instructor') {
                                 redirectPath = '/instructor/courses'

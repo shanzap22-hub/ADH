@@ -60,6 +60,21 @@ export async function POST(req: Request) {
             console.log("[RAZORPAY_VERIFY] Payment stored successfully");
         }
 
+        // Also update user profile with the phone number if authenticated
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && whatsappNumber) {
+            console.log("[RAZORPAY_VERIFY] Updating user metadata with phone:", whatsappNumber);
+            const { error: profileError } = await supabase.auth.updateUser({
+                data: { phone: whatsappNumber }
+            });
+
+            if (profileError) {
+                console.error("[RAZORPAY_VERIFY] Failed to update profile phone:", profileError);
+            } else {
+                console.log("[RAZORPAY_VERIFY] Profile phone updated successfully");
+            }
+        }
+
         return NextResponse.json({ success: true });
     } catch (error: any) {
         console.error("[RAZORPAY_VERIFY] Error:", error.message);

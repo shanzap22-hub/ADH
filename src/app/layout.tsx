@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={cn("min-h-screen bg-background font-sans antialiased flex flex-col", outfit.variable)}>
+      <body className={cn("min-h-screen bg-background font-sans antialiased flex flex-col", outfit.variable)} suppressHydrationWarning>
         <div className="flex-1">
           {children}
         </div>

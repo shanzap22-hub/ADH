@@ -23,13 +23,16 @@ const navItems = [
     { label: "Profile", icon: UserIcon, href: "/profile" },
 ];
 
+
 export const TopHeader = () => {
     const [user, setUser] = useState<User | null>(null);
+    const [isMounted, setIsMounted] = useState(false);
     const router = useRouter();
     const pathname = usePathname();
     const supabase = createClient();
 
     useEffect(() => {
+        setIsMounted(true);
         const getUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             setUser(user);
@@ -37,16 +40,26 @@ export const TopHeader = () => {
         getUser();
     }, [supabase]);
 
-    const handleSignOut = async () => {
-        await supabase.auth.signOut();
-        router.push("/");
-        router.refresh();
+    const handleSignOut = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        try {
+            await supabase.auth.signOut();
+            router.push("/login");
+            router.refresh();
+        } catch (error) {
+            console.error("Logout error:", error);
+            router.push("/login");
+        }
     };
 
     // Get user's initials for avatar fallback
     const getInitials = (email: string) => {
         return email.charAt(0).toUpperCase();
     };
+
+    if (!isMounted) {
+        return null;
+    }
 
     return (
         <header className="fixed top-0 left-0 right-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-50">

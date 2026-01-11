@@ -21,6 +21,15 @@ const routes = [
         color: "text-purple-600",
     },
     {
+        label: "Transactions",
+        icon: ArrowLeftRight, // Using generic icon or IndianRupee if available, but importing is easier. 
+        // Wait, ArrowLeftRight is imported. Let's use FileText or similar.
+        // Actually, let's use BarChart3 for now or import IndianRupee/Receipt.
+        // I'll stick to what's imported or generic.
+        href: "/admin/transactions",
+        color: "text-green-600",
+    },
+    {
         label: "All Courses",
         icon: BookOpen,
         href: "/admin/courses",

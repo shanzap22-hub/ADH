@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Home, BookOpen, Video, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 const navItems = [
     {
@@ -24,7 +26,7 @@ const navItems = [
     {
         label: "Profile",
         icon: User,
-        href: "/profile",  // Fixed: was /dashboard/profile (404), now /profile (works!)
+        href: "/profile",
     },
 ];
 
@@ -33,7 +35,10 @@ export const BottomNav = () => {
 
     return (
         <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 md:hidden z-50">
-            <div className="grid grid-cols-4 h-16">
+            <div
+                className="grid h-16"
+                style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}
+            >
                 {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -72,7 +77,7 @@ export const BottomNav = () => {
             <div
                 className="absolute top-0 left-0 h-0.5 bg-gradient-to-r from-orange-500 to-pink-500 transition-all duration-300"
                 style={{
-                    width: "25%",
+                    width: `${100 / navItems.length}%`,
                     transform: `translateX(${navItems.findIndex(item => pathname === item.href || pathname.startsWith(item.href + "/")) * 100}%)`,
                 }}
             />

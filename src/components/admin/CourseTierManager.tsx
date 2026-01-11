@@ -49,15 +49,15 @@ export function CourseTierManager({ courses, tierAssignments }: CourseTierManage
     const toggleTier = (courseId: string, tier: string) => {
         setAssignments((prev) => {
             const newAssignments = new Map(prev);
-            if (!newAssignments.has(courseId)) {
-                newAssignments.set(courseId, new Set());
-            }
-            const courseTiers = newAssignments.get(courseId)!;
-            if (courseTiers.has(tier)) {
-                courseTiers.delete(tier);
+            const currentTiers = newAssignments.get(courseId);
+            const newTiers = new Set(currentTiers); // correct cloning
+
+            if (newTiers.has(tier)) {
+                newTiers.delete(tier);
             } else {
-                courseTiers.add(tier);
+                newTiers.add(tier);
             }
+            newAssignments.set(courseId, newTiers);
             return newAssignments;
         });
     };
@@ -153,13 +153,7 @@ export function CourseTierManager({ courses, tierAssignments }: CourseTierManage
                 </Button>
             </div>
 
-            {/* Info */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-                <p className="text-sm text-blue-900 dark:text-blue-100">
-                    <strong>Note:</strong> Courses can be assigned to multiple tiers. Higher tiers automatically include
-                    access to lower tier courses. For example, Gold members can access Bronze, Silver, and Gold courses.
-                </p>
-            </div>
+            {/* Info Removed */}
         </div>
     );
 }

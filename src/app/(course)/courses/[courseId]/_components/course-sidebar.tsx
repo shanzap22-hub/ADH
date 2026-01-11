@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { CourseSidebarItem } from "./course-sidebar-item";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 interface CourseSidebarProps {
     course: any;
@@ -48,6 +50,13 @@ export const CourseSidebar = async ({
     return (
         <div className="h-full border-r flex flex-col overflow-y-auto shadow-sm">
             <div className="p-8 flex flex-col border-b">
+                <Link
+                    href="/dashboard"
+                    className="flex items-center text-sm font-medium text-slate-500 hover:text-slate-700 mb-4 transition-colors"
+                >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Dashboard
+                </Link>
                 <h1 className="font-semibold">
                     {course.title}
                 </h1>

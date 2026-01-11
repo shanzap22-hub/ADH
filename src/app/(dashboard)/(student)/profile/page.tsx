@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { User } from "lucide-react";
 import { MembershipBadge } from "@/components/membership/MembershipBadge";
 import { Button } from "@/components/ui/button";
+import { ProfileSignOutButton } from "@/components/dashboard/ProfileSignOutButton";
 
 export default async function ProfilePage() {
     const supabase = await createClient();
@@ -79,14 +80,7 @@ export default async function ProfilePage() {
             </div>
 
             {/* Sign Out Button */}
-            <form action="/auth/signout" method="post">
-                <button
-                    type="submit"
-                    className="w-full md:w-auto px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors"
-                >
-                    Sign Out
-                </button>
-            </form>
+            <ProfileSignOutButton />
         </div>
     );
 }

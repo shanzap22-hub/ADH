@@ -64,28 +64,17 @@ export default async function HomePage() {
               ADH CONNECT is the premier community for entrepreneurs ready to build <span className="text-white font-medium">automation</span>, save time, and achieve big-picture results through strategic digital leadership.
             </p>
 
-            {/* Pricing Highlight */}
-            <div className="inline-block bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/30 rounded-2xl p-8 mt-8">
-              <p className="text-slate-300 text-sm uppercase tracking-wider mb-3">Limited-Time Exclusive Offer</p>
-              <div className="flex items-center justify-center gap-4">
-                <span className="text-3xl text-slate-500 line-through">₹17,000</span>
-                <ArrowRight className="text-orange-400 h-8 w-8" />
-                <span className="text-4xl sm:text-6xl font-bold bg-gradient-to-r from-orange-400 to-pink-500 bg-clip-text text-transparent">
-                  ₹4,999
-                </span>
-              </div>
-              <p className="text-slate-400 mt-3">Premium Course Bundle - Save 71%</p>
-            </div>
-
             {/* Primary CTA */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-12">
-              <RazorpayButtonWrapper>
-                <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-bold text-base sm:text-lg px-6 py-4 sm:px-12 sm:py-7 shadow-2xl shadow-orange-500/30">
-                  <Sparkles className="mr-2 h-5 w-5 sm:h-6 sm:w-6" />
-                  Unlock Premium Access - ₹4,999
-                </Button>
-              </RazorpayButtonWrapper>
-              <p className="text-sm text-slate-500">Join 500+ Forward-Thinking Entrepreneurs</p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-12 w-full">
+              <div className="w-full sm:w-auto flex justify-center">
+                <RazorpayButtonWrapper>
+                  <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-bold text-base sm:text-lg px-6 py-4 sm:px-12 sm:py-7 shadow-2xl shadow-orange-500/30">
+                    <Sparkles className="mr-2 h-5 w-5 sm:h-6 sm:w-6" />
+                    Unlock Premium Access
+                  </Button>
+                </RazorpayButtonWrapper>
+              </div>
+              <p className="text-sm text-slate-500 mt-2 sm:mt-0">Join Forward-Thinking Entrepreneurs</p>
             </div>
           </div>
         </div>
@@ -204,121 +193,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Irresistible Offer Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-orange-900/20 via-pink-900/20 to-purple-900/20">
-        <div className="max-w-5xl mx-auto">
-          <div className="bg-slate-900/90 border-2 border-orange-500/50 rounded-3xl p-12">
-            <div className="text-center mb-12">
-              <p className="text-orange-400 font-semibold text-sm uppercase tracking-wider mb-3">🚀 LIMITED-TIME OFFER</p>
-              <h2 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-                The Complete ADH CONNECT Bundle
-              </h2>
-              <p className="text-xl text-slate-300">
-                Everything You Need to Master Digital Business
-              </p>
-            </div>
-
-            {/* Value Breakdown */}
-            <div className="grid sm:grid-cols-2 gap-6 mb-12">
-              <div className="bg-slate-800/50 rounded-xl p-6">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-white font-medium">Meta Marketing Course</span>
-                  <span className="text-slate-400">₹8,000</span>
-                </div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-white font-medium">AI Automation Training</span>
-                  <span className="text-slate-400">₹5,000</span>
-                </div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-white font-medium">Personal Branding Masterclass</span>
-                  <span className="text-slate-400">₹4,000</span>
-                </div>
-                <div className="border-t border-slate-700 mt-4 pt-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-white font-bold text-lg">Total Value:</span>
-                    <span className="text-2xl font-bold text-slate-400 line-through">₹17,000</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-orange-500/20 to-pink-500/20 border-2 border-orange-500/50 rounded-xl p-6 flex flex-col justify-center items-center">
-                <p className="text-white text-sm mb-2">Your Investment Today:</p>
-                <p className="text-5xl sm:text-7xl font-bold bg-gradient-to-r from-orange-400 to-pink-500 bg-clip-text text-transparent">
-                  ₹4,999
-                </p>
-                <p className="text-green-400 font-semibold text-xl mt-4">
-                  Save 71% - ₹12,001 Off!
-                </p>
-                <div className="mt-6 bg-red-500/20 border border-red-500/50 rounded-lg px-4 py-2">
-                  <p className="text-red-300 text-sm font-medium">⏰ Offer Expires Soon</p>
-                </div>
-              </div>
-            </div>
-
-            {/* CTA */}
-            <div className="text-center">
-              <RazorpayButtonWrapper>
-                <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-bold text-base sm:text-xl px-8 py-5 sm:px-16 sm:py-8 shadow-2xl shadow-orange-500/40">
-                  <Sparkles className="mr-3 h-6 w-6 sm:h-7 sm:w-7" />
-                  Claim Your Spot - Pay ₹4,999 Now
-                </Button>
-              </RazorpayButtonWrapper>
-              <p className="text-slate-400 mt-4 text-sm">Instant access to all courses & community</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Social Proof Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <Users className="h-12 w-12 text-orange-400 mx-auto mb-4" />
-            <h2 className="text-4xl font-bold text-white mb-4">
-              Trusted by Forward-Thinking Business Owners
-            </h2>
-            <p className="text-xl text-slate-300">
-              Join hundreds of entrepreneurs transforming their businesses
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                quote: "Scaled my business revenue by 3x in 6 months using the Meta marketing strategies from ADH CONNECT.",
-                author: "Priya Sharma",
-                role: "Digital Marketing Agency Owner"
-              },
-              {
-                quote: "Saved 10+ hours every week with the AI automation tools. Game-changing for solopreneurs!",
-                author: "Rajesh Kumar",
-                role: "E-commerce Entrepreneur"
-              },
-              {
-                quote: "Finally built the personal brand I always wanted. My credibility in the industry has skyrocketed.",
-                author: "Anita Desai",
-                role: "Business Coach"
-              }
-            ].map((testimonial, idx) => (
-              <Card key={idx} className="bg-slate-800/50 border-slate-700">
-                <CardContent className="p-6">
-                  <p className="text-slate-300 italic mb-4">"{testimonial.quote}"</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full flex items-center justify-center text-white font-bold">
-                      {testimonial.author[0]}
-                    </div>
-                    <div>
-                      <p className="text-white font-semibold">{testimonial.author}</p>
-                      <p className="text-slate-400 text-sm">{testimonial.role}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Final CTA Footer */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-slate-900 to-slate-950">
         <div className="max-w-4xl mx-auto text-center">
@@ -332,13 +206,17 @@ export default async function HomePage() {
             Join ADH CONNECT today and transform your business with Meta Marketing, AI Automation, and Strategic Digital Leadership.
           </p>
 
-          <RazorpayButtonWrapper>
-            <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-bold text-base sm:text-xl px-8 py-5 sm:px-16 sm:py-8 shadow-2xl shadow-orange-500/40 mb-4">
-              <Sparkles className="mr-3 h-6 w-6 sm:h-7 sm:w-7" />
-              Get Instant Access for ₹4,999
-            </Button>
-          </RazorpayButtonWrapper>
-          <p className="text-slate-500 text-sm">Limited-time offer • Instant access • 500+ members</p>
+          <div className="flex justify-center w-full">
+            <div className="w-full sm:w-auto">
+              <RazorpayButtonWrapper>
+                <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-bold text-base sm:text-xl px-8 py-5 sm:px-16 sm:py-8 shadow-2xl shadow-orange-500/40 mb-4">
+                  <Sparkles className="mr-3 h-6 w-6 sm:h-7 sm:w-7" />
+                  Claim Your Spot Now
+                </Button>
+              </RazorpayButtonWrapper>
+            </div>
+          </div>
+          <p className="text-slate-500 text-sm">Instant access to all courses & community</p>
         </div>
       </section>
 

@@ -17,6 +17,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface DeleteCourseDialogProps {
     courseId: string;
@@ -28,6 +29,7 @@ export const DeleteCourseDialog = ({
     courseTitle,
 }: DeleteCourseDialogProps) => {
     const [isDeleting, setIsDeleting] = useState(false);
+    const [confirmationText, setConfirmationText] = useState("");
     const router = useRouter();
 
     const onDelete = async () => {
@@ -44,6 +46,7 @@ export const DeleteCourseDialog = ({
 
             toast.success("Course deleted successfully");
             router.refresh();
+            router.push("/instructor/courses");
         } catch (error) {
             toast.error("Failed to delete course");
             console.error(error);
@@ -68,14 +71,35 @@ export const DeleteCourseDialog = ({
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
                         This will permanently delete <strong>{courseTitle}</strong> and all its chapters.
-                        All uploaded files will be removed from storage. This action cannot be undone.
+                        All uploaded files will be removed from storage.
                     </AlertDialogDescription>
+                    <div className="py-4">
+                        <p className="text-sm text-slate-500 mb-2">
+                            To confirm, type <strong>DELETE</strong> below:
+                        </p>
+                        <Input
+                            value={confirmationText}
+                            onChange={(e) => setConfirmationText(e.target.value)}
+                            placeholder="Type DELETE"
+                            className="w-full"
+                        />
+                    </div>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                        onClick={onDelete}
+                    <AlertDialogCancel
                         disabled={isDeleting}
+                        onClick={() => setConfirmationText("")}
+                    >
+                        Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                        onClick={(e) => {
+                            e.preventDefault(); // Prevent closing if not valid? Usually action closes.
+                            if (confirmationText === "DELETE") {
+                                onDelete();
+                            }
+                        }}
+                        disabled={isDeleting || confirmationText !== "DELETE"}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
                         {isDeleting ? "Deleting..." : "Delete Course"}

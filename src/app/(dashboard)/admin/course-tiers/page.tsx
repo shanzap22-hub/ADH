@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Settings } from "lucide-react";
 import { CourseTierManager } from "@/components/admin/CourseTierManager";
+import { TierBookingToggle } from "@/components/admin/TierBookingToggle";
 
 export default async function CourseTiersPage() {
     const supabase = await createClient();
@@ -60,6 +61,8 @@ export default async function CourseTiersPage() {
                 </div>
             </div>
 
+
+
             {/* Tier Info Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {tierPricing?.map((tier) => (
@@ -74,15 +77,26 @@ export default async function CourseTiersPage() {
                         <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                             {tier.max_courses === 999 ? "All courses" : `${tier.max_courses} courses`}
                         </div>
+                        <div className="mt-2 text-xs font-medium text-emerald-600">
+                            {tier.has_booking_access && "✨ Includes 1-on-1 Sessions"}
+                        </div>
                     </div>
                 ))}
             </div>
 
-            {/* Course Tier Manager */}
-            <CourseTierManager
-                courses={courses || []}
-                tierAssignments={tierAssignments || []}
-            />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                    {/* Course Tier Manager */}
+                    <CourseTierManager
+                        courses={courses || []}
+                        tierAssignments={tierAssignments || []}
+                    />
+                </div>
+                <div>
+                    {/* Feature Toggles */}
+                    <TierBookingToggle tiers={tierPricing || []} />
+                </div>
+            </div>
         </div>
     );
 }

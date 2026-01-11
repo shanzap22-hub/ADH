@@ -3,6 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserRoleSelector } from "@/components/admin/UserRoleSelector";
 import { UserTierSelector } from "@/components/admin/UserTierSelector";
+import { UserPhoneEditor } from "@/components/admin/UserPhoneEditor";
+import { UserEmailEditor } from "@/components/admin/UserEmailEditor";
+import { UserNameEditor } from "@/components/admin/UserNameEditor";
+import { DeleteUserAction } from "@/components/admin/DeleteUserAction";
 import { MembershipBadge } from "@/components/membership/MembershipBadge";
 import { Users, Mail, Calendar } from "lucide-react";
 
@@ -62,9 +66,7 @@ export default async function AdminUsersPage() {
                             >
                                 <div className="flex-1 space-y-1">
                                     <div className="flex items-center gap-3">
-                                        <h3 className="font-medium text-gray-900">
-                                            {user.full_name || 'No name'}
-                                        </h3>
+                                        <UserNameEditor userId={user.id} currentName={user.full_name} />
                                         <Badge
                                             variant={
                                                 user.role === 'super_admin' ? 'destructive' :
@@ -77,14 +79,14 @@ export default async function AdminUsersPage() {
                                         <MembershipBadge tier={user.membership_tier || 'bronze'} size="sm" />
                                     </div>
                                     <div className="flex items-center gap-4 text-sm text-gray-500">
-                                        <div className="flex items-center gap-1">
-                                            <Mail className="h-4 w-4" />
-                                            <span>{user.email}</span>
-                                        </div>
+                                        <UserEmailEditor userId={user.id} currentEmail={user.email} />
                                         <div className="flex items-center gap-1">
                                             <Calendar className="h-4 w-4" />
                                             <span>{new Date(user.created_at).toLocaleDateString()}</span>
                                         </div>
+                                    </div>
+                                    <div className="mt-2">
+                                        <UserPhoneEditor userId={user.id} currentPhone={user.phone} />
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -95,6 +97,9 @@ export default async function AdminUsersPage() {
                                     <div className="text-right">
                                         <div className="text-xs text-gray-500 mb-1">Membership Tier</div>
                                         <UserTierSelector userId={user.id} currentTier={user.membership_tier || 'bronze'} />
+                                    </div>
+                                    <div className="ml-2">
+                                        <DeleteUserAction userId={user.id} userName={user.full_name || 'User'} />
                                     </div>
                                 </div>
                             </div>
