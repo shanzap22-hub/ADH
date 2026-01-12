@@ -15,6 +15,12 @@ const routes = [
         color: "text-sky-500",
     },
     {
+        label: "Community",
+        icon: Users,
+        href: "/instructor/community",
+        color: "text-indigo-500",
+    },
+    {
         label: "Analytics",
         icon: LayoutDashboard,
         href: "/instructor/analytics",

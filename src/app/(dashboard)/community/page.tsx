@@ -16,7 +16,7 @@ export default async function CommunityPage() {
     if (!user) return redirect("/login");
 
     const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-    const isAdmin = profile?.role === "super_admin";
+    const isAdmin = profile?.role === "super_admin" || profile?.role === "instructor";
 
     // Fetch Posts
     // Note: RLS policies on 'posts' will automatically filter invisible posts for non-admins
