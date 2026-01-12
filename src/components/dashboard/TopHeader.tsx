@@ -16,11 +16,10 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const navItems = [
-    { label: "Feed", icon: Home, href: "/dashboard" },
-    { label: "Courses", icon: BookOpen, href: "/courses" },
-    { label: "Live", icon: Video, href: "/live" },
-    { label: "Profile", icon: UserIcon, href: "/profile" },
+{ label: "Community", icon: Home, href: "/community" },
+{ label: "Courses", icon: BookOpen, href: "/courses" },
+{ label: "Live", icon: Video, href: "/live" },
+{ label: "Profile", icon: UserIcon, href: "/profile" },
 ];
 
 

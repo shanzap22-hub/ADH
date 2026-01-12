@@ -9,9 +9,9 @@ import { createClient } from "@/lib/supabase/client";
 
 const navItems = [
     {
-        label: "Feed",
+        label: "Community",
         icon: Home,
-        href: "/dashboard",
+        href: "/community",
     },
     {
         label: "Courses",
