@@ -18,70 +18,53 @@ export const CourseHero = ({
     lessonsCount
 }: CourseHeroProps) => {
     return (
-        <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl border border-slate-700">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:20px_20px]" />
-
-            <div className="relative grid md:grid-cols-2 gap-8 p-8 md:p-12">
-                {/* Left: Course Info */}
-                <div className="space-y-6 flex flex-col justify-center">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 w-fit">
-                        <Award className="h-4 w-4 text-orange-400" />
-                        <span className="text-sm font-medium text-orange-400">Course</span>
-                    </div>
-
-                    <div className="space-y-4">
-                        <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight">
-                            {title}
-                        </h1>
-
-                        {description && (
-                            <p className="text-lg text-slate-300 leading-relaxed">
-                                {description}
-                            </p>
+        <div className="relative overflow-hidden bg-slate-900 rounded-xl border border-slate-700/50">
+            <div className="relative flex flex-col md:flex-row gap-6 p-6">
+                {/* Image Section - Compact & Left aligned on desktop */}
+                <div className="w-full md:w-1/3 flex-shrink-0">
+                    <div className="relative aspect-video rounded-lg overflow-hidden bg-slate-800 border border-slate-700">
+                        {imageUrl ? (
+                            <img
+                                src={imageUrl}
+                                alt={title}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                                <BookOpen className="h-12 w-12 text-slate-600" />
+                            </div>
                         )}
-                    </div>
-
-                    {/* Stats */}
-                    <div className="flex items-center gap-6 pt-4">
-                        <div className="flex items-center gap-2">
-                            <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                                <BookOpen className="h-5 w-5 text-blue-400" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-slate-400">Chapters</p>
-                                <p className="text-lg font-semibold text-white">{chaptersCount}</p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
-                                <Clock className="h-5 w-5 text-purple-400" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-slate-400">Lessons</p>
-                                <p className="text-lg font-semibold text-white">{lessonsCount}</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
-                {/* Right: Course Image */}
-                <div className="relative aspect-video md:aspect-square rounded-xl overflow-hidden bg-slate-800 border border-slate-700">
-                    {imageUrl ? (
-                        <img
-                            src={imageUrl}
-                            alt={title}
-                            className="w-full h-full object-cover"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <BookOpen className="h-24 w-24 text-slate-600" />
-                        </div>
+                {/* Content Section */}
+                <div className="flex flex-col justify-center space-y-3 flex-1">
+                    <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/20 w-fit">
+                        <Award className="h-3 w-3 text-orange-400" />
+                        <span className="text-xs font-medium text-orange-400">Course</span>
+                    </div>
+
+                    <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight">
+                        {title}
+                    </h1>
+
+                    {description && (
+                        <p className="text-sm md:text-base text-slate-300 line-clamp-2">
+                            {description}
+                        </p>
                     )}
 
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" />
+                    {/* Stats */}
+                    <div className="flex items-center gap-4 pt-2">
+                        <div className="flex items-center gap-1.5 text-slate-400">
+                            <BookOpen className="h-4 w-4 text-blue-400" />
+                            <span className="text-sm">{chaptersCount} Chapters</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-slate-400">
+                            <Clock className="h-4 w-4 text-purple-400" />
+                            <span className="text-sm">{lessonsCount} Lessons</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

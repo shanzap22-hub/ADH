@@ -52,8 +52,8 @@ export default async function CourseLayout({
                     progressCount={progressCount}
                 />
             </div>
-            <main className="md:pl-80 h-full pt-[80px]">
-                {/* Added padding top for header if we add one, or 0 if not */}
+            <main className="md:pl-80 h-full pt-0">
+                {/* Removed fixed padding top */}
                 {children}
             </main>
         </div>

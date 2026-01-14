@@ -100,7 +100,7 @@ export default async function ChapterDetailPage({
                     </div>
                 </div>
 
-                <div className="flex-1 max-w-6xl mx-auto w-full p-4 md:p-6 space-y-6">
+                <div className="flex-1 max-w-6xl mx-auto w-full p-3 md:p-6 pt-2 space-y-4">
                     {/* Video Player Section */}
                     <div className="bg-black rounded-xl overflow-hidden shadow-lg aspect-video relative">
                         {isLocked ? (
@@ -116,6 +116,7 @@ export default async function ChapterDetailPage({
                             </div>
                         ) : chapter.video_url ? (
                             <iframe
+                                key={chapter.id}
                                 src={chapter.video_url}
                                 className="w-full h-full"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
