@@ -58,22 +58,50 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
     useEffect(() => {
         setMessages([]);
         const fetchMessages = async () => {
-            const { data, error } = await supabase
+            // 1. Fetch Raw Messages (Guaranteed to work)
+            const { data: msgs, error } = await supabase
                 .from("chat_messages")
-                .select(`
-                    *,
-                    sender:profiles(full_name, avatar_url),
-                    reply_to:chat_messages!reply_to_id(
-                        id,
-                        content,
-                        type,
-                        sender:profiles(full_name)
-                    )
-                `)
+                .select('*')
                 .eq("conversation_id", conversationId)
                 .order("created_at", { ascending: true });
 
-            if (data) setMessages(data);
+            if (msgs) setMessages(msgs || []); // Show messages immediately while profiles load
+
+            if (!msgs || msgs.length === 0) return;
+
+            // 2. Fetch Profiles for Senders
+            const senderIds = Array.from(new Set(msgs.map(m => m.sender_id)));
+            const { data: profiles } = await supabase
+                .from('profiles')
+                .select('id, full_name, avatar_url')
+                .in('id', senderIds);
+
+            const profileMap = new Map(profiles?.map(p => [p.id, p]));
+
+            // 3. Simple Reply Handling (Fetch reply content if missing)
+            // Optimisation: Reuse messages we already have if possible
+            const replyIds = msgs.filter(m => m.reply_to_id).map(m => m.reply_to_id);
+            const { data: replies } = await supabase
+                .from('chat_messages')
+                .select('id, content, type, sender_id')
+                .in('id', replyIds);
+
+            const replyMap = new Map(replies?.map(r => [r.id, r]));
+
+            // 4. Merge Data
+            const completeMessages = msgs.map(msg => {
+                const sender = profileMap.get(msg.sender_id);
+                const replyRaw = msg.reply_to_id ? replyMap.get(msg.reply_to_id) : null;
+                const replySender = replyRaw ? profileMap.get(replyRaw.sender_id) : null; // Try to get name from existing map
+
+                return {
+                    ...msg,
+                    sender: sender,
+                    reply_to: replyRaw ? { ...replyRaw, sender: replySender } : null
+                };
+            });
+
+            setMessages(completeMessages);
         };
         fetchMessages();
 
