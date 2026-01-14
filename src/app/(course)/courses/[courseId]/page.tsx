@@ -108,7 +108,10 @@ export default async function CourseIdPage({
                 const cleanUrl = chapter.video_url.trim();
                 const isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanUrl);
 
-                if (isGuid) {
+                if (cleanUrl.startsWith("bunny://")) {
+                    // Handle custom bunny://VIDEO_ID format
+                    videoId = cleanUrl.replace("bunny://", "");
+                } else if (isGuid) {
                     videoId = cleanUrl;
                 } else {
                     // Support embed/LIB/VID and play/LIB/VID
@@ -120,23 +123,17 @@ export default async function CourseIdPage({
                 }
 
                 if (videoId) {
+                    // If libraryId is undefined, getBunnyVideoLength uses the ENV var default
                     const durationSec = await getBunnyVideoLength(videoId, libraryId);
 
                     if (durationSec > 0) {
                         const minutes = Math.floor(durationSec / 60);
                         const seconds = durationSec % 60;
                         durationStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                    } else {
-                        // Diagnostic: API returned 0
-                        durationStr = "API 0";
                     }
-                } else {
-                    // Diagnostic output for debugging
-                    durationStr = `? ${cleanUrl.substring(0, 15)}`;
                 }
             } catch (e) {
                 console.error("Error fetching duration", e);
-                durationStr = "Sys Err";
             }
         }
 
