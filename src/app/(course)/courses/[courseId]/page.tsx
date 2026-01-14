@@ -7,6 +7,7 @@ import { CourseTOCPreview } from "@/components/course/CourseTOCPreview";
 import { CourseEnrollButton } from "@/components/course-enroll-button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { getBunnyVideoLength } from "@/actions/bunny";
 
 export default async function CourseIdPage({
     params
@@ -28,7 +29,8 @@ export default async function CourseIdPage({
                 description,
                 position,
                 is_published,
-                is_free
+                is_free,
+                video_url
             )
         `)
         .eq("id", courseId)
@@ -87,24 +89,43 @@ export default async function CourseIdPage({
     const firstChapterId = chapters[0]?.id;
     const hasProgress = completedLessons > 0;
 
-    // Prepare chapters with completion status
-    const chaptersWithStatus = chapters.map((chapter: any) => {
+    // Prepare chapters with completion status & duration
+    const chaptersWithStatus = await Promise.all(chapters.map(async (chapter: any) => {
         let isCompleted = false;
         if (progressData) {
             const progress = progressData.find((p: any) => p.chapter_id === chapter.id);
             if (progress?.is_completed) isCompleted = true;
         }
 
+        // Fetch duration if video exists
+        let durationStr = "0:00";
+        if (chapter.video_url) {
+            // Extract video ID from Bunny embed URL
+            try {
+                // Regex to find video ID in Bunny URL (e.g. /embed/library/video-id)
+                const match = chapter.video_url.match(/embed\/[^\/]+\/([^\/?]+)/);
+                if (match && match[1]) {
+                    const durationSec = await getBunnyVideoLength(match[1]);
+                    const minutes = Math.floor(durationSec / 60);
+                    const seconds = durationSec % 60;
+                    durationStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                }
+            } catch (e) {
+                console.error("Error fetching duration", e);
+            }
+        }
+
         return {
             ...chapter,
             isCompleted,
-            isLocked: !isEnrolled && !chapter.is_free
+            isLocked: !isEnrolled && !chapter.is_free,
+            duration: durationStr
         };
-    });
+    }));
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-            <div className="max-w-6xl mx-auto p-6 space-y-8">
+            <div className="max-w-6xl mx-auto p-4 space-y-8">
                 {/* Back Button */}
                 <Link
                     href="/courses"

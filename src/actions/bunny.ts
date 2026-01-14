@@ -124,9 +124,32 @@ export async function getBunnyVideoStatus(videoId: string) {
             status,
             videoId: data.guid,
             thumbnail: data.thumbnailFileName,
+            length: data.length, // Add length (seconds)
         };
     } catch (error) {
         console.error("[BUNNY] Error checking status:", error);
         throw error;
+    }
+}
+
+export async function getBunnyVideoLength(videoId: string): Promise<number> {
+    try {
+        const response = await fetch(
+            `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${videoId}`,
+            {
+                headers: {
+                    "AccessKey": BUNNY_API_KEY!,
+                    "Accept": "application/json",
+                },
+                next: { revalidate: 3600 } // Cache for 1 hour
+            }
+        );
+
+        if (!response.ok) return 0;
+        const data = await response.json();
+        return data.length || 0;
+    } catch (error) {
+        console.error("[BUNNY] Error fetching video length:", error);
+        return 0;
     }
 }

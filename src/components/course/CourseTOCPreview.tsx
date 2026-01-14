@@ -9,6 +9,7 @@ interface Chapter {
     position: number;
     isCompleted?: boolean;
     isLocked?: boolean;
+    duration?: string;
 }
 
 interface CourseTOCPreviewProps {
@@ -54,9 +55,8 @@ export const CourseTOCPreview = ({ chapters, courseId }: CourseTOCPreviewProps) 
                                     <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                                         Chapter {index + 1}
                                     </span>
-                                    {/* Duration Placeholder - If DB has duration, use chapter.duration */}
                                     <span className="text-xs text-slate-400">
-                                        10:00 {/* Placeholder as DB column unknown */}
+                                        {chapter.duration || "0:00"}
                                     </span>
                                 </div>
                                 <h4 className={`font-semibold mb-1 ${isLocked ? "text-slate-500" : "text-slate-900 dark:text-white"}`}>
