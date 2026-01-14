@@ -34,9 +34,10 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const supabase = createClient();
+    const isFirstLoad = useRef(true);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scrollToBottom = (instant = false) => {
+        messagesEndRef.current?.scrollIntoView({ behavior: instant ? "auto" : "smooth" });
     };
 
     const scrollToMessage = (messageId: string) => {
@@ -51,7 +52,10 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
     };
 
     useEffect(() => {
-        scrollToBottom();
+        if (messages.length > 0) {
+            scrollToBottom(isFirstLoad.current);
+            isFirstLoad.current = false;
+        }
     }, [messages]);
 
     // Fetch Messages with Sender Profile AND Reply Info
