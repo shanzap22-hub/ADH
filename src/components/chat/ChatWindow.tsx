@@ -418,7 +418,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
 
                                     {/* Action Menu */}
                                     <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                        <DropdownMenu>
+                                        <DropdownMenu modal={false}>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800">
                                                     <MoreHorizontal className={cn("w-4 h-4", isMe ? "text-purple-200 hover:text-purple-100" : "text-slate-400 hover:text-slate-600")} />
