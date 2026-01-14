@@ -143,7 +143,13 @@ export const BunnyVideoPlayer = ({
     }, [videoId, initialTime, handleCompletion]);
 
     const libraryId = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID;
-    const embedUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&context=adh-player&t=${initialTime}`;
+
+    // Only update embedUrl when videoId changes, NOT when initialTime updates (to prevent iframe reload on revalidate)
+    const [embedUrl, setEmbedUrl] = useState(`https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&context=adh-player&t=${initialTime}`);
+
+    useEffect(() => {
+        setEmbedUrl(`https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&context=adh-player&t=${initialTime}`);
+    }, [videoId, libraryId]); // Exclude initialTime to prevent reload on progress save
 
     return (
         <div className={cn("relative aspect-video bg-slate-900 rounded-lg overflow-hidden", className)}>
