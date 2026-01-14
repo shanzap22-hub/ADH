@@ -28,6 +28,12 @@ export const BunnyVideoPlayer = ({
     className,
     initialTime = 0,
 }: BunnyVideoPlayerProps) => {
+    const libraryId = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID;
+
+    // Memoize the embed URL to prevent iframe reloading on prop changes (like initialTime updates)
+    // We only update this when videoId changes.
+    const [embedUrl, setEmbedUrl] = useState(`https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&context=adh-player`);
+
     const [isReady, setIsReady] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const playerRef = useRef<any>(null);
@@ -37,6 +43,19 @@ export const BunnyVideoPlayer = ({
     const onProgressRef = useRef(onProgress);
     const hasEndedRef = useRef(false);
 
+    // STRICT INITIALIZATION CONTROL
+    // We use a ref to track if we have already performed the initial seek for the current video.
+    // This prevents "looping" or "jumping" back if initialTime prop updates during playback.
+    const isInitialTimeSetRef = useRef(false);
+    const initialTimeRef = useRef(initialTime);
+
+    // Keep initialTimeRef updated with the latest prop value
+    // This allows us to read the correct time inside the 'ready' callback without
+    // triggering the useEffect to re-run.
+    useEffect(() => {
+        initialTimeRef.current = initialTime;
+    }, [initialTime]);
+
     useEffect(() => {
         onEndRef.current = onEnd;
     }, [onEnd]);
@@ -45,11 +64,15 @@ export const BunnyVideoPlayer = ({
         onProgressRef.current = onProgress;
     }, [onProgress]);
 
-    // Reset loop ref when video changes
+    // Reset state when VIDEO ID changes
     useEffect(() => {
         hasEndedRef.current = false;
+        isInitialTimeSetRef.current = false; // Reset the seek flag for the new video
         setIsReady(false);
-    }, [videoId]);
+        setEmbedUrl(`https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&context=adh-player`);
+
+        // Note: we don't reset playerRef here, handled in cleanup of init effect or by re-init logic
+    }, [videoId, libraryId]);
 
     const handleCompletion = useCallback(() => {
         if (!hasEndedRef.current) {
@@ -81,7 +104,7 @@ export const BunnyVideoPlayer = ({
         const initPlayer = () => {
             if (window.playerjs && iframeRef.current) {
                 // Initialize player only if not already initialized or if iframe changed
-                // Check if playerRef.current is null OR if the iframe source has changed (implies new videoId)
+                // (Checking playerRef.current.element ensures we aren't re-wrapping the same iframe)
                 if (!playerRef.current || playerRef.current.element !== iframeRef.current) {
                     try {
                         const player = new window.playerjs.Player(iframeRef.current);
@@ -90,16 +113,28 @@ export const BunnyVideoPlayer = ({
                         player.on('ready', () => {
                             console.log("[BunnyPlayer] SDK Ready");
                             setIsReady(true);
-                            if (initialTime > 0) {
-                                player.setCurrentTime(initialTime);
+
+                            // ---------------------------------------------------------
+                            // STRICT SEEK LOGIC
+                            // ---------------------------------------------------------
+                            // Only seek if we haven't done so for this video session.
+                            // We use the Ref value to get the startup time.
+                            if (!isInitialTimeSetRef.current) {
+                                const t = initialTimeRef.current;
+                                if (t > 0) {
+                                    console.log("[BunnyPlayer] Seeking to initial time (once):", t);
+                                    player.setCurrentTime(t);
+                                }
+                                isInitialTimeSetRef.current = true;
                             }
+                            // ---------------------------------------------------------
                         });
 
                         player.on('timeupdate', (data: any) => {
-                            // data.seconds and data.duration
                             if (data.seconds && data.duration) {
                                 // Calls onProgress via Ref to avoid closure staleness
                                 if (onProgressRef.current) {
+                                    // Pass float seconds, parent can floor it if needed
                                     onProgressRef.current(data.seconds);
                                 }
 
@@ -134,22 +169,40 @@ export const BunnyVideoPlayer = ({
 
         return () => {
             script.removeEventListener("load", initPlayer);
-            // We generally don't destroy the player instance explicitly as per lightweight usage, 
-            // from Bunny docs.
             if (playerRef.current) {
                 playerRef.current = null;
             }
         };
-    }, [videoId, initialTime, handleCompletion]);
+    }, [videoId, handleCompletion]);
+    // We need to re-run init logic if videoId changes (since iframe ref might change or source changed)
+    // Actually, embedUrl change triggers iframe re-render.
+    // So we should depend on [embedUrl] or [videoId].
+    // If we depend on [videoId], it's safer.
+    // handleCompletion is stable via useCallback? Yes.
 
-    const libraryId = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID;
+    // Wait, if we use [videoId], when videoId changes, Effect runs.
+    // Cleanup runs -> playerRef = null.
+    // Setup runs -> initPlayer.
+    // playerRef is null -> new Player created.
+    // ready fires -> isInitialTimeSetRef was reset in the OTHER effect.
+    // Logic holds.
 
-    // Only update embedUrl when videoId changes, NOT when initialTime updates (to prevent iframe reload on revalidate)
-    const [embedUrl, setEmbedUrl] = useState(`https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&context=adh-player&t=${initialTime}`);
+    // WARNING: 'handleCompletion' must be in deps.
+    // But 'initialTime' is NOT in deps (we use ref).
+    // This is valid.
 
-    useEffect(() => {
-        setEmbedUrl(`https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&context=adh-player&t=${initialTime}`);
-    }, [videoId, libraryId]); // Exclude initialTime to prevent reload on progress save
+    // Wait, dependencies:
+    // [handleCompletion] - yes
+    // [videoId] - yes, implicit via re-render?
+    // Actually, if we pass videoId to iframe src, React handles Iframe update.
+    // We need to re-init playerjs on the NEW iframe node (or same node with new content).
+    // Safest is to depend on [embedUrl, handleCompletion].
+
+    // But Step 9302 used [videoId, initialTime, handleCompletion].
+    // I am removing initialTime.
+
+    // Let's use [videoId, handleCompletion].
+    // Since embedUrl is derived from videoId via effect/state, it aligns.
 
     return (
         <div className={cn("relative aspect-video bg-slate-900 rounded-lg overflow-hidden", className)}>
