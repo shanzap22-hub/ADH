@@ -60,15 +60,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
         const fetchMessages = async () => {
             const { data, error } = await supabase
                 .from("chat_messages")
-                .select(`
-                    *,
-                    sender:profiles(full_name, avatar_url),
-                    reply_to:chat_messages!reply_to_id(
-                        id,
-                        content,
-                        type
-                    )
-                `)
+                .select('*')
                 .eq("conversation_id", conversationId)
                 .order("created_at", { ascending: true });
 
