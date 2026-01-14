@@ -40,11 +40,22 @@ export async function uploadChatMedia(formData: FormData): Promise<{ url?: strin
         const hostname = region === 'de' ? 'storage.bunnycdn.com' : `${region}.storage.bunnycdn.com`;
         const endpoint = `https://${hostname}/${zoneName}/${uploadPath}`;
 
+        // Detect proper Content-Type based on file extension
+        let contentType = "application/octet-stream";
+        const ext = file.name.toLowerCase().split('.').pop();
+        if (ext === 'png') contentType = 'image/png';
+        else if (ext === 'jpg' || ext === 'jpeg') contentType = 'image/jpeg';
+        else if (ext === 'gif') contentType = 'image/gif';
+        else if (ext === 'webp') contentType = 'image/webp';
+        else if (ext === 'webm') contentType = 'audio/webm';
+        else if (ext === 'mp3') contentType = 'audio/mpeg';
+        else if (ext === 'mp4') contentType = 'video/mp4';
+
         const response = await fetch(endpoint, {
             method: "PUT",
             headers: {
                 AccessKey: process.env.BUNNY_STORAGE_API_KEY,
-                "Content-Type": "application/octet-stream",
+                "Content-Type": contentType,
             },
             body: arrayBuffer, // Pass ArrayBuffer directly
         });
