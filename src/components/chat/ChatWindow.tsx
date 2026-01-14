@@ -336,7 +336,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                             )}
                         >
                             {!isMe && chatInfo.is_group && (
-                                <Avatar className="h-6 w-6 mr-2 mt-1 self-start">
+                                <Avatar className="h-6 w-6 mr-2 mt-1 self-start flex-shrink-0">
                                     <AvatarImage src={msg.sender?.avatar_url} />
                                     <AvatarFallback className="text-[9px]">{msg.sender?.full_name?.[0]}</AvatarFallback>
                                 </Avatar>
@@ -344,7 +344,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
 
                             <div
                                 className={cn(
-                                    "p-3 rounded-lg shadow-sm relative text-sm group min-w-[120px]",
+                                    "p-3 rounded-lg shadow-sm relative text-sm group min-w-[120px] max-w-full overflow-hidden",
                                     isMe
                                         ? "bg-purple-600 text-white rounded-br-none"
                                         : "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-bl-none border border-slate-100 dark:border-slate-700"
@@ -378,7 +378,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                                 {msg.type === 'image' && msg.media_url && (
                                     <Dialog>
                                         <DialogTrigger asChild>
-                                            <div className="mb-2 w-[240px] h-[240px] rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-black/5">
+                                            <div className="mb-2 w-full max-w-[240px] aspect-square rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-black/5">
                                                 <img src={msg.media_url} alt="Image" className="w-full h-full object-cover" loading="lazy" />
                                             </div>
                                         </DialogTrigger>
@@ -524,7 +524,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                                 placeholder="Type a message"
                                 className="rounded-full border-slate-200 dark:border-slate-700 focus-visible:ring-purple-500 bg-slate-50 dark:bg-slate-800"
                                 value={inputText}
-                                onChange={(e) => setInputText(e.target.value)}
+                                onChange={(e) => { setInputText(e.target.value) }}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter" && !e.shiftKey) {
                                         e.preventDefault();
@@ -567,4 +567,3 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
         </div>
     );
 }
-
