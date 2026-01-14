@@ -132,7 +132,15 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                 reply_to_id: replyingTo?.id || null
             });
 
-            if (error) throw error;
+            if (error) {
+                console.error("Supabase Insert Error:", {
+                    message: error.message,
+                    details: error.details,
+                    hint: error.hint,
+                    code: error.code
+                });
+                throw error;
+            }
 
             setInputText("");
             setMediaFile(null);
@@ -140,7 +148,8 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
 
         } catch (error: any) {
             console.error("Send failed:", error);
-            toast.error("Failed to send message: " + error.message);
+            const errorMsg = error.hint || error.details || error.message || "Unknown error";
+            toast.error("Failed to send: " + errorMsg);
             setUploading(false);
         }
     };
