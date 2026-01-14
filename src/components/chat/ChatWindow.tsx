@@ -378,8 +378,8 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                                 {msg.type === 'image' && msg.media_url && (
                                     <Dialog>
                                         <DialogTrigger asChild>
-                                            <div className="mb-2 max-w-[240px] rounded overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
-                                                <img src={msg.media_url} alt="Image" className="w-full h-auto object-cover" />
+                                            <div className="mb-2 w-[240px] h-[240px] rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-black/5">
+                                                <img src={msg.media_url} alt="Image" className="w-full h-full object-cover" loading="lazy" />
                                             </div>
                                         </DialogTrigger>
                                         <DialogContent className="max-w-4xl p-0 bg-transparent border-none shadow-none flex items-center justify-center">
