@@ -5,10 +5,11 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Video, Calendar, ArrowRight, Loader2, Lock } from "lucide-react";
+import { Video, Calendar, ArrowRight, Loader2, Lock, Sparkles, Clock } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { LiveCountDown } from "@/components/live/LiveCountDown";
+import { cn } from "@/lib/utils";
 
 export default function LivePage() {
     const [hasBookingAccess, setHasBookingAccess] = useState(false);
@@ -76,93 +77,159 @@ export default function LivePage() {
     }
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-8">
-            <div>
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Live Sessions</h1>
-                <p className="text-slate-500 mt-1">Join live classes or book 1-on-1 mentorship.</p>
+        <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h1 className="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400">
+                        Live Sessions
+                    </h1>
+                    <p className="text-slate-500 mt-2 text-lg">
+                        Interactive learning experiences designed for you.
+                    </p>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* 1-on-1 Booking Card */}
-                {hasBookingAccess && (
-                    <Card className="hover:shadow-lg transition-all border-l-4 border-l-purple-500 animate-in fade-in zoom-in duration-300">
-                        <CardHeader>
-                            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center mb-4">
-                                <Calendar className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+                {/* 1. Weekly Live Class Card (Now First) */}
+                <div className="group relative">
+                    {/* Glow Effect */}
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-400 to-amber-600 rounded-2xl opacity-20 group-hover:opacity-40 blur transition duration-500" />
+
+                    <Card className="relative h-full border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl overflow-hidden flex flex-col">
+                        {!hasLiveAccess && (
+                            <div className="absolute inset-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-20 p-6 text-center">
+                                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 transform scale-100 hover:scale-105 transition-transform">
+                                    <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <Lock className="w-6 h-6 text-amber-600 dark:text-amber-500" />
+                                    </div>
+                                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">Premium Content</h3>
+                                    <p className="text-sm text-slate-500 mt-1 mb-3">Upgrade your plan to access weekly live sessions.</p>
+                                    <Button size="sm" variant="outline" className="w-full">View Plans</Button>
+                                </div>
                             </div>
-                            <CardTitle>1-on-1 Mentorship</CardTitle>
-                            <CardDescription>
-                                Book a personal session with an expert instructor to clear doubts or get career guidance.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardFooter>
-                            <Link href="/book-session" className="w-full">
-                                <Button className="w-full bg-purple-600 hover:bg-purple-700 group">
-                                    Book Now
-                                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                                </Button>
-                            </Link>
-                        </CardFooter>
-                    </Card>
-                )}
+                        )}
 
-                {/* Weekly Live Class Card */}
-                <Card className="hover:shadow-lg transition-all border-l-4 border-l-amber-500 overflow-hidden relative">
-                    {!hasLiveAccess && (
-                        <div className="absolute inset-0 bg-white/60 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center z-10 p-6 text-center">
-                            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-xl border">
-                                <Lock className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-                                <h3 className="font-bold">Upgrade to Access</h3>
-                                <p className="text-xs text-slate-500 mt-1">Weekly Live Classes are locked for your plan.</p>
-                            </div>
-                        </div>
-                    )}
-
-                    {latestSession?.banner_url && (
-                        <div className="h-40 w-full overflow-hidden">
-                            <img src={latestSession.banner_url} alt="Live Banner" className="w-full h-full object-cover" />
-                        </div>
-                    )}
-
-                    <CardHeader className={latestSession?.banner_url ? "pt-4" : ""}>
-                        <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/20 rounded-lg flex items-center justify-center mb-4">
-                            <Video className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-                        </div>
-                        <CardTitle>{latestSession?.title || "Weekly Live Class"}</CardTitle>
-                        <CardDescription>
-                            Join our community live sessions every weekend.
-                        </CardDescription>
-                    </CardHeader>
-
-                    <CardContent>
-                        {latestSession ? (
-                            <div className="space-y-4">
-                                <LiveCountDown targetDate={latestSession.scheduled_at} />
-                                <div className="text-xs text-slate-500">
-                                    Next Session: {format(new Date(latestSession.scheduled_at), "PPP 'at' h:mm a")}
+                        {/* Banner Image */}
+                        {latestSession?.banner_url ? (
+                            <div className="h-48 w-full overflow-hidden relative">
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
+                                <img
+                                    src={latestSession.banner_url}
+                                    alt="Live Banner"
+                                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                />
+                                <div className="absolute bottom-3 left-4 z-20">
+                                    <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider shadow-sm">
+                                        Live Series
+                                    </span>
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-sm text-amber-600 dark:text-amber-400 font-medium bg-amber-50 dark:bg-amber-900/10 p-3 rounded-md">
-                                No session scheduled yet.
+                            <div className="h-32 bg-gradient-to-r from-orange-100 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/20 flex items-center justify-center">
+                                <Video className="w-12 h-12 text-orange-300 dark:text-orange-700/50" />
                             </div>
                         )}
-                    </CardContent>
 
-                    <CardFooter>
-                        {latestSession ? (
-                            <a href={latestSession.join_url} target="_blank" rel="noreferrer" className="w-full">
-                                <Button className="w-full bg-amber-600 hover:bg-amber-700 font-bold">
-                                    Join Live Class
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-xl font-bold flex items-center gap-2">
+                                {latestSession?.title || "Weekly Community Live"}
+                                {latestSession && <Sparkles className="w-4 h-4 text-orange-500 animate-pulse" />}
+                            </CardTitle>
+                            <CardDescription>
+                                Join expert-led discussions every weekend.
+                            </CardDescription>
+                        </CardHeader>
+
+                        <CardContent className="flex-grow">
+                            {latestSession ? (
+                                <div className="space-y-5 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
+                                            <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Next Session</p>
+                                            <p className="font-semibold text-slate-700 dark:text-slate-200">
+                                                {format(new Date(latestSession.scheduled_at), "EEEE, MMM do 'at' h:mm a")}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-1">
+                                        <LiveCountDown targetDate={latestSession.scheduled_at} />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center p-6 text-center text-slate-500 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                                    <Video className="w-8 h-8 mb-2 opacity-20" />
+                                    <p className="text-sm">No upcoming sessions scheduled.</p>
+                                </div>
+                            )}
+                        </CardContent>
+
+                        <CardFooter className="pt-2">
+                            {latestSession ? (
+                                <a href={latestSession.join_url} target="_blank" rel="noreferrer" className="w-full">
+                                    <Button className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white shadow-lg shadow-orange-500/20 py-6 text-lg font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
+                                        Join Live Class
+                                    </Button>
+                                    <p className="text-[10px] text-center text-slate-400 mt-2">
+                                        Session starts 15 mins early
+                                    </p>
+                                </a>
+                            ) : (
+                                <Button disabled variant="secondary" className="w-full">
+                                    Stay Tuned
                                 </Button>
-                            </a>
-                        ) : (
-                            <Button disabled variant="outline" className="w-full">
-                                Schedule Coming Soon
-                            </Button>
-                        )}
-                    </CardFooter>
-                </Card>
+                            )}
+                        </CardFooter>
+                    </Card>
+                </div>
+
+                {/* 2. 1-on-1 Booking Card (Now Second) */}
+                {hasBookingAccess && (
+                    <div className="group relative">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-400 to-indigo-600 rounded-2xl opacity-10 group-hover:opacity-30 blur transition duration-500" />
+
+                        <Card className="relative h-full border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl flex flex-col">
+                            <CardHeader>
+                                <div className="w-14 h-14 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded-2xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                                    <Calendar className="w-7 h-7 text-purple-600 dark:text-purple-400" />
+                                </div>
+                                <CardTitle className="text-xl">1-on-1 Mentorship</CardTitle>
+                                <CardDescription className="text-base">
+                                    Personalized guidance from industry experts.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow">
+                                <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                                    <li className="flex items-start gap-2">
+                                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-500" />
+                                        Clear specific doubts
+                                    </li>
+                                    <li className="flex items-start gap-2">
+                                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-500" />
+                                        Career path planning
+                                    </li>
+                                    <li className="flex items-start gap-2">
+                                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-500" />
+                                        Project reviews
+                                    </li>
+                                </ul>
+                            </CardContent>
+                            <CardFooter>
+                                <Link href="/book-session" className="w-full">
+                                    <Button variant="outline" className="w-full border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-700 dark:text-purple-300 group-hover:border-purple-500 transition-colors py-6">
+                                        Book a Session
+                                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                    </Button>
+                                </Link>
+                            </CardFooter>
+                        </Card>
+                    </div>
+                )}
+
             </div>
         </div>
     );
