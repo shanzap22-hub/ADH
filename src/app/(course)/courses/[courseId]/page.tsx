@@ -100,22 +100,34 @@ export default async function CourseIdPage({
         // Fetch duration if video exists
         let durationStr = "0:00";
         if (chapter.video_url) {
-            // Extract video ID and Library ID from Bunny embed URL
+            // Extract video ID and Library ID from Bunny URL
             try {
-                // Regex to capture libraryId and videoId: /embed/{libraryId}/{videoId}
-                const match = chapter.video_url.match(/embed\/([^\/]+)\/([^\/?]+)/);
+                // Support embed/LIB/VID and play/LIB/VID
+                const match = chapter.video_url.match(/(?:embed|play)\/([^\/]+)\/([^\/?]+)/);
+
                 if (match && match[2]) {
                     const libraryId = match[1];
                     const videoId = match[2];
-                    // Pass libraryId explicitly to handle cases where it differs from env var
+
                     const durationSec = await getBunnyVideoLength(videoId, libraryId);
 
-                    const minutes = Math.floor(durationSec / 60);
-                    const seconds = durationSec % 60;
-                    durationStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    if (durationSec > 0) {
+                        const minutes = Math.floor(durationSec / 60);
+                        const seconds = durationSec % 60;
+                        durationStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    } else {
+                        // Diagnostic: API returned 0
+                        console.error(`Duration 0 for vid ${videoId} lib ${libraryId}`);
+                        // If API fails, maybe try fallback? No, just show Err for now
+                        durationStr = "API Err";
+                    }
+                } else {
+                    console.error(`Regex failed for ${chapter.video_url}`);
+                    durationStr = "URL Err";
                 }
             } catch (e) {
                 console.error("Error fetching duration", e);
+                durationStr = "Sys Err";
             }
         }
 
