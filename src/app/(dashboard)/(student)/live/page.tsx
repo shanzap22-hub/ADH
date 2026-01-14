@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { format } from "date-fns";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Video, Calendar, ArrowRight, Loader2, Lock } from "lucide-react";
@@ -138,7 +139,7 @@ export default function LivePage() {
                             <div className="space-y-4">
                                 <LiveCountDown targetDate={latestSession.scheduled_at} />
                                 <div className="text-xs text-slate-500">
-                                    Next Session: {new Date(latestSession.scheduled_at).toLocaleString()}
+                                    Next Session: {format(new Date(latestSession.scheduled_at), "PPP 'at' h:mm a")}
                                 </div>
                             </div>
                         ) : (
