@@ -38,15 +38,6 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
-    const scrollToMessage = (messageId: string) => {
-        const element = document.getElementById(`msg-${messageId}`);
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            element.classList.add('ring-2', 'ring-purple-500', 'transition-all');
-            setTimeout(() => element.classList.remove('ring-2', 'ring-purple-500'), 2000);
-        }
-    };
-
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
@@ -292,7 +283,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                     const isMe = msg.sender_id === currentUserId;
                     return (
                         <div
-                            key={msg.id} id={`msg-${msg.id}`}
+                            key={msg.id}
                             className={cn(
                                 "flex max-w-[80%] mb-2",
                                 isMe ? "ml-auto justify-end" : "mr-auto justify-start"
@@ -315,14 +306,14 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                             >
                                 {/* Reply Context */}
                                 {msg.reply_to && (
-                                    <div onClick={() => scrollToMessage(msg.reply_to.id)} className={cn(
-                                        "mb-2 p-2 rounded text-xs border-l-2 cursor-pointer opacity-90" hover:opacity-100 transition-opacity",
+                                    <div className={cn(
+                                        "mb-2 p-2 rounded text-xs border-l-2 cursor-pointer opacity-90",
                                         isMe ? "bg-purple-700 border-purple-300 text-purple-100" : "bg-slate-100 dark:bg-slate-700 border-purple-500 text-slate-600 dark:text-slate-300"
                                     )}>
                                         <p className="font-bold mb-0.5">{msg.reply_to.sender?.full_name || msg.reply_to.sender?.email?.split('@')[0] || 'User'}</p>
                                         <p className="truncate max-w-[200px]">
-                                            {msg.reply_to.type === 'image' ? '📷 Image' :
-                                                msg.reply_to.type === 'audio' ? '🎤 Voice Note' :
+                                            {msg.reply_to.type === 'image' ? 'ðŸ“· Image' :
+                                                msg.reply_to.type === 'audio' ? 'ðŸŽ¤ Voice Note' :
                                                     msg.reply_to.content}
                                         </p>
                                     </div>
@@ -426,7 +417,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                         <div className="text-sm">
                             <span className="font-semibold text-purple-600 dark:text-purple-400">Replying to {replyingTo.sender?.full_name}</span>
                             <p className="text-xs text-slate-500 truncate max-w-[300px]">
-                                {replyingTo.type === 'image' ? '📷 Image' : replyingTo.type === 'audio' ? '🎤 Voice Note' : replyingTo.content}
+                                {replyingTo.type === 'image' ? 'ðŸ“· Image' : replyingTo.type === 'audio' ? 'ðŸŽ¤ Voice Note' : replyingTo.content}
                             </p>
                         </div>
                         <Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)} className="h-6 w-6 p-0 rounded-full">
@@ -529,3 +520,4 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
         </div>
     );
 }
+
