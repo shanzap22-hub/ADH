@@ -47,17 +47,7 @@ export default async function CoursesPage() {
         return (
             <div className="p-4 md:p-6 space-y-6">
                 {/* Header */}
-                <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-100 to-pink-100 dark:from-orange-900/20 dark:to-pink-900/20 flex items-center justify-center">
-                        <BookOpen className="h-6 w-6 text-orange-500" />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold">All Courses</h1>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                            {courses.length} available
-                        </p>
-                    </div>
-                </div>
+
 
                 {/* Error State */}
                 {fetchError && (
