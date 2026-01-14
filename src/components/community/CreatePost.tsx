@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Send, Pin, Link as LinkIcon } from "lucide-react";
+import { Loader2, Send, Pin, Link as LinkIcon, Image as ImageIcon, X } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/client";
 
 const TIERS = [
     { value: "bronze", label: "Bronze" },
@@ -25,7 +26,12 @@ export function CreatePost() {
     const [selectedTiers, setSelectedTiers] = useState<Set<string>>(new Set(["bronze", "silver", "gold", "diamond"]));
     const [expanded, setExpanded] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const router = useRouter();
+    const supabase = createClient();
 
     const toggleTier = (tier: string) => {
         const next = new Set(selectedTiers);
@@ -37,11 +43,44 @@ export function CreatePost() {
         setSelectedTiers(next);
     };
 
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setImageFile(file);
+            const url = URL.createObjectURL(file);
+            setImagePreview(url);
+        }
+    };
+
+    const removeImage = () => {
+        setImageFile(null);
+        if (imagePreview) URL.revokeObjectURL(imagePreview);
+        setImagePreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
     const handlePost = async () => {
         if (!content.trim()) return;
 
         setLoading(true);
         try {
+            let imageUrl = null;
+
+            if (imageFile) {
+                const fileName = `${Date.now()}-${imageFile.name}`;
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from("feed_images")
+                    .upload(fileName, imageFile);
+
+                if (uploadError) throw new Error("Image upload failed");
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from("feed_images")
+                    .getPublicUrl(fileName);
+
+                imageUrl = publicUrl;
+            }
+
             const res = await fetch("/api/feed/create", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -50,6 +89,7 @@ export function CreatePost() {
                     link,
                     isPinned,
                     tiers: Array.from(selectedTiers),
+                    imageUrl
                 }),
             });
 
@@ -62,6 +102,7 @@ export function CreatePost() {
             setContent("");
             setLink("");
             setIsPinned(false);
+            removeImage();
             setExpanded(false);
             router.refresh(); // Refresh page to show new post
         } catch (error: any) {
@@ -109,8 +150,42 @@ export function CreatePost() {
                     />
                 </div>
 
+                {imagePreview && (
+                    <div className="relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                        <img src={imagePreview} alt="Preview" className="max-h-[300px] w-full object-cover" />
+                        <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2 h-6 w-6 rounded-full"
+                            onClick={removeImage}
+                        >
+                            <X className="w-4 h-4" />
+                        </Button>
+                    </div>
+                )}
+
                 <div className="flex flex-col gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                     <div className="flex items-center gap-2">
+                        {/* Image Upload Button */}
+                        <div className="relative">
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                ref={fileInputRef}
+                                onChange={handleImageSelect}
+                            />
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 gap-2 text-slate-500"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                <ImageIcon className="w-4 h-4" />
+                                Image
+                            </Button>
+                        </div>
+
                         <div className="relative flex-1">
                             <LinkIcon className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                             <Input

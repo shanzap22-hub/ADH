@@ -45,7 +45,7 @@ export default async function InstructorCommunityPage() {
 
                 <CreatePost />
                 <div className="mt-8">
-                    <FeedView posts={posts || []} isAdmin={true} />
+                    <FeedView posts={posts || []} isAdmin={true} currentUserId={user.id} />
                 </div>
             </div>
         </div>

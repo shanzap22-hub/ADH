@@ -40,7 +40,7 @@ export default async function CommunityPage() {
                 </div>
 
                 {isAdmin && <CreatePost />}
-                <FeedView posts={posts || []} isAdmin={isAdmin} />
+                <FeedView posts={posts || []} isAdmin={isAdmin} currentUserId={user.id} />
             </div>
         </div>
     );

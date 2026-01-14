@@ -5,9 +5,10 @@ import { PostCard } from "./PostCard";
 interface FeedViewProps {
     posts: any[];
     isAdmin: boolean;
+    currentUserId?: string;
 }
 
-export function FeedView({ posts, isAdmin }: FeedViewProps) {
+export function FeedView({ posts, isAdmin, currentUserId }: FeedViewProps) {
     if (posts.length === 0) {
         return (
             <div className="text-center py-20 animate-in fade-in duration-500">
@@ -26,7 +27,7 @@ export function FeedView({ posts, isAdmin }: FeedViewProps) {
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {posts.map((post, i) => (
                 <div key={post.id} style={{ animationDelay: `${i * 50}ms` }} className="animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards">
-                    <PostCard post={post} isAdmin={isAdmin} />
+                    <PostCard post={post} isAdmin={isAdmin} currentUserId={currentUserId} />
                 </div>
             ))}
         </div>

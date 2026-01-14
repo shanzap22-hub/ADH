@@ -23,7 +23,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { content, link, isPinned, tiers } = body;
+        const { content, link, isPinned, tiers, imageUrl } = body;
 
         if (!content) {
             return NextResponse.json({ error: "Content is required" }, { status: 400 });
@@ -35,6 +35,7 @@ export async function POST(req: Request) {
             .insert({
                 content,
                 link,
+                image_url: imageUrl,
                 is_pinned: isPinned || false,
                 author_id: user.id
             })

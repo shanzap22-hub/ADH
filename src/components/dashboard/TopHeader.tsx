@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { Bell, Search, Home, BookOpen, Video, User as UserIcon } from "lucide-react";
+import { Bell, Search, Home, BookOpen, Video, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,7 @@ const navItems = [
     { label: "Community", icon: Home, href: "/community" },
     { label: "Courses", icon: BookOpen, href: "/courses" },
     { label: "Live", icon: Video, href: "/live" },
-    { label: "Profile", icon: UserIcon, href: "/profile" },
+    { label: "Chat", icon: MessageCircle, href: "/chat" },
 ];
 
 
@@ -128,7 +128,7 @@ export const TopHeader = () => {
                                 </div>
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => router.push("/dashboard/profile")}>
+                            <DropdownMenuItem onClick={() => router.push("/profile")}>
                                 Profile
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
