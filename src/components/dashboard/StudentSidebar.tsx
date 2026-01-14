@@ -8,18 +8,18 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 const routes = [
-    {
-        label: "Browse",
-        icon: Compass,
-        href: "/courses",
-        color: "text-sky-500",
-    },
-    {
-        label: "Dashboard",
-        icon: LayoutDashboard,
-        href: "/dashboard",
-        color: "text-violet-500",
-    },
+    // {
+    //     label: "Browse",
+    //     icon: Compass,
+    //     href: "/courses",
+    //     color: "text-sky-500",
+    // },
+    // {
+    //     label: "Dashboard",
+    //     icon: LayoutDashboard,
+    //     href: "/dashboard",
+    //     color: "text-violet-500",
+    // },
 ];
 
 interface StudentSidebarProps {

@@ -61,8 +61,10 @@ export const TopHeader = () => {
         return null;
     }
 
+    const isChat = pathname === '/chat' || pathname.startsWith('/chat/');
+
     return (
-        <header className="fixed top-0 left-0 right-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-50">
+        <header className={cn("fixed top-0 left-0 right-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-50", isChat && "hidden md:block")}>
             <div className="flex items-center justify-between h-16 px-4">
                 {/* Logo/Brand */}
                 <div className="flex items-center gap-8">
