@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, BookOpen, Video, User } from "lucide-react";
+import { Home, BookOpen, Video, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
@@ -24,9 +24,9 @@ const navItems = [
         href: "/live",
     },
     {
-        label: "Profile",
-        icon: User,
-        href: "/profile",
+        label: "Chat",
+        icon: MessageCircle,
+        href: "/chat",
     },
 ];
 

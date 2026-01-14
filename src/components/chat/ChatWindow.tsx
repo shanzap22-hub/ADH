@@ -226,7 +226,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                 }
             };
 
-            recorder.start();
+            recorder.start(100); // Request data every 100ms to ensure audio is captured
             setIsRecording(true);
         } catch (e) {
             console.error("Mic error:", e);
