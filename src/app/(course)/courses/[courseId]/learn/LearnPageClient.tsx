@@ -3,6 +3,9 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { LessonViewer } from "@/components/course/LessonViewer";
 import { LessonNavigation } from "@/components/course/LessonNavigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 interface Chapter {
     id: string;
@@ -61,11 +64,21 @@ export default function LearnPageClient({
     }
 
     return (
-        <div className="h-screen flex overflow-hidden bg-slate-50 dark:bg-slate-950">
+        <div className="h-[100dvh] flex overflow-hidden bg-slate-50 dark:bg-slate-950">
             {/* Sidebar is handled by layout.tsx */}
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Back Button Header */}
+                <div className="flex-none p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center md:hidden">
+                    <Link href={`/courses/${courseId}`}>
+                        <Button variant="ghost" size="sm" className="pl-0 gap-2 hover:bg-transparent">
+                            <ArrowLeft className="h-4 w-4" />
+                            Back to Course
+                        </Button>
+                    </Link>
+                </div>
+
                 <div className="flex-1 overflow-y-auto">
                     <LessonViewer
                         courseId={courseId}

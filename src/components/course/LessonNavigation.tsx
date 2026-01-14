@@ -17,7 +17,7 @@ export const LessonNavigation = ({
     hasNext
 }: LessonNavigationProps) => {
     return (
-        <div className="flex items-center justify-between p-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div className="flex items-center justify-between p-4 pb-8 md:p-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
             <Button
                 variant="outline"
                 onClick={onPrevious}

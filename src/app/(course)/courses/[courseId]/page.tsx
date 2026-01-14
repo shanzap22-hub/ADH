@@ -58,19 +58,22 @@ export default async function CourseIdPage({
     // Get user progress
     let completedLessons = 0;
     let lastViewedChapterId: string | undefined;
+    let progressData: any[] | null = null;
 
     if (user && isEnrolled) {
-        const { data: progressData } = await supabase
+        const { data } = await supabase
             .from("user_progress")
             .select("*")
             .eq("user_id", user.id)
             .in("chapter_id", course.chapters?.map((ch: any) => ch.id) || []);
 
+        progressData = data;
+
         if (progressData) {
             completedLessons = progressData.filter(p => p.is_completed).length;
 
             // Get last viewed chapter (most recently updated)
-            const sortedProgress = progressData.sort((a, b) =>
+            const sortedProgress = [...progressData].sort((a, b) =>
                 new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
             );
             if (sortedProgress.length > 0) {
@@ -85,11 +88,19 @@ export default async function CourseIdPage({
     const hasProgress = completedLessons > 0;
 
     // Prepare chapters with completion status
-    const chaptersWithStatus = chapters.map((chapter: any) => ({
-        ...chapter,
-        isCompleted: false, // Will be populated from progress data
-        isLocked: !isEnrolled && !chapter.is_free
-    }));
+    const chaptersWithStatus = chapters.map((chapter: any) => {
+        let isCompleted = false;
+        if (progressData) {
+            const progress = progressData.find((p: any) => p.chapter_id === chapter.id);
+            if (progress?.is_completed) isCompleted = true;
+        }
+
+        return {
+            ...chapter,
+            isCompleted,
+            isLocked: !isEnrolled && !chapter.is_free
+        };
+    });
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
