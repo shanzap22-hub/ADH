@@ -33,8 +33,8 @@ export const CourseTOCPreview = ({ chapters, courseId }: CourseTOCPreviewProps) 
                     const ChapterInner = (
                         <div
                             className={`flex items-start gap-4 p-4 rounded-lg border transition-colors ${isLocked
-                                    ? "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/50 cursor-not-allowed text-slate-400"
-                                    : "border-slate-200 dark:border-slate-800 hover:border-orange-500/50 dark:hover:border-orange-500/50 cursor-pointer bg-white dark:bg-slate-900"
+                                ? "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/50 cursor-not-allowed text-slate-400"
+                                : "border-slate-200 dark:border-slate-800 hover:border-orange-500/50 dark:hover:border-orange-500/50 cursor-pointer bg-white dark:bg-slate-900"
                                 }`}
                         >
                             {/* Status Icon */}
@@ -69,7 +69,7 @@ export const CourseTOCPreview = ({ chapters, courseId }: CourseTOCPreviewProps) 
                     return isLocked ? (
                         <div key={chapter.id}>{ChapterInner}</div>
                     ) : (
-                        <Link href={`/courses/${courseId}/chapters/${chapter.id}`} key={chapter.id}>
+                        <Link href={`/courses/${courseId}/learn?lesson=${chapter.id}`} key={chapter.id}>
                             {ChapterInner}
                         </Link>
                     );
