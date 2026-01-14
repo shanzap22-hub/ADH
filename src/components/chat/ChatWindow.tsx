@@ -60,7 +60,10 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
         const fetchMessages = async () => {
             const { data, error } = await supabase
                 .from("chat_messages")
-                .select('*')
+                .select(`
+                    *,
+                    sender:profiles(full_name, avatar_url)
+                `)
                 .eq("conversation_id", conversationId)
                 .order("created_at", { ascending: true });
 
@@ -80,14 +83,6 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                         .single();
 
                     let replyInfo = null;
-                    if (payload.new.reply_to_id) {
-                        const { data: replyData } = await supabase
-                            .from('chat_messages')
-                            .select(`content, type, sender:profiles(full_name)`)
-                            .eq('id', payload.new.reply_to_id)
-                            .single();
-                        replyInfo = replyData;
-                    }
 
                     const newMessage = { ...payload.new, sender: senderProfile, reply_to: replyInfo };
                     setMessages((prev) => [...prev, newMessage]);
