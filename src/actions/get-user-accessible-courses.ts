@@ -119,41 +119,38 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
         console.log("[getUserAccessibleCourses] Course access map:", Object.fromEntries(courseAccessMap));
 
         // Filter and mark courses
-        const accessibleCourses: Course[] = [];
+        const accessibleCourses = await Promise.all(
+            courses.map(async (course) => {
+                const allowedTiers = courseAccessMap.get(course.id);
 
-        for (const course of courses) {
-            const allowedTiers = courseAccessMap.get(course.id);
+                // If no tier restrictions, HIDE the course
+                if (!allowedTiers || allowedTiers.length === 0) {
+                    return null;
+                }
 
-            console.log(`[getUserAccessibleCourses] Course "${course.title}":`, {
-                courseId: course.id,
-                allowedTiers: allowedTiers || "none (course will be hidden)",
-                userTierHierarchy: tierHierarchy
-            });
+                // Check access
+                const hasAccess = allowedTiers.includes(userTier);
 
-            // If no tier restrictions, HIDE the course (admin must assign tiers)
-            if (!allowedTiers || allowedTiers.length === 0) {
-                console.log(`[getUserAccessibleCourses] ✗ Course "${course.title}" has no tier assignments - hiding from students`);
-                continue; // Skip this course entirely
-            }
+                if (hasAccess) {
+                    // Fetch progress
+                    const { getCourseProgress } = await import("@/actions/get-course-progress");
+                    const progress = await getCourseProgress(userId, course.id);
 
-            // Check if user's tier EXACTLY matches any allowed tier
-            const hasAccess = allowedTiers.includes(userTier);
+                    return {
+                        ...transformCourse(course),
+                        progress,
+                        isLocked: false,
+                    };
+                }
 
-            if (hasAccess) {
-                console.log(`[getUserAccessibleCourses] ✓ Course "${course.title}" accessible - user tier "${userTier}" matches`);
-                accessibleCourses.push({
-                    ...transformCourse(course),
-                    isLocked: false,
-                });
-            } else {
-                // DO NOT show locked courses - only show what admin assigned to this tier
-                console.log(`[getUserAccessibleCourses] ✗ Course "${course.title}" NOT assigned to tier "${userTier}" - hiding completely`);
-                // Skip this course - don't add to accessibleCourses at all
-            }
-        }
+                return null;
+            })
+        );
 
-        console.log("[getUserAccessibleCourses] Final accessible courses:", accessibleCourses.length);
-        return accessibleCourses;
+        const filteredCourses = accessibleCourses.filter((c): c is Course => c !== null);
+
+        console.log("[getUserAccessibleCourses] Final accessible courses:", filteredCourses.length);
+        return filteredCourses;
     } catch (error) {
         console.error("[getUserAccessibleCourses] Exception:", error);
         return [];
