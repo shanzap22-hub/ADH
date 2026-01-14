@@ -120,7 +120,7 @@ export const WeeklyLiveManager = () => {
                                 <FormLabel>Banner Image</FormLabel>
                                 <FormControl>
                                     <FileUpload
-                                        endpoint="courseImage"
+                                        endpoint="course-thumbnails"
                                         onChange={(url) => {
                                             if (url) field.onChange(url);
                                         }}
