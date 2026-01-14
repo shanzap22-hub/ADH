@@ -5,7 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Send, Mic, Image as ImageIcon, X, Loader2, ArrowLeft, Users, Trash2, Reply } from "lucide-react";
+import { Send, Mic, Image as ImageIcon, X, Loader2, ArrowLeft, Users, Trash2, Reply, MoreHorizontal } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -63,6 +64,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                     *,
                     sender:profiles!sender_id(full_name, avatar_url),
                     reply_to:chat_messages!reply_to_id(
+                        id,
                         content,
                         type,
                         sender:profiles!sender_id(full_name)
@@ -382,37 +384,36 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                                         {format(new Date(msg.created_at), 'HH:mm')}
                                     </span>
 
-                                    {/* Action Buttons */}
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        {/* Reply Button */}
-                                        <button
-                                            onClick={() => setReplyingTo(msg)}
-                                            className={cn(
-                                                "p-0.5 rounded hover:bg-black/10",
-                                                isMe ? "text-purple-100" : "text-slate-400"
-                                            )}
-                                        >
-                                            <Reply className="w-3 h-3" />
-                                        </button>
-
-                                        {/* Delete Button */}
-                                        {(isMe || ['admin', 'super_admin', 'instructor'].includes(currentUserRole || '')) && (
-                                            <button
-                                                onClick={async () => {
-                                                    if (confirm("Delete this message?")) {
-                                                        const { error } = await supabase.from("chat_messages").delete().eq("id", msg.id);
-                                                        if (error) toast.error("Failed to delete");
-                                                        else toast.success("Message deleted");
-                                                    }
-                                                }}
-                                                className={cn(
-                                                    "p-0.5 rounded hover:bg-black/10",
-                                                    isMe ? "text-purple-100" : "text-slate-400"
+                                    {/* Action Menu */}
+                                    <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800">
+                                                    <MoreHorizontal className={cn("w-4 h-4", isMe ? "text-purple-200 hover:text-purple-100" : "text-slate-400 hover:text-slate-600")} />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align={isMe ? "end" : "start"}>
+                                                <DropdownMenuItem onClick={() => setReplyingTo(msg)}>
+                                                    <Reply className="w-4 h-4 mr-2" />
+                                                    Reply
+                                                </DropdownMenuItem>
+                                                {(isMe || ['admin', 'super_admin', 'instructor'].includes(currentUserRole || '')) && (
+                                                    <DropdownMenuItem
+                                                        onClick={async () => {
+                                                            if (confirm("Delete this message?")) {
+                                                                const { error } = await supabase.from("chat_messages").delete().eq("id", msg.id);
+                                                                if (error) toast.error("Failed to delete");
+                                                                else toast.success("Message deleted");
+                                                            }
+                                                        }}
+                                                        className="text-red-600 focus:text-red-600"
+                                                    >
+                                                        <Trash2 className="w-4 h-4 mr-2" />
+                                                        Delete
+                                                    </DropdownMenuItem>
                                                 )}
-                                            >
-                                                <Trash2 className="w-3 h-3" />
-                                            </button>
-                                        )}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                 </div>
                             </div>
