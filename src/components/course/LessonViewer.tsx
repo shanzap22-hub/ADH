@@ -44,13 +44,13 @@ export const LessonViewer = ({
         const now = Date.now();
         if (now - lastSaveTimeRef.current > 5000) {
             lastSaveTimeRef.current = now;
-            if (courseId && chapterId && !isCompleted) {
+            if (courseId && chapterId) {
                 // Clean URL check not needed here as we are in BunnyPlayer context logic
                 updateChapterProgress(courseId, chapterId, { lastPlayedSecond: seconds })
                     .catch(e => console.error("Progress save failed", e));
             }
         }
-    }, [courseId, chapterId, isCompleted]);
+    }, [courseId, chapterId]);
 
     const handleMarkAsComplete = () => {
         if (!courseId || !chapterId) return;
