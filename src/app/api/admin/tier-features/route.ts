@@ -30,7 +30,8 @@ export async function POST(req: Request) {
             const { error } = await supabase
                 .from("tier_pricing")
                 .update({
-                    has_chat_access: feature.has_chat_access
+                    has_chat_access: feature.has_chat_access,
+                    has_weekly_live_access: feature.has_weekly_live_access
                 })
                 .eq('tier', feature.tier);
 

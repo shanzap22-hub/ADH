@@ -27,6 +27,12 @@ const routes = [
         color: "text-violet-500",
     },
     {
+        label: "Live Manager",
+        icon: Radio,
+        href: "/instructor/live-manager",
+        color: "text-red-500",
+    },
+    {
         label: "Availability",
         icon: Clock,
         href: "/instructor/availability",

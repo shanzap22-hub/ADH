@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 interface TierFeature {
     tier: string;
     has_chat_access: boolean;
+    has_weekly_live_access?: boolean;
 }
 
 interface TierFeatureManagerProps {
@@ -27,13 +28,17 @@ const TIERS = [
 export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps) {
     const router = useRouter();
     const [saving, setSaving] = useState(false);
-    const [features, setFeatures] = useState<TierFeature[]>(initialFeatures);
+    // Initialize with default true if missing (for seamless UI before DB update propagates)
+    const [features, setFeatures] = useState<TierFeature[]>(initialFeatures.map(f => ({
+        ...f,
+        has_weekly_live_access: f.has_weekly_live_access ?? true
+    })));
 
-    const toggleChat = (tierValue: string) => {
+    const toggleFeature = (tierValue: string, featureKey: 'has_chat_access' | 'has_weekly_live_access') => {
         setFeatures(prev => {
             return prev.map(f => {
                 if (f.tier === tierValue) {
-                    return { ...f, has_chat_access: !f.has_chat_access };
+                    return { ...f, [featureKey]: !f[featureKey] };
                 }
                 return f;
             });
@@ -41,7 +46,7 @@ export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps)
     };
 
     const getFeature = (tierValue: string) => {
-        return features.find(f => f.tier === tierValue) || { tier: tierValue, has_chat_access: false };
+        return features.find(f => f.tier === tierValue) || { tier: tierValue, has_chat_access: false, has_weekly_live_access: false };
     };
 
     const handleSave = async () => {
@@ -70,29 +75,43 @@ export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps)
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <MessageCircle className="w-5 h-5 text-purple-600" />
-                    Chat Access Control
+                    Tier Feature Control
                 </CardTitle>
                 <CardDescription>
-                    Control which membership tiers have access to the Community Chat.
+                    Control access to Chat and Weekly Live sessions for each tier.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="space-y-6">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                         {TIERS.map((tier) => {
                             const feature = getFeature(tier.value);
                             return (
-                                <div key={tier.value} className="flex flex-col items-center justify-center p-4 border rounded-lg bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                                    <span className={`font-semibold mb-3 ${tier.color}`}>{tier.label}</span>
-                                    <div className="flex items-center gap-2">
-                                        <Checkbox
-                                            id={`chat-${tier.value}`}
-                                            checked={feature.has_chat_access}
-                                            onCheckedChange={() => toggleChat(tier.value)}
-                                        />
-                                        <label htmlFor={`chat-${tier.value}`} className="text-sm cursor-pointer select-none">
-                                            Chat Access
-                                        </label>
+                                <div key={tier.value} className="flex flex-col p-4 border rounded-lg bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                    <span className={`font-semibold mb-3 text-center ${tier.color}`}>{tier.label}</span>
+
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <Checkbox
+                                                id={`chat-${tier.value}`}
+                                                checked={feature.has_chat_access}
+                                                onCheckedChange={() => toggleFeature(tier.value, 'has_chat_access')}
+                                            />
+                                            <label htmlFor={`chat-${tier.value}`} className="text-sm cursor-pointer select-none">
+                                                Chat Access
+                                            </label>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <Checkbox
+                                                id={`live-${tier.value}`}
+                                                checked={feature.has_weekly_live_access}
+                                                onCheckedChange={() => toggleFeature(tier.value, 'has_weekly_live_access')}
+                                            />
+                                            <label htmlFor={`live-${tier.value}`} className="text-sm cursor-pointer select-none">
+                                                Weekly Live
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             );
