@@ -45,15 +45,16 @@ export const StudentDashboardLayoutContent = ({
 
             {/* Main Content Area */}
             {/* Adjustable padding: 144px (normal) or 64px (chat - header only) */}
+            {/* Added pb-16 to Chat mobile view to account for BottomNav */}
             <main className={cn(
                 "md:pl-56 h-full",
-                isChat ? "pt-16 pb-0" : "pt-[144px] pb-16 md:pb-0"
+                isChat ? "pt-16 pb-16 md:pb-0" : "pt-[144px] pb-16 md:pb-0"
             )}>
                 {children}
             </main>
 
-            {/* Bottom Navigation - Hidden on Chat to give full height */}
-            {!isChat && <BottomNav />}
+            {/* Bottom Navigation - Always Visible */}
+            <BottomNav />
         </div>
     );
 };
