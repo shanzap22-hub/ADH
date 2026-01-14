@@ -15,6 +15,7 @@ interface BunnyVideoPlayerProps {
     videoId: string;
     title?: string;
     onEnd?: () => void;
+    onProgress?: (seconds: number) => void;
     className?: string;
     initialTime?: number;
 }
@@ -23,6 +24,7 @@ export const BunnyVideoPlayer = ({
     videoId,
     title,
     onEnd,
+    onProgress,
     className,
     initialTime = 0,
 }: BunnyVideoPlayerProps) => {
@@ -32,11 +34,16 @@ export const BunnyVideoPlayer = ({
 
     // Use refs for callbacks to avoid stale closures in event listeners
     const onEndRef = useRef(onEnd);
+    const onProgressRef = useRef(onProgress);
     const hasEndedRef = useRef(false);
 
     useEffect(() => {
         onEndRef.current = onEnd;
     }, [onEnd]);
+
+    useEffect(() => {
+        onProgressRef.current = onProgress;
+    }, [onProgress]);
 
     // Reset loop ref when video changes
     useEffect(() => {
@@ -91,6 +98,11 @@ export const BunnyVideoPlayer = ({
                         player.on('timeupdate', (data: any) => {
                             // data.seconds and data.duration
                             if (data.seconds && data.duration) {
+                                // Calls onProgress via Ref to avoid closure staleness
+                                if (onProgressRef.current) {
+                                    onProgressRef.current(data.seconds);
+                                }
+
                                 const percent = (data.seconds / data.duration) * 100;
                                 if (percent >= 95) {
                                     handleCompletion();
@@ -123,18 +135,14 @@ export const BunnyVideoPlayer = ({
         return () => {
             script.removeEventListener("load", initPlayer);
             // We generally don't destroy the player instance explicitly as per lightweight usage, 
-            // but setting ref to null handles React strict mode cleanup partially.
-            // If the component unmounts, we should ensure the player instance is cleaned up.
+            // from Bunny docs.
             if (playerRef.current) {
-                // player.js doesn't have a direct 'destroy' method, but removing listeners is good practice.
-                // For a full cleanup, one might need to remove the iframe itself or ensure its source is cleared.
                 playerRef.current = null;
             }
         };
     }, [videoId, initialTime, handleCompletion]);
 
     const libraryId = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID;
-    // Removed api=1 as SDK handles it, but keeping contexts is fine.
     const embedUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&context=adh-player`;
 
     return (

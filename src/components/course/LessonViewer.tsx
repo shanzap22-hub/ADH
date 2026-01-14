@@ -3,7 +3,7 @@
 import { BookOpen, File, CheckCircle, Loader2 } from "lucide-react";
 import { BunnyVideoPlayer } from "@/components/bunny/BunnyVideoPlayer";
 import { Button } from "@/components/ui/button";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef, useCallback } from "react";
 import { updateChapterProgress } from "@/actions/update-progress";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -37,6 +37,20 @@ export const LessonViewer = ({
     const cleanUrl = videoUrl ? videoUrl.trim() : null;
     const [isLoading, startTransition] = useTransition();
     const router = useRouter();
+    const lastSaveTimeRef = useRef<number>(0);
+
+    const handleProgress = useCallback((seconds: number) => {
+        // Save progress every 5 seconds
+        const now = Date.now();
+        if (now - lastSaveTimeRef.current > 5000) {
+            lastSaveTimeRef.current = now;
+            if (courseId && chapterId && !isCompleted) {
+                // Clean URL check not needed here as we are in BunnyPlayer context logic
+                updateChapterProgress(courseId, chapterId, { lastPlayedSecond: seconds })
+                    .catch(e => console.error("Progress save failed", e));
+            }
+        }
+    }, [courseId, chapterId, isCompleted]);
 
     const handleMarkAsComplete = () => {
         if (!courseId || !chapterId) return;
@@ -138,6 +152,7 @@ export const LessonViewer = ({
                                     videoId={bunnyVideoId}
                                     title={title}
                                     initialTime={lastPlayedSecond}
+                                    onProgress={handleProgress}
                                     onEnd={async () => {
                                         if (courseId && chapterId && !isCompleted) {
                                             try {
