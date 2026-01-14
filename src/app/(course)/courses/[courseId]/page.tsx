@@ -100,15 +100,26 @@ export default async function CourseIdPage({
         // Fetch duration if video exists
         let durationStr = "0:00";
         if (chapter.video_url) {
-            // Extract video ID and Library ID from Bunny URL
             try {
-                // Support embed/LIB/VID and play/LIB/VID
-                const match = chapter.video_url.match(/(?:embed|play)\/([^\/]+)\/([^\/?]+)/);
+                let videoId = "";
+                let libraryId: string | undefined = undefined;
 
-                if (match && match[2]) {
-                    const libraryId = match[1];
-                    const videoId = match[2];
+                // Check if URL is just a GUID (Video ID)
+                const cleanUrl = chapter.video_url.trim();
+                const isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanUrl);
 
+                if (isGuid) {
+                    videoId = cleanUrl;
+                } else {
+                    // Support embed/LIB/VID and play/LIB/VID
+                    const match = cleanUrl.match(/(?:embed|play)\/([^\/]+)\/([^\/?]+)/);
+                    if (match && match[2]) {
+                        libraryId = match[1];
+                        videoId = match[2];
+                    }
+                }
+
+                if (videoId) {
                     const durationSec = await getBunnyVideoLength(videoId, libraryId);
 
                     if (durationSec > 0) {
@@ -117,13 +128,11 @@ export default async function CourseIdPage({
                         durationStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
                     } else {
                         // Diagnostic: API returned 0
-                        console.error(`Duration 0 for vid ${videoId} lib ${libraryId}`);
-                        // If API fails, maybe try fallback? No, just show Err for now
-                        durationStr = "API Err";
+                        durationStr = "API 0";
                     }
                 } else {
-                    console.error(`Regex failed for ${chapter.video_url}`);
-                    durationStr = "URL Err";
+                    // Diagnostic output for debugging
+                    durationStr = `? ${cleanUrl.substring(0, 15)}`;
                 }
             } catch (e) {
                 console.error("Error fetching duration", e);
