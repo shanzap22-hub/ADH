@@ -94,7 +94,7 @@ export default function LivePage() {
                 {/* 1. Weekly Live Class Card (Now First) */}
                 <div className="group relative">
                     {/* Glow Effect */}
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-400 to-amber-600 rounded-2xl opacity-20 group-hover:opacity-40 blur transition duration-500" />
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600 to-orange-500 rounded-2xl opacity-20 group-hover:opacity-40 blur transition duration-500" />
 
                     <Card className="relative h-full border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl overflow-hidden flex flex-col">
                         {!hasLiveAccess && (
@@ -126,8 +126,8 @@ export default function LivePage() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="h-32 bg-gradient-to-r from-orange-100 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/20 flex items-center justify-center">
-                                <Video className="w-12 h-12 text-orange-300 dark:text-orange-700/50" />
+                            <div className="h-32 bg-gradient-to-r from-violet-100 to-orange-50 dark:from-violet-950/30 dark:to-orange-950/20 flex items-center justify-center">
+                                <Video className="w-12 h-12 text-violet-300 dark:text-orange-700/50" />
                             </div>
                         )}
 
@@ -136,9 +136,6 @@ export default function LivePage() {
                                 {latestSession?.title || "Weekly Community Live"}
                                 {latestSession && <Sparkles className="w-4 h-4 text-orange-500 animate-pulse" />}
                             </CardTitle>
-                            <CardDescription>
-                                Join expert-led discussions every weekend.
-                            </CardDescription>
                         </CardHeader>
 
                         <CardContent className="flex-grow">
@@ -171,8 +168,8 @@ export default function LivePage() {
                         <CardFooter className="pt-2">
                             {latestSession ? (
                                 <a href={latestSession.join_url} target="_blank" rel="noreferrer" className="w-full">
-                                    <Button className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white shadow-lg shadow-orange-500/20 py-6 text-lg font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
-                                        Join Live Class
+                                    <Button className="w-full bg-gradient-to-r from-violet-600 via-purple-600 to-orange-500 hover:from-violet-700 hover:to-orange-600 text-white shadow-lg shadow-purple-500/20 py-6 text-lg font-bold tracking-wide transition-all hover:scale-[1.02] active:scale-[0.98]">
+                                        JOIN LIVE CLASS
                                     </Button>
                                     <p className="text-[10px] text-center text-slate-400 mt-2">
                                         Session starts 15 mins early
@@ -190,12 +187,12 @@ export default function LivePage() {
                 {/* 2. 1-on-1 Booking Card (Now Second) */}
                 {hasBookingAccess && (
                     <div className="group relative">
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-400 to-indigo-600 rounded-2xl opacity-10 group-hover:opacity-30 blur transition duration-500" />
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-slate-200 to-slate-400 dark:from-slate-800 dark:to-slate-700 rounded-2xl opacity-10 group-hover:opacity-30 blur transition duration-500" />
 
                         <Card className="relative h-full border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-xl flex flex-col">
                             <CardHeader>
-                                <div className="w-14 h-14 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded-2xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform duration-300">
-                                    <Calendar className="w-7 h-7 text-purple-600 dark:text-purple-400" />
+                                <div className="w-14 h-14 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800/30 dark:to-slate-900/30 rounded-2xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                                    <Calendar className="w-7 h-7 text-slate-600 dark:text-slate-400" />
                                 </div>
                                 <CardTitle className="text-xl">1-on-1 Mentorship</CardTitle>
                                 <CardDescription className="text-base">
@@ -205,22 +202,22 @@ export default function LivePage() {
                             <CardContent className="flex-grow">
                                 <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
                                     <li className="flex items-start gap-2">
-                                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-500" />
+                                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-slate-500" />
                                         Clear specific doubts
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-500" />
+                                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-slate-500" />
                                         Career path planning
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-500" />
+                                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-slate-500" />
                                         Project reviews
                                     </li>
                                 </ul>
                             </CardContent>
                             <CardFooter>
                                 <Link href="/book-session" className="w-full">
-                                    <Button variant="outline" className="w-full border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-700 dark:text-purple-300 group-hover:border-purple-500 transition-colors py-6">
+                                    <Button variant="outline" className="w-full border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900/20 text-slate-700 dark:text-slate-300 group-hover:border-slate-500 transition-colors py-6">
                                         Book a Session
                                         <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                                     </Button>
