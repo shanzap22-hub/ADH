@@ -46,7 +46,7 @@ export default function LivePage() {
                 }
 
                 // Fetch Latest Session
-                const { data: session } = await supabase
+                const { data: session } = await (supabase as any)
                     .from('weekly_live_sessions')
                     .select('*')
                     .order('created_at', { ascending: false })

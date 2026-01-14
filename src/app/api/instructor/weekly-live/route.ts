@@ -9,7 +9,7 @@ export async function GET() {
         if (!user) return new NextResponse("Unauthorized", { status: 401 });
 
         // Get latest session
-        const { data: session } = await supabase
+        const { data: session } = await (supabase as any)
             .from("weekly_live_sessions")
             .select("*")
             .order("created_at", { ascending: false })
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 
         let result;
         if (body.id) {
-            result = await supabase
+            result = await (supabase as any)
                 .from("weekly_live_sessions")
                 .update({
                     title: body.title,
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
                 .select()
                 .single();
         } else {
-            result = await supabase
+            result = await (supabase as any)
                 .from("weekly_live_sessions")
                 .insert({
                     title: body.title,
