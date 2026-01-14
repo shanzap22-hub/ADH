@@ -46,7 +46,7 @@ export async function updateChapterProgress(
             throw new Error("Failed to update progress");
         }
 
-        revalidatePath(`/courses/${courseId}/learn`);
+        revalidatePath(`/courses/${courseId}`, "layout");
 
         return { success: true };
     } catch (error) {

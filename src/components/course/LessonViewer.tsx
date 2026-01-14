@@ -45,8 +45,10 @@ export const LessonViewer = ({
         if (now - lastSaveTimeRef.current > 5000) {
             lastSaveTimeRef.current = now;
             if (courseId && chapterId) {
-                // Clean URL check not needed here as we are in BunnyPlayer context logic
-                updateChapterProgress(courseId, chapterId, { lastPlayedSecond: seconds })
+                // Ensure integer and log
+                const sec = Math.floor(seconds);
+                console.log("Saving progress:", sec);
+                updateChapterProgress(courseId, chapterId, { lastPlayedSecond: sec })
                     .catch(e => console.error("Progress save failed", e));
             }
         }
