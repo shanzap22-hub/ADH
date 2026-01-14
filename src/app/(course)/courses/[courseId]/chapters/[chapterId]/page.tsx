@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { ChevronLeft, BookOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft, BookOpen, FileText, HelpCircle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 export default async function ChapterDetailPage({
     params
@@ -14,7 +16,7 @@ export default async function ChapterDetailPage({
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
-        // Fetch chapter details
+        // Fetch course and chapter details
         const { data: chapter, error: chapterError } = await supabase
             .from("chapters")
             .select(`
@@ -22,6 +24,7 @@ export default async function ChapterDetailPage({
                 courses (
                     id,
                     title,
+                    description,
                     is_published
                 )
             `)
@@ -29,9 +32,20 @@ export default async function ChapterDetailPage({
             .single();
 
         if (chapterError || !chapter) {
-            console.error("[CHAPTER_PAGE] Error fetching chapter:", chapterError);
             return redirect(`/courses/${courseId}`);
         }
+
+        // Fetch ALL published chapters to determine Prev/Next navigation
+        const { data: allChapters } = await supabase
+            .from("chapters")
+            .select("id, position, title, is_free")
+            .eq("course_id", courseId)
+            .eq("is_published", true)
+            .order("position", { ascending: true });
+
+        const currentChapterIndex = allChapters?.findIndex((c) => c.id === chapterId) ?? -1;
+        const nextChapter = currentChapterIndex !== -1 && allChapters ? allChapters[currentChapterIndex + 1] : null;
+        const prevChapter = currentChapterIndex !== -1 && allChapters ? allChapters[currentChapterIndex - 1] : null;
 
         // Check enrollment
         let isEnrolled = false;
@@ -44,18 +58,11 @@ export default async function ChapterDetailPage({
                     .eq("course_id", courseId)
                     .single();
 
-                if (enrollment) {
-                    isEnrolled = true;
-                }
-            } catch (error) {
-                // Not enrolled, that's okay
-                console.log("[CHAPTER_PAGE] User not enrolled");
-            }
+                if (enrollment) isEnrolled = true;
+            } catch (error) { }
         }
 
-
-        // The current chapter is already fetched above as 'chapter'
-        // We just need to check if it's completed
+        // Check progress
         let isCompleted = false;
         if (user) {
             try {
@@ -67,119 +74,126 @@ export default async function ChapterDetailPage({
                     .eq("is_completed", true)
                     .single();
 
-                if (progress) {
-                    isCompleted = true;
-                }
-            } catch (error) {
-                // Progress tracking not available
-            }
+                if (progress) isCompleted = true;
+            } catch (error) { }
         }
 
-        // Prepare current chapter data
-        const currentChapterWithProgress = {
-            ...chapter,
-            isCompleted,
-            isLocked: !isEnrolled && !chapter.is_free,
-        };
-
+        const isLocked = !isEnrolled && !chapter.is_free;
 
         return (
-            <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-                <div className="max-w-5xl mx-auto p-6 space-y-6">
-                    {/* Breadcrumb */}
-                    <div className="flex items-center gap-2 text-sm">
-                        <Link
-                            href={`/courses/${courseId}`}
-                            className="text-orange-600 dark:text-orange-400 hover:underline flex items-center gap-1"
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                            {chapter.courses?.title || "Course"}
-                        </Link>
-                        <span className="text-slate-400">/</span>
-                        <span className="text-slate-600 dark:text-slate-400">{chapter.title}</span>
-                    </div>
-
-                    {/* Chapter Header */}
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4">
-                        <div className="flex items-start justify-between">
-                            <div className="space-y-2">
-                                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-                                    {chapter.title}
-                                </h1>
-                                {chapter.description && (
-                                    <p className="text-lg text-slate-600 dark:text-slate-400">
-                                        {chapter.description}
-                                    </p>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                                <BookOpen className="h-5 w-5" />
-                                <span>1 lesson</span>
-                            </div>
-                        </div>
-
-                        {/* Progress */}
-                        {isEnrolled && (
-                            <div className="flex items-center gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-                                <span className="text-sm text-slate-600 dark:text-slate-400">
-                                    Status:
-                                </span>
-                                <div className="flex items-center gap-2">
-                                    {currentChapterWithProgress.isCompleted ? (
-                                        <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                                            ✓ Completed
-                                        </span>
-                                    ) : (
-                                        <span className="px-3 py-1 text-xs font-semibold rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">
-                                            In Progress
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Current Chapter Video - Show videos directly */}
-                    <div className="space-y-4">
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                            {currentChapterWithProgress.title}
-                        </h2>
-
-                        {currentChapterWithProgress.description && (
-                            <p className="text-sm text-slate-600 dark:text-slate-400">
-                                {currentChapterWithProgress.description}
-                            </p>
-                        )}
-
-                        {currentChapterWithProgress.video_url ? (
-                            <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                                <iframe
-                                    src={currentChapterWithProgress.video_url}
-                                    className="w-full h-full"
-                                    allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
-                                    allowFullScreen
-                                />
-                            </div>
-                        ) : (
-                            <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
-                                <p className="text-slate-500">No video uploaded yet</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Not Enrolled Message */}
-                    {!isEnrolled && (
-                        <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-6 text-center">
-                            <p className="text-orange-900 dark:text-orange-100 mb-4">
-                                Enroll in this course to access all lessons
-                            </p>
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
+                {/* Header / Back Button Bar */}
+                <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 sticky top-0 z-50">
+                    <div className="max-w-6xl mx-auto flex items-center justify-between">
+                        <div className="flex items-center gap-4">
                             <Link href={`/courses/${courseId}`}>
-                                <Button className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700">
-                                    Go to Course Page
+                                <Button variant="ghost" size="sm" className="pl-0 hover:bg-transparent text-slate-600 dark:text-slate-400">
+                                    <ArrowLeft className="h-5 w-5 mr-2" />
+                                    Back to Course
                                 </Button>
                             </Link>
+                            <span className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block"></span>
+                            <h1 className="text-sm font-semibold text-slate-900 dark:text-white truncate max-w-[200px] sm:max-w-md hidden sm:block">
+                                {chapter.title}
+                            </h1>
                         </div>
-                    )}
+                    </div>
+                </div>
+
+                <div className="flex-1 max-w-6xl mx-auto w-full p-4 md:p-6 space-y-6">
+                    {/* Video Player Section */}
+                    <div className="bg-black rounded-xl overflow-hidden shadow-lg aspect-video relative">
+                        {isLocked ? (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-white p-6 text-center">
+                                <div className="mb-4 text-4xl">🔒</div>
+                                <h2 className="text-xl font-bold mb-2">Lesson Locked</h2>
+                                <p className="text-slate-400 mb-6 max-w-md">Enroll in this course to get access to this lesson and all other content.</p>
+                                <Link href={`/courses/${courseId}`}>
+                                    <Button className="font-bold bg-white text-black hover:bg-slate-200">
+                                        Subscribe Now
+                                    </Button>
+                                </Link>
+                            </div>
+                        ) : chapter.video_url ? (
+                            <iframe
+                                src={chapter.video_url}
+                                className="w-full h-full"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                            />
+                        ) : (
+                            <div className="absolute inset-0 flex items-center justify-center bg-slate-800 text-slate-400">
+                                No video content available
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Navigation Buttons */}
+                    <div className="flex items-center justify-between">
+                        <Link href={prevChapter ? `/courses/${courseId}/chapters/${prevChapter.id}` : "#"} className={!prevChapter ? "pointer-events-none" : ""}>
+                            <Button variant="outline" disabled={!prevChapter} className="gap-2">
+                                <ChevronLeft className="h-4 w-4" />
+                                Previous
+                            </Button>
+                        </Link>
+
+                        <div className="flex items-center gap-2">
+                            {/* Mark Complete Button could go here */}
+                            {isCompleted && <span className="text-sm text-green-600 font-medium">✓ Completed</span>}
+                        </div>
+
+                        <Link href={nextChapter ? `/courses/${courseId}/chapters/${nextChapter.id}` : "#"} className={!nextChapter ? "pointer-events-none" : ""}>
+                            <Button className="gap-2 bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black">
+                                Next Lesson
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </Link>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+                        {/* Main Content: Tabs */}
+                        <div className="lg:col-span-2">
+                            <Tabs defaultValue="about" className="w-full">
+                                <TabsList className="grid w-full grid-cols-3 mb-6 bg-slate-100 dark:bg-slate-800 p-1">
+                                    <TabsTrigger value="about" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950">
+                                        <Info className="w-4 h-4 mr-2" /> About
+                                    </TabsTrigger>
+                                    <TabsTrigger value="resources" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950">
+                                        <FileText className="w-4 h-4 mr-2" /> Resources
+                                    </TabsTrigger>
+                                    <TabsTrigger value="questions" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950">
+                                        <HelpCircle className="w-4 h-4 mr-2" /> Questions
+                                    </TabsTrigger>
+                                </TabsList>
+
+                                <TabsContent value="about" className="space-y-4">
+                                    <div className="prose dark:prose-invert max-w-none">
+                                        <h2 className="text-2xl font-bold mb-2">{chapter.title}</h2>
+                                        <div dangerouslySetInnerHTML={{ __html: chapter.description || "" }} />
+                                        {!chapter.description && <p className="text-slate-500 italic">No description provided for this lesson.</p>}
+                                    </div>
+                                </TabsContent>
+
+                                <TabsContent value="resources" className="space-y-4">
+                                    <div className="bg-slate-50 dark:bg-slate-900 border rounded-lg p-8 text-center text-slate-500">
+                                        <FileText className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                                        <p>No resources attached to this lesson.</p>
+                                    </div>
+                                </TabsContent>
+
+                                <TabsContent value="questions" className="space-y-4">
+                                    <div className="bg-slate-50 dark:bg-slate-900 border rounded-lg p-8 text-center text-slate-500">
+                                        <HelpCircle className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                                        <p>Q&A section coming soon.</p>
+                                    </div>
+                                </TabsContent>
+                            </Tabs>
+                        </div>
+
+                        {/* Sidebar (Optional - Course items could be shown here as sidebar) */}
+                        {/* For now leaving empty or could show Up Next */}
+                    </div>
+
                 </div>
             </div>
         );
