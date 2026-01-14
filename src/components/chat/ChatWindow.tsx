@@ -61,8 +61,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
             const { data, error } = await supabase
                 .from("chat_messages")
                 .select(`
-                    *,
-                    sender:profiles(full_name, avatar_url)
+                    *
                 `)
                 .eq("conversation_id", conversationId)
                 .order("created_at", { ascending: true });
@@ -76,15 +75,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `conversation_id=eq.${conversationId}` },
                 async (payload) => {
-                    const { data: senderProfile } = await supabase
-                        .from('profiles')
-                        .select('full_name, avatar_url')
-                        .eq('id', payload.new.sender_id)
-                        .single();
-
-                    let replyInfo = null;
-
-                    const newMessage = { ...payload.new, sender: senderProfile, reply_to: replyInfo };
+                    const newMessage = { ...payload.new, sender: null, reply_to: null };
                     setMessages((prev) => [...prev, newMessage]);
                 }
             )
