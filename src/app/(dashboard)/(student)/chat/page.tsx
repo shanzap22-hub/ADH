@@ -7,6 +7,8 @@ export const metadata = {
     description: "Connect with your peers",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function ChatPage() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -26,11 +28,12 @@ export default async function ChatPage() {
         .eq("tier", profile?.membership_tier || "bronze")
         .single();
 
-    const hasAccess =
+    const isAdmin =
         profile?.role === "super_admin" ||
         profile?.role === "instructor" ||
-        profile?.role === "admin" ||
-        tierSettings?.has_chat_access;
+        profile?.role === "admin";
+
+    const hasAccess = isAdmin || tierSettings?.has_chat_access === true;
 
     if (!hasAccess) {
         return (

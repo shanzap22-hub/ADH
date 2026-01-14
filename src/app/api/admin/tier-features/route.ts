@@ -29,10 +29,10 @@ export async function POST(req: Request) {
         for (const feature of features) {
             const { error } = await supabase
                 .from("tier_pricing")
-                .upsert({
-                    tier: feature.tier,
+                .update({
                     has_chat_access: feature.has_chat_access
-                }, { onConflict: 'tier' });
+                })
+                .eq('tier', feature.tier);
 
             if (error) {
                 console.error("Error updating tier:", feature.tier, error);
