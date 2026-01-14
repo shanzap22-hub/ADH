@@ -26,17 +26,16 @@ export const StudentDashboardLayoutContent = ({
             {/* Top Navigation Header - Always Visible */}
             <TopHeader />
 
-            {/* Mobile Sidebar Trigger Bar - Hidden on Chat */}
-            {!isChat && (
+            {/* Mobile Sidebar Trigger Bar - Hidden Globally on Mobile as requested */}
+            {/* {!isChat && (
                 <div className="h-[80px] md:pl-56 fixed inset-y-0 w-full z-40 mt-16">
                     <div className="p-4 border-b h-full flex items-center bg-background shadow-sm">
                         <StudentMobileSidebar />
                         <div className="flex w-full justify-end">
-                            {/* UserButton / Actions */}
                         </div>
                     </div>
                 </div>
-            )}
+            )} */}
 
             {/* Desktop Sidebar */}
             <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-40 mt-16">
@@ -44,11 +43,11 @@ export const StudentDashboardLayoutContent = ({
             </div>
 
             {/* Main Content Area */}
-            {/* Adjustable padding: 144px (normal) or 64px (chat - header only) */}
-            {/* Added pb-16 to Chat mobile view to account for BottomNav */}
+            {/* Adjustable padding: pt-16 (Height of TopHeader) */}
+            {/* Added pb-16 to mobile view to account for BottomNav */}
             <main className={cn(
                 "md:pl-56 h-full",
-                isChat ? "pt-16 pb-16 md:pb-0" : "pt-[144px] pb-16 md:pb-0"
+                "pt-16 pb-16 md:pb-0"
             )}>
                 {children}
             </main>
