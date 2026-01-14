@@ -100,12 +100,16 @@ export default async function CourseIdPage({
         // Fetch duration if video exists
         let durationStr = "0:00";
         if (chapter.video_url) {
-            // Extract video ID from Bunny embed URL
+            // Extract video ID and Library ID from Bunny embed URL
             try {
-                // Regex to find video ID in Bunny URL (e.g. /embed/library/video-id)
-                const match = chapter.video_url.match(/embed\/[^\/]+\/([^\/?]+)/);
-                if (match && match[1]) {
-                    const durationSec = await getBunnyVideoLength(match[1]);
+                // Regex to capture libraryId and videoId: /embed/{libraryId}/{videoId}
+                const match = chapter.video_url.match(/embed\/([^\/]+)\/([^\/?]+)/);
+                if (match && match[2]) {
+                    const libraryId = match[1];
+                    const videoId = match[2];
+                    // Pass libraryId explicitly to handle cases where it differs from env var
+                    const durationSec = await getBunnyVideoLength(videoId, libraryId);
+
                     const minutes = Math.floor(durationSec / 60);
                     const seconds = durationSec % 60;
                     durationStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;

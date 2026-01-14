@@ -132,10 +132,11 @@ export async function getBunnyVideoStatus(videoId: string) {
     }
 }
 
-export async function getBunnyVideoLength(videoId: string): Promise<number> {
+export async function getBunnyVideoLength(videoId: string, libraryId?: string): Promise<number> {
     try {
+        const libId = libraryId || BUNNY_LIBRARY_ID;
         const response = await fetch(
-            `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${videoId}`,
+            `https://video.bunnycdn.com/library/${libId}/videos/${videoId}`,
             {
                 headers: {
                     "AccessKey": BUNNY_API_KEY!,
@@ -145,7 +146,10 @@ export async function getBunnyVideoLength(videoId: string): Promise<number> {
             }
         );
 
-        if (!response.ok) return 0;
+        if (!response.ok) {
+            console.error(`[BUNNY] Failed to fetch video length for ${videoId} in lib ${libId}: ${response.status}`);
+            return 0;
+        }
         const data = await response.json();
         return data.length || 0;
     } catch (error) {
