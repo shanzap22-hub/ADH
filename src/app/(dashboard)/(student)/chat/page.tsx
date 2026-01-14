@@ -19,9 +19,36 @@ export default async function ChatPage() {
         .eq("id", user.id)
         .single();
 
-    // Check global tier setting
-    // We could check `tier_pricing` here too, but for now we enforce via the "Banner" logic in client
-    // and assume enabled as per the SQL default.
+    // Check tier capabilities
+    const { data: tierSettings } = await supabase
+        .from("tier_pricing")
+        .select("has_chat_access")
+        .eq("tier", profile?.membership_tier || "bronze")
+        .single();
+
+    const hasAccess =
+        profile?.role === "super_admin" ||
+        profile?.role === "instructor" ||
+        profile?.role === "admin" ||
+        tierSettings?.has_chat_access;
+
+    if (!hasAccess) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-4">
+                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
+                    <span className="text-3xl">🔒</span>
+                </div>
+                <h2 className="text-xl font-bold">Chat Access Restricted</h2>
+                <p className="text-slate-500 max-w-md">
+                    Your current membership plan does not include access to Community Chat.
+                    Please upgrade your plan to unlock this feature.
+                </p>
+                {/* <Button asChild>
+                    <Link href="/pricing">View Plans</Link>
+                </Button> */}
+            </div>
+        );
+    }
 
     return (
         <ChatPageClient

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Settings } from "lucide-react";
 import { CourseTierManager } from "@/components/admin/CourseTierManager";
 import { TierBookingToggle } from "@/components/admin/TierBookingToggle";
+import { TierFeatureManager } from "@/components/admin/TierFeatureManager";
 
 export default async function CourseTiersPage() {
     const supabase = await createClient();
@@ -94,7 +95,10 @@ export default async function CourseTiersPage() {
                 </div>
                 <div>
                     {/* Feature Toggles */}
-                    <TierBookingToggle tiers={tierPricing || []} />
+                    <div className="space-y-6">
+                        <TierBookingToggle tiers={tierPricing || []} />
+                        <TierFeatureManager initialFeatures={tierPricing || []} />
+                    </div>
                 </div>
             </div>
         </div>
