@@ -97,7 +97,7 @@ export default async function CourseTiersPage() {
                     {/* Feature Toggles */}
                     <div className="space-y-6">
                         <TierBookingToggle tiers={tierPricing || []} />
-                        <TierFeatureManager initialFeatures={tierPricing || []} />
+                        <TierFeatureManager initialFeatures={(tierPricing as any) || []} />
                     </div>
                 </div>
             </div>
