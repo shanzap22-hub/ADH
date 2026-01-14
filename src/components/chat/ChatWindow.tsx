@@ -62,12 +62,11 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                 .from("chat_messages")
                 .select(`
                     *,
-                    sender:profiles!sender_id(full_name, avatar_url),
+                    sender:profiles(full_name, avatar_url),
                     reply_to:chat_messages!reply_to_id(
                         id,
                         content,
-                        type,
-                        sender:profiles!sender_id(full_name)
+                        type
                     )
                 `)
                 .eq("conversation_id", conversationId)
@@ -92,7 +91,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                     if (payload.new.reply_to_id) {
                         const { data: replyData } = await supabase
                             .from('chat_messages')
-                            .select(`content, type, sender:profiles!sender_id(full_name)`)
+                            .select(`content, type, sender:profiles(full_name)`)
                             .eq('id', payload.new.reply_to_id)
                             .single();
                         replyInfo = replyData;
