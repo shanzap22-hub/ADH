@@ -43,6 +43,37 @@ export async function POST(req: Request) {
 
         const endDateTime = new Date(startDateTime.getTime() + 30 * 60000); // 30 min duration
 
+        let meetingLink = `https://meet.google.com/new?booking=${Date.now()}`; // Fallback
+
+        // 2.5 Sync with Google Calendar (if configured)
+        const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
+        if (scriptUrl) {
+            try {
+                const response = await fetch(scriptUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: `1-on-1: ${profile.full_name}`,
+                        description: `Strategy Session with ${profile.full_name} (${profile.email})`,
+                        startTime: startDateTime.toISOString(),
+                        endTime: endDateTime.toISOString(),
+                        studentEmail: profile.email,
+                        notes: "Booked via ADH Platform"
+                    })
+                });
+
+                const data = await response.json();
+                if (data.result === 'success' && data.meetLink) {
+                    meetingLink = data.meetLink;
+                } else {
+                    console.warn("Google Sync Warning:", data);
+                }
+            } catch (syncError) {
+                console.error("Google Sync Error:", syncError);
+                // Continue with booking even if sync fails, just log it.
+            }
+        }
+
         // 3. Create Booking
         const { data: booking, error } = await supabase
             .from("bookings")
@@ -52,7 +83,7 @@ export async function POST(req: Request) {
                 start_time: startDateTime.toISOString(),
                 end_time: endDateTime.toISOString(),
                 status: 'confirmed',
-                meeting_link: `https://meet.google.com/new`, // Mock link or integration
+                meeting_link: meetingLink,
             })
             .select()
             .single();
