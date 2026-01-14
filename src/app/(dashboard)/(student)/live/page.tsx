@@ -79,7 +79,7 @@ export default function LivePage() {
                     Live Sessions
                 </h1>
                 <p className="text-slate-500 text-base">
-                    Interactive learning experiences.
+                    Master digital leadership and scale your business with AI & Marketing.
                 </p>
             </div>
 
@@ -112,7 +112,7 @@ export default function LivePage() {
                                 />
                                 <div className="absolute bottom-2 left-3 z-20">
                                     <span className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide shadow-sm">
-                                        Weekly Live
+                                        Weekly Mastermind
                                     </span>
                                 </div>
                             </div>
@@ -124,7 +124,7 @@ export default function LivePage() {
 
                         <CardHeader className="pb-0 pt-4 px-5">
                             <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-slate-100">
-                                {latestSession?.title || "Community Live"}
+                                {latestSession?.title || "Business Scaling Workshop"}
                                 {latestSession && <Sparkles className="w-4 h-4 text-indigo-500" />}
                             </CardTitle>
                         </CardHeader>
@@ -150,7 +150,7 @@ export default function LivePage() {
                                 </div>
                             ) : (
                                 <div className="py-4 text-center text-slate-400 text-sm italic">
-                                    Schedule updated every Monday.
+                                    Join us to discuss Marketing & Automation strategies.
                                 </div>
                             )}
                         </CardContent>
@@ -158,9 +158,8 @@ export default function LivePage() {
                         <CardFooter className="px-5 pb-5 pt-0">
                             {latestSession ? (
                                 <a href={latestSession.join_url} target="_blank" rel="noreferrer" className="w-full">
-                                    {/* NEW GRADIENT: Blue/Cyan/Indigo - Fresh & Modern */}
                                     <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-indigo-500/20 py-5 text-base font-bold tracking-wide transition-all hover:translate-y-[-1px]">
-                                        JOIN CLASS
+                                        JOIN WORKSHOP
                                     </Button>
                                 </a>
                             ) : (
@@ -172,7 +171,7 @@ export default function LivePage() {
                     </Card>
                 </div>
 
-                {/* 2. 1-on-1 Mentorship Card */}
+                {/* 2. 1-on-1 Mentorship Card (Updated for Business) */}
                 {hasBookingAccess && (
                     <div className="group relative">
                         {/* Mint/Teal Glow */}
@@ -182,22 +181,22 @@ export default function LivePage() {
                             {/* NEW IMAGE BANNER for Mentorship */}
                             <div className="h-36 w-full overflow-hidden relative">
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
-                                {/* Stock image from Unsplash for Mentorship/Meeting */}
+                                {/* Image: Strategy/Business Growth */}
                                 <img
-                                    src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=600&auto=format&fit=crop"
-                                    alt="Mentorship"
+                                    src="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=600&auto=format&fit=crop"
+                                    alt="Business Consulting"
                                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                                 />
                                 <div className="absolute bottom-2 left-3 z-20">
                                     <span className="bg-teal-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide shadow-sm">
-                                        Personal Guidance
+                                        Digital Leadership
                                     </span>
                                 </div>
                             </div>
 
                             <CardHeader className="pb-0 pt-4 px-5">
                                 <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-slate-100">
-                                    1-on-1 Mentorship
+                                    1-on-1 Strategy Call
                                 </CardTitle>
                             </CardHeader>
 
@@ -205,15 +204,15 @@ export default function LivePage() {
                                 <ul className="space-y-2 text-xs font-medium text-slate-600 dark:text-slate-300">
                                     <li className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/30 p-2 rounded-md">
                                         <div className="w-1.5 h-1.5 rounded-full bg-teal-500" />
-                                        Career Roadmap Planning
+                                        Meta & Social Media Strategy
                                     </li>
                                     <li className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/30 p-2 rounded-md">
                                         <div className="w-1.5 h-1.5 rounded-full bg-teal-500" />
-                                        Project Review & Feedback
+                                        Automation & AI Setup
                                     </li>
                                     <li className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/30 p-2 rounded-md">
                                         <div className="w-1.5 h-1.5 rounded-full bg-teal-500" />
-                                        Technical Doubt Clearance
+                                        Personal Branding Blueprint
                                     </li>
                                 </ul>
                             </CardContent>
@@ -222,8 +221,7 @@ export default function LivePage() {
                                 <Link href="/book-session" className="w-full">
                                     {/* Modern Button for Mentorship: Teal/Emerald */}
                                     <Button className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white shadow-lg shadow-teal-500/20 py-5 text-base font-bold tracking-wide transition-all hover:translate-y-[-1px]">
-                                        BOOK SESSION
-                                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                        BOOK STRATEGY CALL
                                     </Button>
                                 </Link>
                             </CardFooter>
