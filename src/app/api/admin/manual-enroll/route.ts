@@ -46,7 +46,7 @@ export async function POST(req: Request) {
                 email: email,
                 password: temporaryPassword,
                 email_confirm: true,
-                user_metadata: { full_name: name || "Student", setup_required: true }
+                user_metadata: { full_name: name || "", setup_required: true, password_changed: false }
             });
 
             if (createError || !newUser.user) {

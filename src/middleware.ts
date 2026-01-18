@@ -40,14 +40,23 @@ export async function middleware(request: NextRequest) {
     // Check if user is authenticated
     const { data: { user } } = await supabase.auth.getUser()
 
-    // Enforce Mandatory Setup for New Manual Users
+    // Enforce Mandatory Setup & Password Reset
     if (user) {
+        const passwordResetRequired = user.user_metadata?.password_reset_required;
         const setupRequired = user.user_metadata?.setup_required;
         const allowedSetupPaths = ['/onboarding/complete', '/api/user/complete-profile'];
 
         // Allow logout/auth paths to let them escape if needed
         const isAuthRelated = pathname.startsWith('/auth') || pathname === '/signout';
 
+        // 1. Priority: Password Reset Lockdown
+        // Prevent access to ANY page except update-password until reset is done
+        if (passwordResetRequired && pathname !== '/update-password' && !isAuthRelated) {
+            console.log('[MIDDLEWARE] Lockdown: Redirecting to update-password:', pathname);
+            return NextResponse.redirect(new URL('/update-password', request.url));
+        }
+
+        // 2. Priority: Setup Required
         if (setupRequired && !allowedSetupPaths.includes(pathname) && !isAuthRelated) {
             console.log('[MIDDLEWARE] Redirecting to setup:', pathname);
             return NextResponse.redirect(new URL('/onboarding/complete', request.url));

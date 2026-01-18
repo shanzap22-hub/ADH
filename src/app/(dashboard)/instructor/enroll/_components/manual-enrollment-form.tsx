@@ -135,7 +135,7 @@ export function ManualEnrollmentForm() {
                                     <SelectItem value="bronze">Bronze</SelectItem>
                                     <SelectItem value="silver">Silver (Most Popular)</SelectItem>
                                     <SelectItem value="gold">Gold (VIP)</SelectItem>
-                                    <SelectItem value="platinum">Platinum</SelectItem>
+                                    <SelectItem value="diamond">Diamond</SelectItem>
                                 </SelectContent>
                             </Select>
                             <FormDescription className="text-slate-400">

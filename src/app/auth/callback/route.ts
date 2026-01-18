@@ -28,8 +28,13 @@ export async function GET(request: Request) {
             const forwardedHost = request.headers.get('x-forwarded-host')
             const isLocalEnv = process.env.NODE_ENV === 'development'
             let redirectPath = next
+            const type = searchParams.get('type')
 
-            if (next === '/') {
+            // Handle Password Recovery
+            if (type === 'recovery') {
+                await supabase.auth.updateUser({ data: { password_reset_required: true } })
+                redirectPath = '/update-password'
+            } else if (next === '/') {
                 try {
                     const { data: { user } } = await supabase.auth.getUser()
                     if (user) {
