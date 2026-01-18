@@ -14,15 +14,18 @@ import { useRouter } from "next/navigation";
 
 export function StudentBookingSystem() {
     const [instructors, setInstructors] = useState<any[]>([]);
+
     const [selectedInstructor, setSelectedInstructor] = useState<string | null>(null);
-    const [date, setDate] = useState<Date | undefined>(new Date());
+    const [date, setDate] = useState<Date | undefined>(undefined); // Start with NO date selected
     const [slots, setSlots] = useState<string[]>([]);
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [isSlotLoading, setIsSlotLoading] = useState(false); // Specific loading state for slots
     const [booking, setBooking] = useState(false);
 
     // Success State
     const [bookedSession, setBookedSession] = useState<any>(null);
+    const [availableDates, setAvailableDates] = useState<string[]>([]);
 
     const supabase = createClient();
     const router = useRouter();
@@ -39,8 +42,25 @@ export function StudentBookingSystem() {
 
             if (data && data.length > 0) {
                 setInstructors(data);
-                // Auto-select first one (usually Admin for ADH)
-                setSelectedInstructor(data[0].id);
+                // Auto-select first one (Default behavior)
+                let instructorIdForCalendar = selectedInstructor;
+                if (!selectedInstructor) {
+                    const firstId = data[0].id;
+                    setSelectedInstructor(firstId);
+                    instructorIdForCalendar = firstId;
+                }
+                console.log("DEBUG_INSTRUCTOR_ID:", instructorIdForCalendar);
+
+                // Fetch Available Dates (Month View)
+                try {
+                    const res = await fetch(`/api/booking/calendar-availability?instructorId=${instructorIdForCalendar}`);
+                    if (res.ok) {
+                        const dates = await res.json();
+                        setAvailableDates(dates);
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch calendar availability", e);
+                }
             }
             setLoading(false);
         };
@@ -52,12 +72,11 @@ export function StudentBookingSystem() {
         if (!selectedInstructor || !date) return;
 
         const fetchSlots = async () => {
+            setIsSlotLoading(true);
             setSlots([]);
             setSelectedSlot(null);
 
             // Format YYYY-MM-DD
-            // Important: Handle timezone offset correctly or use local string logic
-            // simple hack: 
             const offset = date.getTimezoneOffset();
             const localDate = new Date(date.getTime() - (offset * 60 * 1000));
             const dateStr = localDate.toISOString().split('T')[0];
@@ -72,6 +91,8 @@ export function StudentBookingSystem() {
                 }
             } catch (e) {
                 console.error("Slot fetch error", e);
+            } finally {
+                setIsSlotLoading(false);
             }
         };
 
@@ -97,6 +118,9 @@ export function StudentBookingSystem() {
             });
 
             const data = await res.json();
+            if (data.googleError) {
+                console.error("GOOGLE_SYNC_DEBUG:", data.googleError);
+            }
             if (!res.ok) throw new Error(data.error || "Booking Failed");
 
             setBookedSession({
@@ -116,7 +140,15 @@ export function StudentBookingSystem() {
         }
     };
 
+    const handleBackToCalendar = () => {
+        setDate(undefined);
+        setSlots([]);
+        setSelectedSlot(null);
+    };
+
     if (bookedSession) {
+        // ... (Keep existing Success UI logic, omitted here for brevity if it was external, but since I am replacing the block, I will include it or reference it. 
+        // Wait, I should include the full Success UI block here as I am replacing a large chunk)
         return (
             <Card className="max-w-md mx-auto mt-10 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
                 <CardContent className="pt-6 text-center space-y-4">
@@ -136,7 +168,8 @@ export function StudentBookingSystem() {
                         </p>
                         <p className="flex items-center gap-2 mb-2">
                             <Clock className="w-4 h-4 opacity-70" />
-                            {bookedSession.time}
+                            {/* Format 24h to 12h for display */}
+                            {new Date(`2000-01-01T${bookedSession.time}`).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
                         </p>
                         <p className="flex items-center gap-2">
                             <Avatar className="w-5 h-5">
@@ -160,118 +193,126 @@ export function StudentBookingSystem() {
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-            {/* Left: Controls */}
-            <div className="md:col-span-8 space-y-6">
 
-                {/* 1. Instructor Selection */}
-                {instructors.length > 1 && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Select Mentor</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex gap-4 overflow-x-auto pb-2">
-                                {instructors.map(inst => (
-                                    <div
-                                        key={inst.id}
-                                        onClick={() => setSelectedInstructor(inst.id)}
-                                        className={`cursor-pointer flex flex-col items-center p-4 rounded-xl border transition-all min-w-[120px] ${selectedInstructor === inst.id ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-sm ring-1 ring-purple-500' : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                                    >
-                                        <Avatar className="w-16 h-16 mb-3">
-                                            <AvatarImage src={inst.avatar_url} />
-                                            <AvatarFallback>{inst.full_name?.[0]}</AvatarFallback>
-                                        </Avatar>
-                                        <p className="text-sm font-medium text-center truncate w-full">{inst.full_name}</p>
-                                        <p className="text-[10px] text-slate-500 capitalize">{inst.role}</p>
-                                    </div>
-                                ))}
+        <div className="max-w-xl mx-auto">
+            <Card className="shadow-lg border-t-4 border-t-purple-600">
+                <CardHeader>
+                    {/* Header adjusts based on step */}
+                    {!date ? (
+                        <>
+                            <CardTitle>Select a Date</CardTitle>
+                            <CardDescription>Choose a day for your 1-on-1 session</CardDescription>
+                        </>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm" onClick={handleBackToCalendar} className="-ml-2">
+                                ← Back
+                            </Button>
+                            <div>
+                                <CardTitle>{format(date, "EEE, MMM do")}</CardTitle>
+                                <CardDescription>Select a time</CardDescription>
                             </div>
-                        </CardContent>
-                    </Card>
-                )}
+                        </div>
+                    )}
+                </CardHeader>
+                <CardContent className="min-h-[400px] flex flex-col">
+                    {!date ? (
+                        // Step 1: Calendar View
+                        <div className="flex justify-center">
+                            <Calendar
+                                mode="single"
+                                selected={date}
+                                onSelect={setDate}
+                                disabled={(date) => {
+                                    // Disable past dates, future > 30 days, AND days NOT in availableDays
+                                    const isPast = date < new Date();
+                                    const isTooFar = date > addDays(new Date(), 30);
+                                    const dateStr = format(date, 'yyyy-MM-dd');
+                                    // Disable if not in availableDates list (and valid range)
+                                    // Make sure we don't disable if checking hasn't finished? 
+                                    // For now, assume empty list means no slots.
+                                    const isUnavailable = availableDates.length > 0 && !availableDates.includes(dateStr);
 
-                {/* 2. Calendar */}
-                <Card className="overflow-hidden">
-                    <CardHeader>
-                        <CardTitle>Select Date</CardTitle>
-                        <CardDescription>Choose a day for your session</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex justify-center p-0 md:p-6">
-                        <Calendar
-                            mode="single"
-                            selected={date}
-                            onSelect={setDate}
-                            disabled={(date) => date < new Date() || date > addDays(new Date(), 30)}
-                            className="rounded-md border-0"
-                            classNames={{
-                                head_cell: "text-slate-500 font-normal text-[0.8rem] uppercase w-10 h-10 md:w-12 md:h-12 flex items-center justify-center",
-                                cell: "h-10 w-10 md:h-12 md:w-12 text-center text-sm p-0 m-0.5 relative [&:has([aria-selected])]:bg-purple-100 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                                day: "h-10 w-10 md:h-12 md:w-12 p-0 font-normal aria-selected:opacity-100 hover:bg-slate-100 rounded-full",
-                                day_selected: "bg-purple-600 text-white hover:bg-purple-600 hover:text-white focus:bg-purple-600 focus:text-white shadow-md",
-                                day_today: "bg-slate-100 text-slate-900 font-bold",
-                            }}
-                        />
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Right: Slots & Confirm */}
-            <div className="md:col-span-4 space-y-6">
-                <Card className="h-full border-l-4 border-l-purple-500 shadow-md">
-                    <CardHeader>
-                        <CardTitle>Available Slots</CardTitle>
-                        <CardDescription>
-                            {date ? format(date, "EEEE, MMM do") : "Select a date"}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {!date ? (
-                            <div className="text-center py-10 text-slate-400">
-                                <CalendarIcon className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                                <p>Please select a date from the calendar</p>
-                            </div>
-                        ) : slots.length === 0 ? (
-                            <div className="text-center py-10 text-slate-500 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                                <AlertCircle className="w-8 h-8 mx-auto mb-2 text-amber-500" />
-                                <p>No slots available on this date.</p>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto pr-2">
-                                {slots.map(slot => (
-                                    <Button
-                                        key={slot}
-                                        variant={selectedSlot === slot ? "default" : "outline"}
-                                        className={selectedSlot === slot ? "bg-purple-600 hover:bg-purple-700" : "hover:border-purple-300"}
-                                        onClick={() => setSelectedSlot(slot)}
-                                    >
-                                        {slot}
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    return date < today || isTooFar || isUnavailable;
+                                }}
+                                modifiers={{
+                                    available: (date) => availableDates.includes(format(date, 'yyyy-MM-dd'))
+                                }}
+                                modifiersClassNames={{
+                                    available: "bg-green-100 text-green-900 font-bold hover:bg-green-200 rounded-full cursor-pointer relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-green-500 after:rounded-full"
+                                }}
+                                className="rounded-xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm bg-white dark:bg-black"
+                                classNames={{
+                                    head_cell: "text-slate-500 font-normal text-[0.8rem] uppercase w-10 h-10 flex items-center justify-center",
+                                    cell: "h-10 w-10 text-center text-sm p-0 m-0.5 relative [&:has([aria-selected])]:bg-purple-100 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                                    day: "h-10 w-10 p-0 font-normal aria-selected:opacity-100 hover:bg-slate-100 rounded-full",
+                                    day_selected: "bg-purple-600 text-white hover:bg-purple-600 hover:text-white focus:bg-purple-600 focus:text-white shadow-md",
+                                    day_today: "bg-slate-100 text-slate-900 font-bold",
+                                }}
+                            />
+                        </div>
+                    ) : (
+                        // Step 2: Time Slots View
+                        <div className="flex-1 flex flex-col animate-in fade-in slide-in-from-right-4 duration-300">
+                            {isSlotLoading ? (
+                                <div className="flex-1 flex flex-col items-center justify-center text-slate-500 py-12">
+                                    <Loader2 className="w-8 h-8 animate-spin mb-2 opacity-50" />
+                                    <p>Checking availability...</p>
+                                </div>
+                            ) : slots.length === 0 ? (
+                                <div className="flex-1 flex flex-col items-center justify-center text-slate-500 py-12">
+                                    <AlertCircle className="w-10 h-10 mb-2 opacity-30" />
+                                    <p>No available slots for this date.</p>
+                                    <Button variant="link" onClick={handleBackToCalendar} className="mt-2 text-purple-600">
+                                        Check another date
                                     </Button>
-                                ))}
-                            </div>
-                        )}
-                    </CardContent>
-                    <CardFooter className="flex-col gap-3 pt-4 border-t">
-                        <Button
-                            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 h-12 text-lg shadow-lg shadow-purple-500/20"
-                            disabled={!selectedSlot || booking}
-                            onClick={handleBooking}
-                        >
-                            {booking ? (
-                                <>
-                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                    Confirming...
-                                </>
+                                </div>
                             ) : (
-                                "Book Session"
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    {slots.map(slot => {
+                                        // Convert 13:00 -> 1:00 PM for display
+                                        const [h, m] = slot.split(':');
+                                        const dateObj = new Date();
+                                        dateObj.setHours(parseInt(h), parseInt(m));
+                                        const displayTime = dateObj.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+
+                                        return (
+                                            <Button
+                                                key={slot}
+                                                variant={selectedSlot === slot ? "default" : "outline"}
+                                                className={`h-12 ${selectedSlot === slot ? "bg-purple-600 hover:bg-purple-700 ring-2 ring-purple-600 ring-offset-2" : "hover:border-purple-400 border-slate-200"}`}
+                                                onClick={() => setSelectedSlot(slot)}
+                                            >
+                                                {displayTime}
+                                            </Button>
+                                        );
+                                    })}
+                                </div>
                             )}
-                        </Button>
-                        <p className="text-xs text-center text-slate-400">
-                            You wil receive a Google Calendar invite via email.
-                        </p>
-                    </CardFooter>
-                </Card>
-            </div>
+
+                            {/* Confirm Button Area */}
+                            <div className="mt-8 border-t pt-4">
+                                <Button
+                                    className="w-full h-12 text-lg bg-black text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-slate-200 transaction-all"
+                                    disabled={!selectedSlot || booking}
+                                    onClick={handleBooking}
+                                >
+                                    {booking ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                            Scheduling...
+                                        </>
+                                    ) : (
+                                        "Confirm Booking"
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }

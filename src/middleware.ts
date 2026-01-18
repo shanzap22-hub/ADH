@@ -20,6 +20,7 @@ export async function middleware(request: NextRequest) {
         '/api/enrollment/finalize',
         '/api/onboarding/complete',
         '/api/webhook',   // Webhooks for Razorpay/Stripe
+        '/api/cron',      // Automated tasks (Reminders)
     ];
 
     // Allow public pages without authentication
@@ -38,6 +39,20 @@ export async function middleware(request: NextRequest) {
 
     // Check if user is authenticated
     const { data: { user } } = await supabase.auth.getUser()
+
+    // Enforce Mandatory Setup for New Manual Users
+    if (user) {
+        const setupRequired = user.user_metadata?.setup_required;
+        const allowedSetupPaths = ['/onboarding/complete', '/api/user/complete-profile'];
+
+        // Allow logout/auth paths to let them escape if needed
+        const isAuthRelated = pathname.startsWith('/auth') || pathname === '/signout';
+
+        if (setupRequired && !allowedSetupPaths.includes(pathname) && !isAuthRelated) {
+            console.log('[MIDDLEWARE] Redirecting to setup:', pathname);
+            return NextResponse.redirect(new URL('/onboarding/complete', request.url));
+        }
+    }
 
     // Define public routes that don't require authentication
     const publicRoutes = ['/', '/login', '/signup', '/forgot-password', '/auth']

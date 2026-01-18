@@ -62,17 +62,35 @@ export async function POST(req: Request) {
 
         // Also update user profile with the phone number if authenticated
         const { data: { user } } = await supabase.auth.getUser();
-        if (user && whatsappNumber) {
-            console.log("[RAZORPAY_VERIFY] Updating user metadata with phone:", whatsappNumber);
-            const { error: profileError } = await supabase.auth.updateUser({
-                data: { phone: whatsappNumber }
-            });
+        if (user) {
+            console.log("[RAZORPAY_VERIFY] Authenticated user found:", user.id);
 
-            if (profileError) {
-                console.error("[RAZORPAY_VERIFY] Failed to update profile phone:", profileError);
-            } else {
-                console.log("[RAZORPAY_VERIFY] Profile phone updated successfully");
+            // 1. Update Metadata (Phone)
+            if (whatsappNumber) {
+                console.log("[RAZORPAY_VERIFY] Updating user metadata with phone:", whatsappNumber);
+                const { error: profileError } = await supabase.auth.updateUser({
+                    data: { phone: whatsappNumber }
+                });
+                if (profileError) console.error("[RAZORPAY_VERIFY] Failed to update profile phone:", profileError);
             }
+
+            // 2. Upgrade Membership Tier to 'silver'
+            console.log("[RAZORPAY_VERIFY] Upgrading user to SILVER tier...");
+            const { error: upgradeError } = await supabase
+                .from('profiles')
+                .update({
+                    membership_tier: 'silver',
+                    role: 'student' // Ensure they are a student
+                })
+                .eq('id', user.id);
+
+            if (upgradeError) {
+                console.error("[RAZORPAY_VERIFY] Failed to upgrade membership:", upgradeError);
+            } else {
+                console.log("[RAZORPAY_VERIFY] User upgraded to SILVER successfully");
+            }
+        } else {
+            console.warn("[RAZORPAY_VERIFY] User is NOT authenticated. Payment recorded but membership NOT upgraded automatically.");
         }
 
         return NextResponse.json({ success: true });

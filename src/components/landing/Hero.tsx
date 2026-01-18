@@ -15,7 +15,7 @@ export function Hero() {
                         Launch Your Online Academy in Minutes
                     </h1>
                     <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-                        ADH LMS provides everything you need to create, market, and sell your courses.
+                        ADH Connect provides everything you need to create, market, and sell your courses.
                         No coding required. just pure teaching.
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">

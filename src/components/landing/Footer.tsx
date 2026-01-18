@@ -7,7 +7,7 @@ export function Footer() {
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
                     <div className="col-span-2 md:col-span-1">
-                        <h3 className="text-xl font-bold mb-4">ADH LMS</h3>
+                        <h3 className="text-xl font-bold mb-4">ADH Connect</h3>
                         <p className="text-sm text-muted-foreground mb-4 max-w-xs">
                             Empowering educators to share their knowledge with the world through modern technology.
                         </p>
@@ -41,7 +41,7 @@ export function Footer() {
                 </div>
                 <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t">
                     <p className="text-sm text-muted-foreground mb-4 md:mb-0">
-                        © {new Date().getFullYear()} ADH LMS. All rights reserved.
+                        © {new Date().getFullYear()} ADH Connect. All rights reserved.
                     </p>
                     <div className="flex items-center gap-4">
                         <Link href="#" className="text-muted-foreground hover:text-foreground bg-primary/10 w-9 h-9 rounded-full flex items-center justify-center transition-colors">

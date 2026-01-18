@@ -34,8 +34,8 @@ export default async function InstructorLayout({
 
     return (
         <div className="h-full">
-            <div className="h-[80px] md:pl-56 fixed inset-y-0 w-full z-50">
-                {/* Dashboard specific navbar could go here, for now using simple header or just mobile sidebar trigger */}
+            <div className="h-[80px] md:pl-56 fixed inset-y-0 w-full z-50 md:hidden">
+                {/* Dashboard specific navbar - hidden on desktop */}
                 <div className="p-4 border-b h-full flex items-center bg-background shadow-sm">
                     <MobileSidebar />
                     <div className="flex w-full justify-end">
@@ -46,7 +46,7 @@ export default async function InstructorLayout({
             <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-50">
                 <Sidebar is_super_admin={is_super_admin} />
             </div>
-            <main className="md:pl-56 pt-[80px] h-full">
+            <main className="md:pl-56 pt-[80px] md:pt-0 h-full">
                 {children}
             </main>
         </div>

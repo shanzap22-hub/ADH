@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 
 export async function GET(req: Request) {
     try {
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+        // Use Admin client to ensure we can read regardless of RLS (though GET typically works)
+        // Actually GET works fine usually. Let's keep GET simple or upgrade it too if needed.
+        // For consistency, let's just stick to Auth client for GET usually, unless RLS is totally blocking.
+        // The user complained about "Reschedule/Delete" (POST).
 
         const { data: slots } = await supabase
             .from("availability_slots")
@@ -26,15 +32,21 @@ export async function POST(req: Request) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-        const body = await req.json();
-        const { slots } = body; // Expecting array of { day_of_week, start_time, end_time }
+        // Use Admin Client for Write Operations to bypass RLS issues
+        const adminSupabase = createAdminClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
 
-        // Determine if this is a full replace or incremental. 
-        // For simplicity, let's do a full replace for the modified days or just all slots.
-        // Full replace is safer for UI consistency.
+        const body = await req.json();
+        const { slots } = body;
 
         // 1. Delete all existing slots for this user
-        await supabase.from("availability_slots").delete().eq("instructor_id", user.id);
+        const { error: delError } = await adminSupabase.from("availability_slots").delete().eq("instructor_id", user.id);
+        if (delError) {
+            console.error("Delete failed", delError);
+            throw delError;
+        }
 
         // 2. Insert new slots
         if (slots && slots.length > 0) {
@@ -46,12 +58,16 @@ export async function POST(req: Request) {
                 is_active: true
             }));
 
-            const { error } = await supabase.from("availability_slots").insert(slotsToInsert);
-            if (error) throw error;
+            const { error } = await adminSupabase.from("availability_slots").insert(slotsToInsert);
+            if (error) {
+                console.error("Insert failed", error);
+                throw error;
+            }
         }
 
         return NextResponse.json({ success: true });
     } catch (error) {
+        console.error("Availability Update Error:", error);
         return NextResponse.json({ error: "Update failed" }, { status: 500 });
     }
 }

@@ -27,23 +27,21 @@ import { toast } from "sonner";
 import { Loader2, CheckCircle } from "lucide-react";
 
 const formSchema = z.object({
+    name: z.string().optional(),
     email: z.string().email({ message: "Invalid email address" }),
-    courseId: z.string().min(1, { message: "Please select a course" }),
+    tier: z.string().min(1, { message: "Please select a membership tier" }),
 });
 
-interface ManualEnrollmentFormProps {
-    courses: { id: string; title: string }[];
-}
-
-export function ManualEnrollmentForm({ courses }: ManualEnrollmentFormProps) {
+export function ManualEnrollmentForm() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            name: "",
             email: "",
-            courseId: "",
+            tier: "",
         },
     });
 
@@ -57,12 +55,14 @@ export function ManualEnrollmentForm({ courses }: ManualEnrollmentFormProps) {
                 body: JSON.stringify(values),
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || "Failed to enroll student");
+                throw new Error(data.error || "Failed to enroll student");
             }
 
-            toast.success("Student enrolled successfully!");
+            // Show success message (includes password if new user)
+            toast.success(data.message, { duration: 10000 });
             form.reset();
             router.refresh();
         } catch (error: any) {
@@ -75,6 +75,28 @@ export function ManualEnrollmentForm({ courses }: ManualEnrollmentFormProps) {
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-white">Student Name (Optional if user exists)</FormLabel>
+                            <FormControl>
+                                <Input
+                                    placeholder="John Doe"
+                                    {...field}
+                                    disabled={isSubmitting}
+                                    className="bg-slate-800 border-slate-700 text-white"
+                                />
+                            </FormControl>
+                            <FormDescription className="text-slate-400">
+                                Required only for new students.
+                            </FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
                 <FormField
                     control={form.control}
                     name="email"
@@ -90,7 +112,7 @@ export function ManualEnrollmentForm({ courses }: ManualEnrollmentFormProps) {
                                 />
                             </FormControl>
                             <FormDescription className="text-slate-400">
-                                The email address of the student you want to enroll
+                                The email address of the student/user.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
@@ -99,26 +121,25 @@ export function ManualEnrollmentForm({ courses }: ManualEnrollmentFormProps) {
 
                 <FormField
                     control={form.control}
-                    name="courseId"
+                    name="tier"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="text-white">Course</FormLabel>
+                            <FormLabel className="text-white">Membership Tier</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
                                 <FormControl>
                                     <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                                        <SelectValue placeholder="Select a course" />
+                                        <SelectValue placeholder="Select Tier" />
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    {courses.map((course) => (
-                                        <SelectItem key={course.id} value={course.id}>
-                                            {course.title}
-                                        </SelectItem>
-                                    ))}
+                                    <SelectItem value="bronze">Bronze</SelectItem>
+                                    <SelectItem value="silver">Silver (Most Popular)</SelectItem>
+                                    <SelectItem value="gold">Gold (VIP)</SelectItem>
+                                    <SelectItem value="platinum">Platinum</SelectItem>
                                 </SelectContent>
                             </Select>
                             <FormDescription className="text-slate-400">
-                                The course the student will get access to
+                                This will grant access to all courses and features in this tier.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>
@@ -133,12 +154,12 @@ export function ManualEnrollmentForm({ courses }: ManualEnrollmentFormProps) {
                     {isSubmitting ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Enrolling...
+                            Upgrading...
                         </>
                     ) : (
                         <>
                             <CheckCircle className="mr-2 h-4 w-4" />
-                            Grant Access
+                            Grant Membership
                         </>
                     )}
                 </Button>

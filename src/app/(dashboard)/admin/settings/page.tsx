@@ -24,7 +24,7 @@ export default function AdminSettingsPage() {
                                 <input
                                     type="text"
                                     className="w-full mt-1 px-3 py-2 border rounded-lg bg-gray-50"
-                                    value="ADH LMS"
+                                    value="ADH Connect"
                                     disabled
                                 />
                             </div>

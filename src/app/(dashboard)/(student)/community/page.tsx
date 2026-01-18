@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Community Feed | ADH LMS",
+    title: "Community Feed | ADH Connect",
     description: "Stay updated with the latest news",
 };
 

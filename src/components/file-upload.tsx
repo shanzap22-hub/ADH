@@ -35,6 +35,25 @@ export const FileUpload = ({
             const fileName = `${Math.random()}.${fileExt}`;
             const filePath = `${fileName}`;
 
+            // Check if we should use Bunny Storage
+            if (endpoint === "course-thumbnails" || endpoint === "course-attachments") {
+                const formData = new FormData();
+                formData.append("file", file);
+
+                // We use dynamic import or updated logic for server action call in client
+                // Note: FileUpload is client component, so we can call server action
+                const { uploadToBunny } = await import("@/actions/bunny-actions");
+                const result = await uploadToBunny(formData, endpoint);
+
+                if (result.error) throw new Error(result.error);
+
+                onChange(result.url);
+                toast.success("File uploaded to Bunny");
+                setIsUploading(false);
+                return;
+            }
+
+            // Fallback to Supabase for other endpoints (e.g. chapter-videos)
             const { error: uploadError } = await supabase.storage
                 .from(endpoint)
                 .upload(filePath, file);

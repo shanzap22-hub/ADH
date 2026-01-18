@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import ChatPageClient from "@/components/chat/ChatPageClient";
 
 export const metadata = {
-    title: "Chat | ADH LMS",
+    title: "Chat | ADH Connect",
     description: "Connect with your peers",
 };
 

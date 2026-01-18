@@ -12,12 +12,7 @@ export default async function EnrollPage() {
         return redirect("/login");
     }
 
-    // Get all published courses
-    const { data: courses } = await supabase
-        .from("courses")
-        .select("id, title")
-        .eq("is_published", true)
-        .order("title");
+    // (Updated) Courses no longer needed here as we select Tier directly
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-6 space-y-6">
@@ -35,14 +30,14 @@ export default async function EnrollPage() {
                     <CardHeader>
                         <CardTitle className="text-white flex items-center gap-2">
                             <UserPlus className="h-5 w-5" />
-                            Enroll Student
+                            Upgrade User Membership
                         </CardTitle>
                         <CardDescription>
-                            Manually grant a student access to a course
+                            Manually grant a student a specific membership tier (Silver, Gold, etc).
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ManualEnrollmentForm courses={courses || []} />
+                        <ManualEnrollmentForm />
                     </CardContent>
                 </Card>
             </div>

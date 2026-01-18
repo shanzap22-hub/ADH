@@ -64,8 +64,8 @@ export async function POST(req: Request) {
                 .from("profiles")
                 .update({
                     full_name: fullName,
-                    contact_number: contactNumber, // Should we allow updating this? Yes for now.
-                    // We might not have a whatsapp_number column in profile yet, checking schema next might be good.
+                    contact_number: contactNumber,
+                    membership_tier: "silver", // Upgrade existing user too
                 })
                 .eq("id", userId);
 
@@ -118,6 +118,7 @@ export async function POST(req: Request) {
                     email: email,
                     full_name: fullName,
                     role: "student",
+                    membership_tier: "silver", // Upgrade to Silver
                 }, { onConflict: "id" });
 
             if (profileError) {

@@ -2,6 +2,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { WeeklyLiveManager } from "@/components/instructor/WeeklyLiveManager";
+import { OneOnOneManager } from "@/components/instructor/OneOnOneManager";
 
 export default async function LiveManagerPage() {
     const supabase = await createClient();
@@ -22,8 +23,9 @@ export default async function LiveManagerPage() {
     return (
         <div className="p-6">
             <h1 className="text-2xl font-bold mb-6">Live Session Manager</h1>
-            <div className="max-w-3xl">
+            <div className="max-w-3xl space-y-8">
                 <WeeklyLiveManager />
+                <OneOnOneManager />
             </div>
         </div>
     );

@@ -1,5 +1,6 @@
 import { StudentDashboardLayoutContent } from "@/components/dashboard/StudentDashboardLayoutContent";
 import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
 export default async function StudentDashboardLayout({
     children,
@@ -16,13 +17,18 @@ export default async function StudentDashboardLayout({
     if (user) {
         const { data: profile } = await supabase
             .from("profiles")
-            .select("role")
+            .select("role, phone_number")
             .eq("id", user.id)
             .single();
 
         if (profile) {
             is_instructor = profile.role === "instructor" || profile.role === "super_admin";
             is_super_admin = profile.role === "super_admin";
+
+            // Enforce Profile Completion (Phone Number is mandatory)
+            if (!profile.phone_number) {
+                redirect("/onboarding/complete");
+            }
         }
     }
 

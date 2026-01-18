@@ -7,7 +7,7 @@ import Script from "next/script";
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "ADH LMS",
+  title: "ADH Connect",
   description: "Advanced Learning Management System",
 };
 

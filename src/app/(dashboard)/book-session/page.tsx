@@ -1,7 +1,7 @@
 import { StudentBookingSystem } from "@/components/booking/StudentBookingSystem";
 
 export const metadata = {
-    title: "Book Mentorship | ADH LMS",
+    title: "Book Mentorship | ADH Connect",
     description: "Schedule your 1-on-1 mentorship session.",
 };
 

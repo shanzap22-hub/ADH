@@ -13,7 +13,7 @@ export async function GET(req: Request) {
             .eq("instructor_id", user.id)
             .single();
 
-        return NextResponse.json(data || { slot_duration: 30, buffer_time: 5 });
+        return NextResponse.json(data || { slot_duration: 30, buffer_time: 5, min_notice_time: 60 });
     } catch (error) {
         return NextResponse.json({ error: "Fetch failed" }, { status: 500 });
     }
@@ -33,6 +33,7 @@ export async function POST(req: Request) {
                 instructor_id: user.id,
                 slot_duration: body.slot_duration || 30,
                 buffer_time: body.buffer_time || 5,
+                min_notice_time: body.min_notice_time || 60,
                 updated_at: new Date().toISOString()
             });
 

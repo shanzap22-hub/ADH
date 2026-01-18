@@ -5,23 +5,33 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url)
     const code = searchParams.get('code')
-    // if "next" is in param, use it as the redirect URL
     const next = searchParams.get('next') ?? '/'
 
     if (code) {
         const supabase = await createClient()
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
-        if (!error) {
-            const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
-            const isLocalEnv = process.env.NODE_ENV === 'development'
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
-            // If next parameter is not provided, determine redirect based on user role
+        if (!error && data?.session) {
+            // CAPTURE TOKENS MANUALLY INTO METADATA
+            const { session } = data;
+            if (session.provider_refresh_token || session.provider_token) {
+                await supabase.auth.updateUser({
+                    data: {
+                        google_refresh_token: session.provider_refresh_token,
+                        google_access_token: session.provider_token,
+                        google_token_updated: new Date().toISOString()
+                    }
+                });
+                console.log("Tokens persisted to User Metadata for:", session.user.email);
+            }
+
+            const forwardedHost = request.headers.get('x-forwarded-host')
+            const isLocalEnv = process.env.NODE_ENV === 'development'
             let redirectPath = next
+
             if (next === '/') {
                 try {
-                    // Fetch user profile to determine role
                     const { data: { user } } = await supabase.auth.getUser()
-
                     if (user) {
                         const { data: profile } = await supabase
                             .from('profiles')
@@ -30,48 +40,26 @@ export async function GET(request: Request) {
                             .single()
 
                         if (profile) {
-                            // SECURITY CHECK: If student, ensure they have purchases
                             if (profile.role === 'student' || !profile.role) {
-                                const { count } = await supabase
-                                    .from('purchases')
-                                    .select('*', { count: 'exact', head: true })
-                                    .eq('user_id', user.id);
-
+                                const { count } = await supabase.from('purchases').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
                                 if (count === 0) {
-                                    console.log("Access Denied: Student with no purchases tried to login via Google");
                                     await supabase.auth.signOut();
                                     return NextResponse.redirect(`${origin}/?error=unauthorized_purchase_required`);
                                 }
                             }
-
-                            // Redirect based on role
-                            if (profile.role === 'instructor') {
-                                redirectPath = '/instructor/courses'
-                            } else if (profile.role === 'admin') {
-                                redirectPath = '/dashboard'
-                            } else {
-                                redirectPath = '/dashboard'
-                            }
+                            if (profile.role === 'instructor') redirectPath = '/instructor/courses'
+                            else if (profile.role === 'admin') redirectPath = '/dashboard'
+                            else redirectPath = '/dashboard'
                         }
                     }
-                } catch (err) {
-                    console.error('Error fetching profile in callback:', err)
-                    // Default to /dashboard on error
-                    redirectPath = '/dashboard'
-                }
+                } catch (e) { console.error(e) }
             }
 
-            if (isLocalEnv) {
-                // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
-                return NextResponse.redirect(`${origin}${redirectPath}`)
-            } else if (forwardedHost) {
-                return NextResponse.redirect(`https://${forwardedHost}${redirectPath}`)
-            } else {
-                return NextResponse.redirect(`${origin}${redirectPath}`)
-            }
+            if (isLocalEnv) return NextResponse.redirect(`${origin}${redirectPath}`)
+            else if (forwardedHost) return NextResponse.redirect(`https://${forwardedHost}${redirectPath}`)
+            else return NextResponse.redirect(`${origin}${redirectPath}`)
         }
     }
 
-    // return the user to an error page with instructions
     return NextResponse.redirect(`${origin}/auth/auth-code-error`)
 }
