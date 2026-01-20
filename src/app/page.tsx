@@ -13,29 +13,30 @@ export default async function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-3 hover:opacity-90 transition">
+            <Link href="/" className="flex items-center space-x-3 hover:opacity-90 transition shrink-0">
               <Image
                 src="/adh-logo.png"
                 alt="ADH CONNECT"
                 width={180}
                 height={60}
-                className="h-14 w-auto"
+                className="h-10 sm:h-14 w-auto"
                 priority
               />
             </Link>
 
             {/* Nav Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Link href="/login">
-                <Button variant="ghost" size="lg" className="text-white border border-slate-700 hover:bg-slate-800 hover:border-slate-600 px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-base font-medium">
+                <Button variant="ghost" size="lg" className="text-white border border-slate-700 hover:bg-slate-800 hover:border-slate-600 px-3 py-2 sm:px-6 sm:py-2 text-xs sm:text-base font-medium">
                   Member Login
                 </Button>
               </Link>
 
               <RazorpayButtonWrapper>
-                <Button size="lg" className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-semibold px-4 py-2 sm:px-8 sm:py-3 text-sm sm:text-base shadow-lg shadow-orange-500/20">
-                  Join the Hub Now
-                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                <Button size="lg" className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-semibold px-3 py-2 sm:px-8 sm:py-3 text-xs sm:text-base shadow-lg shadow-orange-500/20">
+                  <span className="sm:hidden">Join Now</span>
+                  <span className="hidden sm:inline">Join the Hub Now</span>
+                  <ArrowRight className="ml-1 sm:ml-2 h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
               </RazorpayButtonWrapper>
             </div>

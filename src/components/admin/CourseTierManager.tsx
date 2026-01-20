@@ -29,6 +29,8 @@ const TIERS = [
     { value: "silver", label: "Silver 🥈", color: "text-gray-600" },
     { value: "gold", label: "Gold 🥇", color: "text-yellow-600" },
     { value: "diamond", label: "Diamond 💎", color: "text-blue-600" },
+    { value: "platinum", label: "Platinum 💍", color: "text-slate-900" },
+    { value: "expired", label: "Expired ⚠️", color: "text-red-500" },
 ];
 
 export function CourseTierManager({ courses, tierAssignments }: CourseTierManagerProps) {

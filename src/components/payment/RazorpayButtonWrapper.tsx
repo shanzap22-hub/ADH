@@ -21,17 +21,20 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
     const [whatsappNumber, setWhatsappNumber] = useState("");
     const [paymentId, setPaymentId] = useState("");
 
-    const handleProceedToPayment = async (whatsapp: string) => {
+    const handleProceedToPayment = async (whatsapp: string, couponCode?: string) => {
         setWhatsappNumber(whatsapp);
 
         try {
-            console.log("[PAYMENT_WRAPPER] Creating order for:", whatsapp);
+            console.log("[PAYMENT_WRAPPER] Creating order for:", whatsapp, "Coupon:", couponCode);
 
             // Create Razorpay order
             const response = await fetch("/api/razorpay/create-order", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ whatsappNumber: whatsapp }),
+                body: JSON.stringify({
+                    whatsappNumber: whatsapp,
+                    couponCode: couponCode
+                }),
             });
 
             console.log("[PAYMENT_WRAPPER] Response status:", response.status);

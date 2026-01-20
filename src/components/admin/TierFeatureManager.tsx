@@ -23,7 +23,9 @@ const TIERS = [
     { value: "bronze", label: "Bronze 🥉", color: "text-orange-700" },
     { value: "silver", label: "Silver 🥈", color: "text-gray-600" },
     { value: "gold", label: "Gold 🥇", color: "text-yellow-600" },
+    { value: "platinum", label: "Platinum 💠", color: "text-indigo-600" },
     { value: "diamond", label: "Diamond 💎", color: "text-blue-600" },
+    { value: "expired", label: "Expired ⚠️", color: "text-red-600" },
 ];
 
 export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps) {

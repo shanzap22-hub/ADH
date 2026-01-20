@@ -21,12 +21,6 @@ const routes = [
         color: "text-indigo-500",
     },
     {
-        label: "Analytics",
-        icon: LayoutDashboard,
-        href: "/instructor/analytics",
-        color: "text-violet-500",
-    },
-    {
         label: "Live Manager",
         icon: Radio,
         href: "/instructor/live-manager",
@@ -39,31 +33,17 @@ const routes = [
         color: "text-orange-500",
     },
     {
-        label: "Calendar",
-        icon: CalendarIcon,
-        href: "/instructor/calendar",
-        color: "text-pink-500",
-    },
-    {
         label: "Enroll Students",
         icon: UserPlus,
         href: "/instructor/enroll",
         color: "text-emerald-500",
     },
     {
-        label: "Students",
-        icon: Users,
-        href: "/instructor/students",
-        color: "text-pink-700",
-    },
-    {
         label: "Settings",
         icon: Settings,
         href: "/instructor/settings",
     },
-]
-
-    ;
+];
 
 interface SidebarProps {
     is_super_admin?: boolean;

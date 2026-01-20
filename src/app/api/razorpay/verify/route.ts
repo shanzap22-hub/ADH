@@ -60,6 +60,57 @@ export async function POST(req: Request) {
             console.log("[RAZORPAY_VERIFY] Payment stored successfully");
         }
 
+        // Initialize Razorpay to fetch exact details
+        const Razorpay = (await import("razorpay")).default; // Dynamic import to be safe
+        const instance = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_StqvqJ8w5pW5kK",
+            key_secret: razorpaySecret
+        });
+
+        // Fetch Real Payment Details
+        let realAmount = 0;
+        let paymentMethod = 'unknown';
+        let paymentEmail = '';
+        let paymentContact = '';
+
+        try {
+            const payment = await instance.payments.fetch(razorpay_payment_id);
+            realAmount = Number(payment.amount);
+            paymentMethod = payment.method as string;
+            paymentEmail = payment.email as string;
+            paymentContact = payment.contact as string;
+            console.log(`[RAZORPAY_FETCH] Amount: ${realAmount}, Method: ${paymentMethod}`);
+        } catch (e) {
+            console.error("Failed to fetch Razorpay payment details", e);
+            // Fallback to existing or hardcoded if fetch fails (should not happen usually)
+            realAmount = 499900;
+        }
+
+        // UPDATE TRANSACTIONS TABLE (Super Admin Features)
+        const { count: txnUpdateCount } = await supabase.from('transactions')
+            .update({
+                status: 'verified',
+                razorpay_payment_id: razorpay_payment_id,
+                amount: realAmount, // Update with REAL amount
+                // We might want to store method too if we added column, but amount is priority
+                updated_at: new Date().toISOString()
+            })
+            .eq('razorpay_order_id', razorpay_order_id)
+            .select('id', { count: 'exact' });
+
+        if (txnUpdateCount === 0) {
+            console.log("[RAZORPAY_VERIFY] Transaction not found, inserting new Verified record.");
+            await supabase.from('transactions').insert({
+                status: 'verified',
+                razorpay_payment_id: razorpay_payment_id,
+                razorpay_order_id: razorpay_order_id,
+                whatsapp_number: whatsappNumber || paymentContact,
+                student_email: paymentEmail,
+                amount: realAmount,
+                source: 'razorpay'
+            });
+        }
+
         // Also update user profile with the phone number if authenticated
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
@@ -80,7 +131,9 @@ export async function POST(req: Request) {
                 .from('profiles')
                 .update({
                     membership_tier: 'silver',
-                    role: 'student' // Ensure they are a student
+                    role: 'student',
+                    whatsapp_number: whatsappNumber, // Auto-update WhatsApp Number
+                    phone_number: whatsappNumber // Also set as primary phone
                 })
                 .eq('id', user.id);
 
@@ -88,6 +141,13 @@ export async function POST(req: Request) {
                 console.error("[RAZORPAY_VERIFY] Failed to upgrade membership:", upgradeError);
             } else {
                 console.log("[RAZORPAY_VERIFY] User upgraded to SILVER successfully");
+
+                // Link Transaction to User
+                await supabase.from('transactions').update({
+                    user_id: user.id,
+                    student_email: user.email,
+                    membership_plan: 'silver'
+                }).eq('razorpay_order_id', razorpay_order_id);
             }
         } else {
             console.warn("[RAZORPAY_VERIFY] User is NOT authenticated. Payment recorded but membership NOT upgraded automatically.");

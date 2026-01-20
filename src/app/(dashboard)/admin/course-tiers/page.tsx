@@ -5,6 +5,8 @@ import { CourseTierManager } from "@/components/admin/CourseTierManager";
 import { TierBookingToggle } from "@/components/admin/TierBookingToggle";
 import { TierFeatureManager } from "@/components/admin/TierFeatureManager";
 
+export const dynamic = "force-dynamic";
+
 export default async function CourseTiersPage() {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();

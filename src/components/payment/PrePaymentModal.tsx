@@ -5,18 +5,61 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Phone } from "lucide-react";
+import { Loader2, Phone, Tag, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface PrePaymentModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onProceed: (whatsappNumber: string) => void;
+    onProceed: (whatsappNumber: string, couponCode?: string) => void;
 }
 
 export function PrePaymentModal({ isOpen, onClose, onProceed }: PrePaymentModalProps) {
     const [whatsappNumber, setWhatsappNumber] = useState("");
     const [isValidating, setIsValidating] = useState(false);
+
+    // Coupon State
+    const [couponCode, setCouponCode] = useState("");
+    const [appliedCoupon, setAppliedCoupon] = useState<{ code: string, discount: number } | null>(null);
+    const [isCheckingCoupon, setIsCheckingCoupon] = useState(false);
+    const [couponMessage, setCouponMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    const checkCoupon = async () => {
+        if (!couponCode.trim()) return;
+
+        setIsCheckingCoupon(true);
+        setCouponMessage(null);
+
+        try {
+            const res = await fetch('/api/coupons/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: couponCode })
+            });
+            const data = await res.json();
+
+            if (data.valid) {
+                setAppliedCoupon({
+                    code: data.code,
+                    discount: data.calculatedDiscount
+                });
+                setCouponMessage({ type: 'success', text: `Coupon Applied! Saved ₹${data.calculatedDiscount}` });
+            } else {
+                setAppliedCoupon(null);
+                setCouponMessage({ type: 'error', text: data.message || "Invalid Coupon" });
+            }
+        } catch (error) {
+            setCouponMessage({ type: 'error', text: "Failed to validate coupon" });
+        } finally {
+            setIsCheckingCoupon(false);
+        }
+    };
+
+    const removeCoupon = () => {
+        setAppliedCoupon(null);
+        setCouponCode("");
+        setCouponMessage(null);
+    };
 
     const validateAndProceed = () => {
         // Validate WhatsApp number (10 digits)
@@ -33,7 +76,8 @@ export function PrePaymentModal({ isOpen, onClose, onProceed }: PrePaymentModalP
         }
 
         setIsValidating(true);
-        onProceed(cleanedNumber);
+        // Pass coupon code if applied
+        onProceed(cleanedNumber, appliedCoupon ? appliedCoupon.code : undefined);
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -41,6 +85,8 @@ export function PrePaymentModal({ isOpen, onClose, onProceed }: PrePaymentModalP
             validateAndProceed();
         }
     };
+
+    const FINAL_PRICE = appliedCoupon ? (4999 - appliedCoupon.discount) : 4999;
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -50,7 +96,7 @@ export function PrePaymentModal({ isOpen, onClose, onProceed }: PrePaymentModalP
                         Join ADH CONNECT
                     </DialogTitle>
                     <DialogDescription>
-                        Enter your WhatsApp number to proceed with the payment for ₹4,999
+                        Enter your WhatsApp number to proceed with the payment for ₹{FINAL_PRICE.toLocaleString()}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -73,9 +119,41 @@ export function PrePaymentModal({ isOpen, onClose, onProceed }: PrePaymentModalP
                                 disabled={isValidating}
                             />
                         </div>
-                        <p className="text-xs text-slate-500">
-                            We'll send course updates and support on WhatsApp
-                        </p>
+                    </div>
+
+                    {/* Coupon Section */}
+                    <div className="space-y-2">
+                        <Label className="text-sm font-medium flex items-center gap-2">
+                            <Tag className="h-4 w-4" /> Have a Coupon Code?
+                        </Label>
+                        <div className="flex gap-2">
+                            <Input
+                                placeholder="Enter Code"
+                                value={couponCode}
+                                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                disabled={!!appliedCoupon || isCheckingCoupon}
+                                className="uppercase"
+                            />
+                            {appliedCoupon ? (
+                                <Button variant="outline" onClick={removeCoupon} type="button" className="text-red-500 border-red-200 hover:bg-red-50">
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            ) : (
+                                <Button
+                                    variant="secondary"
+                                    onClick={checkCoupon}
+                                    disabled={!couponCode || isCheckingCoupon}
+                                    type="button"
+                                >
+                                    {isCheckingCoupon ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
+                                </Button>
+                            )}
+                        </div>
+                        {couponMessage && (
+                            <p className={`text-xs ${couponMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                                {couponMessage.text}
+                            </p>
+                        )}
                     </div>
 
                     <div className="bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/30 rounded-lg p-4">
@@ -83,10 +161,16 @@ export function PrePaymentModal({ isOpen, onClose, onProceed }: PrePaymentModalP
                             <span className="text-sm text-slate-300">Course Bundle Value</span>
                             <span className="text-sm text-slate-400 line-through">₹17,000</span>
                         </div>
-                        <div className="flex items-center justify-between">
+                        {appliedCoupon && (
+                            <div className="flex items-center justify-between mb-2 text-green-500">
+                                <span className="text-sm">Coupon Discount</span>
+                                <span className="text-sm font-medium">- ₹{appliedCoupon.discount.toLocaleString()}</span>
+                            </div>
+                        )}
+                        <div className="flex items-center justify-between border-t border-dashed border-slate-700 pt-2 mt-2">
                             <span className="font-semibold text-white">You Pay Today</span>
                             <span className="text-2xl font-bold bg-gradient-to-r from-orange-400 to-pink-500 bg-clip-text text-transparent">
-                                ₹4,999
+                                ₹{FINAL_PRICE.toLocaleString()}
                             </span>
                         </div>
                     </div>
@@ -102,7 +186,7 @@ export function PrePaymentModal({ isOpen, onClose, onProceed }: PrePaymentModalP
                                 Processing...
                             </>
                         ) : (
-                            "Proceed to Payment →"
+                            `Pay ₹${FINAL_PRICE.toLocaleString()} →`
                         )}
                     </Button>
 

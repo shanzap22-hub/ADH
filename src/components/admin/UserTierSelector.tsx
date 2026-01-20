@@ -40,7 +40,10 @@ export function UserTierSelector({ userId, currentTier }: UserTierSelectorProps)
                     bronze: "Bronze",
                     silver: "Silver",
                     gold: "Gold",
-                    diamond: "Diamond"
+                    diamond: "Diamond",
+                    platinum: "Platinum",
+                    expired: "Expired",
+                    cancelled: "Cancelled"
                 };
                 toast.success(`Tier updated to ${tierNames[newTier]}!`);
                 router.refresh();
@@ -62,6 +65,9 @@ export function UserTierSelector({ userId, currentTier }: UserTierSelectorProps)
                 <SelectItem value="silver">🥈 Silver (₹4,999)</SelectItem>
                 <SelectItem value="gold">🥇 Gold (₹9,999)</SelectItem>
                 <SelectItem value="diamond">💎 Diamond (₹14,999)</SelectItem>
+                <SelectItem value="platinum">💍 Platinum</SelectItem>
+                <SelectItem value="expired">⚠️ Expired</SelectItem>
+                <SelectItem value="cancelled">🚫 Cancelled</SelectItem>
             </SelectContent>
         </Select>
     );

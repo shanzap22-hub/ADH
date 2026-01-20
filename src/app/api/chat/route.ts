@@ -64,6 +64,9 @@ export async function POST(req: Request) {
             ] : msg.content
         })) : [];
 
+        console.log('[AI Chat] Previous messages count:', previousMessages.length);
+        console.log('[AI Chat] Last message:', previousMessages[previousMessages.length - 1]);
+
         // 4. Construct System Prompt
         const SYSTEM_PROMPT = `
     You are a helpful, encouraging AI course coach for the 'ADH Learning Management System'.
@@ -83,13 +86,16 @@ export async function POST(req: Request) {
         // Safe bet: Fetch history excluding the one we just inserted, or just use 'history' which now contains it.
         // Let's assume 'history' contains it.
 
+        console.log('[AI Chat] Calling streamText...');
+
         const result = await streamText({
-            model: google('models/gemini-1.5-flash'), // or gemini-pro
+            model: google('gemini-1.5-flash'),
             system: SYSTEM_PROMPT,
             messages: previousMessages as any,
 
             async onFinish({ text }) {
                 // 6. Save AI Response to Supabase
+                console.log('[AI Chat] onFinish called, text length:', text.length);
                 await supabase.from('ai_chat_history').insert({
                     user_id: user.id,
                     role: 'assistant', // mapped from 'ai'
@@ -97,6 +103,8 @@ export async function POST(req: Request) {
                 });
             },
         });
+
+        console.log('[AI Chat] streamText completed, returning response');
 
         return result.toTextStreamResponse();
 

@@ -1,4 +1,4 @@
-import { getTierInfo } from "@/lib/membership/check-course-access";
+import { getTierInfo } from "@/lib/membership/utils";
 import { Badge } from "@/components/ui/badge";
 
 interface MembershipBadgeProps {

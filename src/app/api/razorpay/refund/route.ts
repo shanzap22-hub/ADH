@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/lib/audit";
 
 const razorpay = new Razorpay({
     key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
@@ -45,6 +46,35 @@ export async function POST(req: Request) {
             .from("payments_temp")
             .update({ status: 'refunded' })
             .eq("payment_id", paymentId);
+
+        // Update transactions table as well
+        const { data: txnData } = await supabase
+            .from("transactions")
+            .update({ status: 'refunded' })
+            .eq("razorpay_payment_id", paymentId)
+            .select('user_id')
+            .single();
+
+        // USER REQUEST: Auto-cancel membership on refund
+        if (txnData?.user_id) {
+            console.log(`[REFUND_ACTION] Cancelling membership for user: ${txnData.user_id}`);
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .update({ membership_tier: 'cancelled' })
+                .eq('id', txnData.user_id);
+
+            if (profileError) console.error("[REFUND_PROFILE_UPDATE_ERROR]", profileError);
+        }
+
+        if (user) {
+            await logAudit({
+                action: "REFUND_TRANSACTION",
+                entityType: "PAYMENT",
+                entityId: paymentId,
+                details: { refundId: refund.id, amount: refund.amount },
+                userId: user.id
+            });
+        }
 
         return NextResponse.json({ success: true, refund });
 

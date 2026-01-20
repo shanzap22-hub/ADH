@@ -5,27 +5,16 @@ export async function POST(req: Request) {
     try {
         console.log("[RAZORPAY_CREATE_ORDER] Starting order creation...");
 
-        const { whatsappNumber } = await req.json();
-        console.log("[RAZORPAY_CREATE_ORDER] WhatsApp number:", whatsappNumber);
+        const { whatsappNumber, couponCode } = await req.json();
+        console.log("[RAZORPAY_CREATE_ORDER] Request:", { whatsappNumber, couponCode });
 
         if (!whatsappNumber) {
-            console.error("[RAZORPAY_CREATE_ORDER] Missing WhatsApp number");
-            return NextResponse.json(
-                { error: "WhatsApp number is required" },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: "WhatsApp number is required" }, { status: 400 });
         }
 
-        // Check if Razorpay credentials are set
         if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-            console.error("[RAZORPAY_CREATE_ORDER] Missing Razorpay credentials");
-            return NextResponse.json(
-                { error: "Razorpay credentials not configured" },
-                { status: 500 }
-            );
+            return NextResponse.json({ error: "Razorpay credentials missing" }, { status: 500 });
         }
-
-        console.log("[RAZORPAY_CREATE_ORDER] Razorpay Key ID:", process.env.RAZORPAY_KEY_ID?.substring(0, 10) + "...");
 
         // Initialize Razorpay
         const razorpay = new Razorpay({
@@ -33,8 +22,49 @@ export async function POST(req: Request) {
             key_secret: process.env.RAZORPAY_KEY_SECRET!,
         });
 
-        // Create Razorpay order - ₹4999 (amount in paise)
-        const AMOUNT_IN_PAISE = 499900; // ₹4999
+        // 1. Calculate Amount
+        let finalAmount = 4999; // Base Price
+        let discountAmount = 0;
+        let appliedCoupon = null;
+
+        if (couponCode) {
+            // Validate Coupon (Server Side)
+            const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+            const supabaseAdmin = createSupabaseClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.SUPABASE_SERVICE_ROLE_KEY!
+            );
+
+            const { data: coupon, error } = await supabaseAdmin
+                .from('coupons')
+                .select('*')
+                .ilike('code', couponCode)
+                .single();
+
+            if (coupon && coupon.active) {
+                // Check Expiry
+                const isExpired = coupon.expires_at && new Date(coupon.expires_at) < new Date();
+                // Check Limit
+                const isLimitReached = coupon.usage_limit && coupon.used_count >= coupon.usage_limit;
+
+                if (!isExpired && !isLimitReached) {
+                    if (coupon.discount_type === 'percentage') {
+                        discountAmount = (finalAmount * Number(coupon.discount_value)) / 100;
+                    } else {
+                        discountAmount = Number(coupon.discount_value);
+                    }
+                    if (discountAmount > finalAmount) discountAmount = finalAmount;
+
+                    finalAmount = finalAmount - discountAmount;
+                    appliedCoupon = coupon;
+                }
+            }
+        }
+
+        // Safety check for negative amount
+        if (finalAmount < 0) finalAmount = 0;
+
+        const AMOUNT_IN_PAISE = Math.round(finalAmount * 100);
 
         const options = {
             amount: AMOUNT_IN_PAISE,
@@ -42,28 +72,46 @@ export async function POST(req: Request) {
             receipt: `receipt_${Date.now()}`,
             notes: {
                 whatsappNumber: whatsappNumber,
+                couponCode: appliedCoupon ? appliedCoupon.code : "",
             },
         };
 
-        console.log("[RAZORPAY_CREATE_ORDER] Creating order with options:", options);
+        console.log("[RAZORPAY_CREATE_ORDER] Creating order with amount:", AMOUNT_IN_PAISE);
 
         const order = await razorpay.orders.create(options);
 
-        console.log("[RAZORPAY_CREATE_ORDER] Order created successfully:", order.id);
+        // TRACKING DROP-OFFS
+        try {
+            const { createClient } = await import('@/lib/supabase/server');
+            const supabase = await createClient();
+
+            const { error: dbError } = await supabase.from('transactions').insert({
+                razorpay_order_id: order.id,
+                amount: order.amount,
+                currency: order.currency,
+                whatsapp_number: whatsappNumber,
+                status: 'pending',
+                source: 'razorpay',
+                coupon_code: appliedCoupon ? appliedCoupon.code : null,
+                original_amount: 499900, // Store original in paise
+                discount_amount: Math.round(discountAmount * 100)
+            });
+
+            if (dbError) console.error("DB Log Error", dbError);
+        } catch (dbEx) {
+            console.error("DB Tracking Skipped", dbEx);
+        }
 
         return NextResponse.json({
             orderId: order.id,
             amount: order.amount,
             currency: order.currency,
-        });
-    } catch (error: any) {
-        console.error("[RAZORPAY_CREATE_ORDER] Error details:", {
-            message: error.message,
-            statusCode: error.statusCode,
-            error: error.error,
-            stack: error.stack
+            appliedCoupon: appliedCoupon ? appliedCoupon.code : null,
+            discountAmount: discountAmount
         });
 
+    } catch (error: any) {
+        console.error("[RAZORPAY_CREATE_ORDER] Error:", error);
         return NextResponse.json(
             { error: error.message || "Failed to create order" },
             { status: 500 }

@@ -130,6 +130,20 @@ export default async function AdminDashboard() {
                         </a>
                     </CardContent>
                 </Card>
+
+                <Card className="hover:shadow-lg transition cursor-pointer">
+                    <CardHeader>
+                        <CardTitle className="text-lg">Manage Coupons</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-sm text-gray-600">
+                            Create and track discount codes
+                        </p>
+                        <a href="/admin/coupons" className="text-purple-600 text-sm font-medium mt-2 inline-block">
+                            Go to Coupons →
+                        </a>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );
