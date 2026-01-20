@@ -418,4 +418,12 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
                                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 ml-0.5" />}
                             </Button>
                         )}
+                    </form>
+                    <div className="text-[10px] text-center text-slate-400">
+                        Zero-Cost Voice • Powered by ADH AI
+                    </div>
+                </div>
+            </div>
+        </div >
+    )
 }
