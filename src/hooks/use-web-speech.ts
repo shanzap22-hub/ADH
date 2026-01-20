@@ -17,6 +17,7 @@ export function useWebSpeech() {
     // Refs to keep track of instances
     const recognitionRef = useRef<any>(null);
     const synthesisRef = useRef<SpeechSynthesis | null>(null);
+    const accumulatedTranscriptRef = useRef<string>("");
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -32,11 +33,9 @@ export function useWebSpeech() {
                 recognition.interimResults = true;
                 recognition.lang = "en-US"; // Default to English, can be parametrized
 
-                // Use ref to accumulate final transcripts to avoid duplication
-                const accumulatedTranscript = { current: "" };
 
                 recognition.onstart = () => {
-                    accumulatedTranscript.current = ""; // Reset on new session
+                    accumulatedTranscriptRef.current = ""; // Reset on new session
                     setIsListening(true);
                 };
                 recognition.onend = () => setIsListening(false);
@@ -47,14 +46,14 @@ export function useWebSpeech() {
                     for (let i = event.resultIndex; i < event.results.length; ++i) {
                         if (event.results[i].isFinal) {
                             // Append only new final results to avoid duplication
-                            accumulatedTranscript.current += event.results[i][0].transcript;
+                            accumulatedTranscriptRef.current += event.results[i][0].transcript;
                         } else {
                             interimTranscript += event.results[i][0].transcript;
                         }
                     }
 
                     // Set transcript to accumulated finals + current interim
-                    setTranscript(accumulatedTranscript.current + interimTranscript);
+                    setTranscript(accumulatedTranscriptRef.current + interimTranscript);
                 };
 
                 recognitionRef.current = recognition;
@@ -66,6 +65,7 @@ export function useWebSpeech() {
     const startListening = useCallback((lang: string = "en-US") => {
         if (recognitionRef.current && !isListening) {
             setTranscript("");
+            accumulatedTranscriptRef.current = ""; // Clear accumulated transcript
             try {
                 recognitionRef.current.lang = lang; // Update language dynamically
                 recognitionRef.current.start();
