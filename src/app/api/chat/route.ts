@@ -58,9 +58,11 @@ Guidelines:
 - React positively to images if provided.`;
 
         // 5. Initialize Google Generative AI with system instruction
+        // NOTE: Using gemini-2.5-flash (current stable model for v1beta API)
+        // Old models like gemini-1.5-flash, gemini-pro are deprecated
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: 'gemini-pro',
+            model: 'gemini-2.5-flash',
             systemInstruction: systemInstruction
         });
 
