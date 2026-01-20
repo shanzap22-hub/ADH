@@ -7,6 +7,18 @@ export const maxDuration = 30;
 
 export async function POST(req: Request) {
     try {
+        // DEBUG: Check if API key exists
+        const hasApiKey = !!process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+        console.log('[AI Chat] API Key present:', hasApiKey);
+
+        if (!hasApiKey) {
+            console.error('[AI Chat] GOOGLE_GENERATIVE_AI_API_KEY is missing!');
+            return new Response(JSON.stringify({ error: 'AI service not configured' }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         const { messages, data } = await req.json();
         // 'data' can carry extra info like image URLs if not embedded in content
 
