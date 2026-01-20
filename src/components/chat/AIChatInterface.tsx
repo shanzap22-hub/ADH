@@ -42,6 +42,32 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
         }
     }, [transcript]);
 
+    // Load chat history on mount
+    useEffect(() => {
+        const loadHistory = async () => {
+            try {
+                const response = await fetch('/api/chat/history');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.messages) {
+                        // Convert database format to Message format
+                        const loadedMessages: Message[] = data.messages.map((msg: any, index: number) => ({
+                            id: msg.id || `${Date.now()}-${index}`,
+                            role: msg.role as 'user' | 'assistant',
+                            content: msg.content
+                        }));
+                        setMessages(loadedMessages);
+                    }
+                }
+            } catch (error) {
+                console.error('[AI Coach] Failed to load history:', error);
+                // Don't show error toast - just start with empty chat
+            }
+        };
+
+        loadHistory();
+    }, []); // Run once on mount
+
     // Scroll User to bottom
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
