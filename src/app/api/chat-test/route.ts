@@ -25,31 +25,52 @@ export async function POST(req: Request) {
         console.log('[CHAT-TEST] Initializing GoogleGenerativeAI...');
         const genAI = new GoogleGenerativeAI(apiKey);
 
-        // 3. Test with gemini-1.5-flash first
-        console.log('[CHAT-TEST] Getting gemini-1.5-flash model...');
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-flash'
-        });
+        // 3. Test different models for v1beta compatibility
+        const modelsToTest = [
+            'gemini-1.5-pro',           // Latest Pro model
+            'gemini-1.0-pro-latest',    // Stable Pro
+            'gemini-1.0-pro',           // Original Pro
+            'gemini-pro',               // Generic Pro alias
+        ];
 
-        console.log('[CHAT-TEST] Model initialized successfully');
+        let successModel = null;
+        let successResponse = null;
 
-        // 4. Generate simple content (NO STREAMING)
-        console.log('[CHAT-TEST] Generating content...');
-        const result = await model.generateContent('Say "Hello from Gemini!" and nothing else.');
+        for (const modelName of modelsToTest) {
+            try {
+                console.log(`[CHAT-TEST] Testing model: ${modelName}`);
+                const model = genAI.getGenerativeModel({ model: modelName });
 
-        console.log('[CHAT-TEST] Content generated successfully');
-        const response = await result.response;
-        const text = response.text();
+                const result = await model.generateContent('Say "Hello from Gemini!" and nothing else.');
+                const response = await result.response;
+                const text = response.text();
 
-        console.log('[CHAT-TEST] Response text:', text);
+                console.log(`[CHAT-TEST] ✅ SUCCESS with ${modelName}: ${text}`);
+                successModel = modelName;
+                successResponse = text;
+                break; // Found working model
 
-        // 5. Return success
-        return Response.json({
-            success: true,
-            model: 'gemini-1.5-flash',
-            response: text,
-            timestamp: new Date().toISOString()
-        });
+            } catch (error: any) {
+                console.log(`[CHAT-TEST] ❌ FAILED with ${modelName}: ${error.message}`);
+            }
+        }
+
+        if (successModel) {
+            return Response.json({
+                success: true,
+                workingModel: successModel,
+                response: successResponse,
+                allModelsTested: modelsToTest,
+                timestamp: new Date().toISOString()
+            });
+        } else {
+            return Response.json({
+                success: false,
+                message: 'All models failed',
+                testedModels: modelsToTest,
+                timestamp: new Date().toISOString()
+            }, { status: 500 });
+        }
 
     } catch (error: any) {
         // Comprehensive error logging
