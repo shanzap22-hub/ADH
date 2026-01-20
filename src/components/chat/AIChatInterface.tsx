@@ -1,6 +1,5 @@
 "use client";
 
-import { useChat } from "@ai-sdk/react";
 import { useWebSpeech } from "@/hooks/use-web-speech";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -13,25 +12,24 @@ interface AIChatInterfaceProps {
     onBack?: () => void;
 }
 
+interface Message {
+    id: string;
+    role: 'user' | 'assistant';
+    content: string;
+}
+
 export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
-    // 1. Vercel AI SDK (using sendMessage, not append in AI SDK 4.0)
-    const { messages, sendMessage, status } = useChat({
-        api: "/api/chat",
-        onError: (err) => {
-            toast.error("AI Coach Error", { description: err.message });
-        },
-        initialMessages: []
-    });
+    // 1. Message state (no AI SDK, simple state)
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const isLoading = status === 'in_progress' || status === 'pending';
-
-    // 2. Local input state (AI SDK 4.0's useChat input state doesn't update reliably)
+    // 2. Local input state
     const [input, setInput] = useState("");
 
-    // 2. Voice Hook
+    // 3. Voice Hook
     const { isListening, transcript, startListening, stopListening, isSupported } = useWebSpeech();
 
-    // 3. Image State
+    // 4. Image State
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -82,20 +80,65 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
 
         if (!input.trim() && !imageUrl) return; // Don't send empty
 
+        const userMessage: Message = {
+            id: Date.now().toString(),
+            role: 'user',
+            content: input
+        };
+
+        // Add user message immediately
+        setMessages(prev => [...prev, userMessage]);
+
+        // Clear input
+        const currentInput = input;
+        setInput("");
+        const currentImageUrl = imageUrl;
+        setImageUrl(null);
+
+        setIsLoading(true);
+
         try {
-            // Use sendMessage from useChat (AI SDK 4.0)
-            await sendMessage({
-                role: 'user',
-                content: input,
-                experimental_attachments: imageUrl ? [{ url: imageUrl, contentType: 'image/*' }] : undefined
+            // Call backend API (non-streaming)
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: [...messages, userMessage],
+                    data: { imageUrl: currentImageUrl }
+                })
             });
 
-            // Clear input after sending
-            setInput("");
-            setImageUrl(null);
-        } catch (error) {
-            console.error('[AI Coach] Error in onSubmit:', error);
-            toast.error('Failed to send message', { description: String(error) });
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'AI response failed');
+            }
+
+            // Add AI response
+            const aiMessage: Message = {
+                id: (Date.now() + 1).toString(),
+                role: 'assistant',
+                content: data.message
+            };
+
+            setMessages(prev => [...prev, aiMessage]);
+
+        } catch (error: any) {
+            console.error('[AI Coach] Error:', error);
+            toast.error('AI Coach Error', { description: error.message });
+
+            // Remove user message on error
+            setMessages(prev => prev.filter(m => m.id !== userMessage.id));
+
+            // Restore input
+            setInput(currentInput);
+            setImageUrl(currentImageUrl);
+        } finally {
+            setIsLoading(false);
         }
     };
 

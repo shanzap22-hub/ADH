@@ -84,43 +84,30 @@ Guidelines:
             }
         });
 
-        // 8. Stream the response
-        const result = await chat.sendMessageStream(lastMessage.content);
+        // 8. Send message WITHOUT STREAMING (fixes Vercel serverless SSE issue)
+        console.log('[AI Chat] Sending message (non-stream mode)...');
+        const result = await chat.sendMessage(lastMessage.content);
 
-        // 9. Create a readable stream for the response
-        const encoder = new TextEncoder();
-        let fullText = '';
+        // 9. Get complete response
+        const response = await result.response;
+        const fullText = response.text();
 
-        const stream = new ReadableStream({
-            async start(controller) {
-                try {
-                    for await (const chunk of result.stream) {
-                        const text = chunk.text();
-                        fullText += text;
-                        controller.enqueue(encoder.encode(text));
-                    }
+        console.log('[AI Chat] Response received, length:', fullText.length);
 
-                    // Save AI response to database
-                    await supabase.from('ai_chat_history').insert({
-                        user_id: user.id,
-                        role: 'assistant',
-                        content: fullText,
-                    });
-
-                    console.log('[AI Chat] Response saved, length:', fullText.length);
-                    controller.close();
-                } catch (error) {
-                    console.error('[AI Chat] Stream error:', error);
-                    controller.error(error);
-                }
-            }
+        // 10. Save AI response to database
+        await supabase.from('ai_chat_history').insert({
+            user_id: user.id,
+            role: 'assistant',
+            content: fullText,
         });
 
-        return new Response(stream, {
-            headers: {
-                'Content-Type': 'text/plain; charset=utf-8',
-                'Transfer-Encoding': 'chunked',
-            }
+        console.log('[AI Chat] Response saved to database');
+
+        // 11. Return complete response (no streaming)
+        return Response.json({
+            success: true,
+            message: fullText,
+            timestamp: new Date().toISOString()
         });
 
     } catch (error: any) {
