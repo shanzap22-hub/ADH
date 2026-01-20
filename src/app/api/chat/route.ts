@@ -60,7 +60,7 @@ Guidelines:
         // 5. Initialize Google Generative AI with system instruction
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-pro',
             systemInstruction: systemInstruction
         });
 
