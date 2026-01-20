@@ -13,11 +13,13 @@ export function useWebSpeech() {
     const [transcript, setTranscript] = useState("");
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [isSupported, setIsSupported] = useState(false);
+    const [lang, setLang] = useState("en-US"); // Default to English, switchable to ml-IN
 
     // Refs to keep track of instances
     const recognitionRef = useRef<any>(null);
     const synthesisRef = useRef<SpeechSynthesis | null>(null);
 
+    // Initialize Speech Recognition
     useEffect(() => {
         if (typeof window !== "undefined") {
             const { webkitSpeechRecognition, SpeechRecognition } = window as unknown as IWindow;
@@ -26,17 +28,21 @@ export function useWebSpeech() {
             if (BrowserSpeechRecognition && window.speechSynthesis) {
                 setIsSupported(true);
 
-                // Initialize Recognition
+                // Create recognition instance
                 const recognition = new BrowserSpeechRecognition();
-                recognition.continuous = false; // Stop after one sentence/pause
-                recognition.interimResults = true;
-                recognition.lang = "en-US"; // Default to English, can be parametrized
+                recognition.continuous = false; // Stop after one sentence to prevent duplication loops
+                recognition.interimResults = true; // Show words as they are spoken
 
+                // Event Handlers
                 recognition.onstart = () => setIsListening(true);
-                recognition.onend = () => setIsListening(false);
+
+                recognition.onend = () => {
+                    setIsListening(false);
+                };
+
                 recognition.onresult = (event: any) => {
-                    let interimTranscript = "";
                     let finalTranscript = "";
+                    let interimTranscript = "";
 
                     for (let i = event.resultIndex; i < event.results.length; ++i) {
                         if (event.results[i].isFinal) {
@@ -45,7 +51,15 @@ export function useWebSpeech() {
                             interimTranscript += event.results[i][0].transcript;
                         }
                     }
-                    setTranscript(finalTranscript || interimTranscript);
+
+                    // Prioritize final, fallback to interim
+                    const currentText = finalTranscript || interimTranscript;
+                    setTranscript(currentText);
+                };
+
+                recognition.onerror = (event: any) => {
+                    console.error("Speech recognition error", event.error);
+                    setIsListening(false);
                 };
 
                 recognitionRef.current = recognition;
@@ -54,13 +68,21 @@ export function useWebSpeech() {
         }
     }, []);
 
+    // Update language dynamically
+    useEffect(() => {
+        if (recognitionRef.current) {
+            recognitionRef.current.lang = lang;
+        }
+    }, [lang]);
+
     const startListening = useCallback(() => {
         if (recognitionRef.current && !isListening) {
-            setTranscript("");
+            setTranscript(""); // Clear previous
             try {
                 recognitionRef.current.start();
             } catch (e) {
-                console.error("Speech recognition start failed", e);
+                // If already started, ignore
+                console.warn("Recognition already started");
             }
         }
     }, [isListening]);
@@ -73,14 +95,11 @@ export function useWebSpeech() {
 
     const speak = useCallback((text: string) => {
         if (synthesisRef.current) {
-            // Cancel any ongoing speech
             synthesisRef.current.cancel();
-
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.onstart = () => setIsSpeaking(true);
             utterance.onend = () => setIsSpeaking(false);
             utterance.onerror = () => setIsSpeaking(false);
-
             synthesisRef.current.speak(utterance);
         }
     }, []);
@@ -96,6 +115,8 @@ export function useWebSpeech() {
         isSupported,
         isListening,
         transcript,
+        lang,
+        setLang,
         startListening,
         stopListening,
         speak,

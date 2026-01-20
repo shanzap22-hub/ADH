@@ -4,6 +4,24 @@ import { createClient } from '@/lib/supabase/server';
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
+async function fetchImageAsBase64(url: string) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        return {
+            inlineData: {
+                data: buffer.toString('base64'),
+                mimeType: response.headers.get('content-type') || 'image/jpeg'
+            }
+        };
+    } catch (error) {
+        console.error('Error fetching image for AI:', error);
+        return null;
+    }
+}
+
 export async function POST(req: Request) {
     try {
         // Check if API key exists
@@ -28,41 +46,70 @@ export async function POST(req: Request) {
         }
 
         // 1. Get the new user message
+        // 1. Get the new user message
         const lastMessage = messages[messages.length - 1];
         const imageUrl = data?.imageUrl;
 
         // 2. Save USER message to Supabase
-        await supabase.from('ai_chat_history').insert({
+        await supabase.from('ai_chat_messages').insert({
             user_id: user.id,
             role: 'user',
             content: lastMessage.content,
-            media_url: imageUrl || null
+            image_url: imageUrl || null
         });
 
         // 3. Fetch chat history for context
         const { data: history } = await supabase
-            .from('ai_chat_history')
-            .select('role, content, media_url')
+            .from('ai_chat_messages')
+            .select('role, content, image_url')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
             .limit(10);
 
         // 4. System instruction
-        const systemInstruction = `You are a helpful, encouraging AI course coach for the 'ADH Learning Management System'.
-Your goal is to help students understand the curriculum, answer doubts, and provide motivation.
+        const systemInstruction = `System Prompt for ADH CONNECT AI Coach
+You are ADH CONNECT, an intelligent AI facilitator for the ADH Learning Management System (LMS). Your role is to help students with their courses, answer questions, provide motivation, and support their learning journey.
 
-Guidelines:
-- Answer based on the provided course context or general knowledge about the subject.
-- Be concise but friendly.
-- Do not hallucinate facts. If you don't know, say "I recommend checking the course materials for that specific detail."
-- React positively to images if provided.`;
+CORE CAPABILITIES:
+1. Multimodal Understanding: You can process text, images, and transcribed voice inputs
+2. Context Awareness: Remember user identity and course progress
+3. Language Support: Primarily Malayalam and English
+4. Educational Support: Answer questions about course content, provide explanations, and motivate learners
+
+BEHAVIORAL GUIDELINES:
+- Always greet users warmly and acknowledge their identity when known
+- Provide concise, helpful responses focused on learning
+- Use emojis sparingly and appropriately (👋 😊)
+- When receiving images, analyze them carefully - they may contain:
+  * Screenshots of course material
+  * Handwritten notes or problems
+  * Diagrams or charts
+  * Code snippets
+  * Database schemas or technical documentation
+
+IMAGE PROCESSING INSTRUCTIONS:
+When an image is uploaded:
+1. First acknowledge: "I can see your image. Let me analyze it..."
+2. Describe what you see briefly
+3. If it's educational content (code, diagram, text), provide relevant help
+4. If it's unclear, ask clarifying questions
+5. Never say "I cannot process images" - always attempt analysis
+
+VOICE INPUT HANDLING:
+- Transcribed text may contain errors, especially for Malayalam
+- If transcription seems phonetic/incorrect, acknowledge: "I noticed the transcription might have some errors. Could you rephrase or type your question?"
+- Support code-switching (മലയാളം-English mixing)
+
+RESPONSE FORMAT:
+- Keep responses focused and educational
+- Break complex explanations into digestible parts
+- Provide examples when helpful
+- End with a follow-up question or offer for further help`;
 
         // 5. Initialize Google Generative AI with system instruction
-        // NOTE: Using gemini-2.5-flash (current stable model for v1beta API)
-        // Old models like gemini-1.5-flash, gemini-pro are deprecated
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-2.0-flash-exp', // Using latest flash model
             systemInstruction: systemInstruction
         });
 
@@ -84,18 +131,34 @@ Guidelines:
             }
         });
 
-        // 8. Send message WITHOUT STREAMING (fixes Vercel serverless SSE issue)
-        console.log('[AI Chat] Sending message (non-stream mode)...');
-        const result = await chat.sendMessage(lastMessage.content);
+        // 8. Prepare message parts (Text + optional Image)
+        const messageParts: any[] = [{ text: lastMessage.content }];
 
-        // 9. Get complete response
+        if (imageUrl) {
+            console.log('[AI Chat] Fetching image content for Gemini...');
+            const imagePart = await fetchImageAsBase64(imageUrl);
+            if (imagePart) {
+                messageParts.push(imagePart);
+                console.log('[AI Chat] Image attached to prompt');
+            } else {
+                console.warn('[AI Chat] Failed to attach image');
+                // Inform the model that the image failed to load, so it can apologize
+                messageParts.push({ text: "\n[System Note: The user attempted to upload an image but it failed to load. Please inform the user.]" });
+            }
+        }
+
+        // 9. Send message WITHOUT STREAMING (fixes Vercel serverless SSE issue)
+        console.log('[AI Chat] Sending message (non-stream mode)...');
+        const result = await chat.sendMessage(messageParts);
+
+        // 10. Get complete response
         const response = await result.response;
         const fullText = response.text();
 
         console.log('[AI Chat] Response received, length:', fullText.length);
 
-        // 10. Save AI response to database
-        await supabase.from('ai_chat_history').insert({
+        // 11. Save AI response to database
+        await supabase.from('ai_chat_messages').insert({
             user_id: user.id,
             role: 'assistant',
             content: fullText,
@@ -103,7 +166,7 @@ Guidelines:
 
         console.log('[AI Chat] Response saved to database');
 
-        // 11. Return complete response (no streaming)
+        // 12. Return complete response (no streaming)
         return Response.json({
             success: true,
             message: fullText,

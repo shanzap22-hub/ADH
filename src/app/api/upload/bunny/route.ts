@@ -19,12 +19,17 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
         }
 
-        // 3. Prepare Bunny.net Config (matching bunny-actions.ts)
+        // Validate File Size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            return NextResponse.json({ error: "File size exceeds 5MB limit" }, { status: 400 });
+        }
+
+        // 3. Prepare Bunny.net Config
         const STORAGE_ZONE = (process.env.BUNNY_STORAGE_ZONE_NAME || '').replace('.b-cdn.net', '').trim();
         const ACCESS_KEY = process.env.BUNNY_STORAGE_API_KEY;
         let REGION = (process.env.BUNNY_STORAGE_REGION || 'sg').toLowerCase().trim();
 
-        // Normalize region codes (same as bunny-actions)
+        // Normalize region codes
         if (REGION === "singapore" || REGION === "asia") REGION = "sg";
         if (REGION === "stockholm" || REGION === "europe") REGION = "se";
         if (REGION === "germany") REGION = "de";
@@ -33,9 +38,21 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Server Configuration Error: Missing Bunny Keys" }, { status: 500 });
         }
 
-        // 4. Construct Filename (unique)
-        const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-        const filename = `chat_images/${Date.now()}-${sanitizedName}`;
+        // 4. Construct Filename and Determine Content-Type
+        const originalName = file.name;
+        // Get extension from original name, default to .jpg if missing
+        let ext = originalName.split('.').pop()?.toLowerCase() || 'jpg';
+        if (ext === 'jpeg') ext = 'jpg';
+
+        // Map common content types based on extension for reliability
+        let contentType = file.type || "application/octet-stream";
+        if (ext === 'png') contentType = 'image/png';
+        if (ext === 'jpg' || ext === 'jpeg') contentType = 'image/jpeg';
+        if (ext === 'webp') contentType = 'image/webp';
+
+        const timestamp = Date.now();
+        const randomString = Math.random().toString(36).substring(2, 7);
+        const filename = `chat_images/${timestamp}-${randomString}.${ext}`;
 
         // 5. Upload to Bunny.net
         const hostname = REGION === 'de' ? 'storage.bunnycdn.com' : `${REGION}.storage.bunnycdn.com`;
@@ -47,7 +64,7 @@ export async function POST(req: Request) {
             method: "PUT",
             headers: {
                 "AccessKey": ACCESS_KEY,
-                "Content-Type": file.type || "application/octet-stream",
+                "Content-Type": contentType,
             },
             body: Buffer.from(arrayBuffer),
         });
@@ -55,17 +72,17 @@ export async function POST(req: Request) {
         if (!response.ok) {
             const errorText = await response.text();
             console.error("Bunny Upload Failed:", errorText);
-            throw new Error("Failed to upload to storage provider");
+            throw new Error(`Failed to upload: ${response.statusText}`);
         }
 
-        // 6. Return Public CDN URL (using Pull Zone Domain)
+        // 6. Return Public CDN URL
         const pullZoneDomain = process.env.NEXT_PUBLIC_BUNNY_PULL_ZONE_DOMAIN ||
             process.env.BUNNY_PULL_ZONE_DOMAIN ||
             "adh-connect.b-cdn.net";
 
         const publicUrl = `https://${pullZoneDomain}/${filename}`;
 
-        return NextResponse.json({ url: publicUrl });
+        return NextResponse.json({ url: publicUrl, type: contentType });
 
     } catch (error: any) {
         console.error("Upload Error:", error);
