@@ -83,12 +83,15 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
         formData.append("file", file);
 
         try {
+            // Upload via API endpoint (which now returns correct CDN URL)
             const res = await fetch("/api/upload/bunny", {
                 method: "POST",
                 body: formData
             });
+
             const data = await res.json();
-            if (data.url) {
+
+            if (res.ok && data.url) {
                 setImageUrl(data.url);
                 toast.success("Image attached!");
             } else {
