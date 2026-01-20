@@ -47,20 +47,7 @@ export async function POST(req: Request) {
             .order('created_at', { ascending: false })
             .limit(10);
 
-        // 4. Initialize Google Generative AI
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-        // 5. Build conversation history in Gemini format
-        const chatHistory = history ? history.reverse().slice(0, -1).map((msg: any) => ({
-            role: msg.role === 'user' ? 'user' : 'model',
-            parts: [{ text: msg.content }]
-        })) : [];
-
-        console.log('[AI Chat] Chat history length:', chatHistory.length);
-        console.log('[AI Chat] User prompt:', lastMessage.content);
-
-        // 6. System instruction
+        // 4. System instruction
         const systemInstruction = `You are a helpful, encouraging AI course coach for the 'ADH Learning Management System'.
 Your goal is to help students understand the curriculum, answer doubts, and provide motivation.
 
@@ -70,10 +57,25 @@ Guidelines:
 - Do not hallucinate facts. If you don't know, say "I recommend checking the course materials for that specific detail."
 - React positively to images if provided.`;
 
+        // 5. Initialize Google Generative AI with system instruction
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-1.5-flash',
+            systemInstruction: systemInstruction
+        });
+
+        // 6. Build conversation history in Gemini format
+        const chatHistory = history ? history.reverse().slice(0, -1).map((msg: any) => ({
+            role: msg.role === 'user' ? 'user' : 'model',
+            parts: [{ text: msg.content }]
+        })) : [];
+
+        console.log('[AI Chat] Chat history length:', chatHistory.length);
+        console.log('[AI Chat] User prompt:', lastMessage.content);
+
         // 7. Start chat with history
         const chat = model.startChat({
             history: chatHistory,
-            systemInstruction: systemInstruction,
             generationConfig: {
                 temperature: 0.7,
                 maxOutputTokens: 1024,
