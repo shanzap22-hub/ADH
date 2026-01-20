@@ -304,7 +304,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-black/20">
             {/* Header */}
-            <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm z-10">
+            <div className="sticky top-0 flex items-center gap-3 p-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm z-20">
                 <Button variant="ghost" size="icon" className="md:hidden" onClick={onBack}>
                     <ArrowLeft className="w-5 h-5" />
                 </Button>
@@ -456,7 +456,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
             </div>
 
             {/* Input Area */}
-            <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+            <div className="p-3 pb-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
 
                 {/* Replying Banner */}
                 {replyingTo && (

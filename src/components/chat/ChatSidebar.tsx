@@ -24,15 +24,15 @@ export function ChatSidebar({ currentUserId, onSelectChat, selectedConversationI
             try {
                 const group = await getGlobalGroupChat();
                 setGroupChat(group);
-                // Auto-select if nothing selected (optional, but good for single-group apps)
-                if (!selectedConversationId) {
-                    onSelectChat(group.id, {
-                        full_name: group.group_name,
-                        is_group: true,
-                        // Use a default group icon/avatar
-                        avatar_url: null
-                    });
-                }
+                setGroupChat(group);
+                // Auto-select logic removed to allow mobile users to see the list first
+                // if (!selectedConversationId) {
+                //     onSelectChat(group.id, {
+                //         full_name: group.group_name,
+                //         is_group: true,
+                //         avatar_url: null
+                //     });
+                // }
             } catch (e) {
                 console.error("Failed to load group chat", e);
             }

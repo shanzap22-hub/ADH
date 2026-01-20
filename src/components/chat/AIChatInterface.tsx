@@ -27,7 +27,9 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
     const [input, setInput] = useState("");
 
     // Voice Hook
-    const { isListening, transcript, lang, setLang, startListening, stopListening, isSupported } = useWebSpeech();
+    const { isListening, transcript, startListening, stopListening, isSupported } = useWebSpeech();
+    const [lang, setLang] = useState<'en-US' | 'ml-IN'>('en-US');
+    const inputBeforeSpeech = useRef<string>("");
 
     // Image State
     const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -35,36 +37,34 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    // FIXED: Voice Transcript Logic to prevent repetition
-    // Instead of continuously appending "prev + transcript", we track the input state
-    // just before the voice session started.
-    const [inputBeforeVoice, setInputBeforeVoice] = useState("");
-
-    // When voice transcript updates, we reconstruct the input
+    // Capture input state when starting to listen
     useEffect(() => {
-        if (transcript) {
-            setInput((_) => {
-                // If there was text before, add a space if needed
-                const prefix = inputBeforeVoice ? `${inputBeforeVoice} ` : "";
-                return prefix + transcript;
-            });
+        if (isListening) {
+            inputBeforeSpeech.current = input;
         }
-    }, [transcript, inputBeforeVoice]);
+    }, [isListening]);
 
-    const handleStartListening = () => {
-        setInputBeforeVoice(input); // Capture what's already typed
-        startListening();
-    };
+    // Sync Voice Transcript to Input
+    useEffect(() => {
+        if (isListening && transcript) {
+            const prefix = inputBeforeSpeech.current;
+            const spacer = prefix && !prefix.endsWith(" ") ? " " : "";
+            setInput(prefix + spacer + transcript);
+        }
+    }, [transcript, isListening]);
 
-    const toggleLanguage = () => {
-        const newLang = lang === "en-US" ? "ml-IN" : "en-US";
-        setLang(newLang);
-        toast.info(`Voice Language: ${newLang === "ml-IN" ? "Malayalam 🇮🇳" : "English 🇺🇸"}`);
-    };
+    // Auto-resize textarea when input changes (including voice input)
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+    }, [input]);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+        messagesEndRef.current?.scrollIntoView({ behavior });
     };
 
     // Load chat history on mount
@@ -76,7 +76,7 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
                     const data = await response.json();
                     if (data.messages) {
                         setMessages(data.messages);
-                        setTimeout(scrollToBottom, 100);
+                        setTimeout(() => scrollToBottom("auto"), 100);
                     }
                 }
             } catch (error) {
@@ -118,7 +118,7 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
             const data = await res.json();
 
             if (res.ok && data.url) {
-                setImageUrl(data.url); // Use the CDN URL
+                setImageUrl(data.url);
                 toast.success("Image attached!");
             } else {
                 throw new Error(data.error || "Upload failed");
@@ -142,15 +142,7 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
     const onSubmit = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
 
-        // Use localImagePreview as a fallback check if upload is somehow stuck but url is seemingly there
-        // But mainly we rely on imageUrl.
-        const effectiveImageUrl = imageUrl;
-
-        // Validation: Text OR Image must exist
-        if ((!input.trim() && !effectiveImageUrl) || isLoading || uploading) {
-            if (uploading) toast.warning("Please wait for image upload to complete.");
-            return;
-        }
+        if ((!input.trim() && !imageUrl) || isLoading || uploading) return;
 
         // Optimistic UI Update
         const tempId = Date.now().toString();
@@ -158,18 +150,18 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
             id: tempId,
             role: 'user',
             content: input,
-            image_url: effectiveImageUrl || undefined,
+            image_url: imageUrl || undefined,
             created_at: new Date().toISOString()
         };
 
         setMessages(prev => [...prev, userMessage]);
 
-        // Save Context for Recovery
+        // Save Context
         const currentInput = input;
+        const currentImageUrl = imageUrl;
 
         // Reset Inputs
         setInput("");
-        setInputBeforeVoice(""); // Reset voice context
         clearImage();
         setIsLoading(true);
 
@@ -179,7 +171,7 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     messages: [...messages, userMessage],
-                    data: { imageUrl: effectiveImageUrl } // Send actual URL
+                    data: { imageUrl: currentImageUrl }
                 })
             });
 
@@ -193,7 +185,9 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
                 throw new Error(data.error || 'AI response failed');
             }
 
-            // Append AI response
+            // Replace optimistic message or just append AI response
+            // Ideally backend returns true ID, but for now we trust persistence happened
+
             const aiMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
@@ -209,9 +203,9 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
 
             // Restore input on failure
             setInput(currentInput);
-            if (effectiveImageUrl) {
-                setImageUrl(effectiveImageUrl);
-                setLocalImagePreview(effectiveImageUrl); // Optimistic best effort restore
+            if (currentImageUrl) {
+                setImageUrl(currentImageUrl);
+                setLocalImagePreview(currentImageUrl); // Restoration might need fetch if it was local URL
             }
 
             // Remove optimistic message
@@ -232,7 +226,7 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
     return (
         <div className="flex flex-col h-full bg-white dark:bg-slate-950">
             {/* Header */}
-            <header className="h-16 border-b flex items-center px-4 bg-white dark:bg-slate-900 shrink-0 shadow-sm z-10">
+            <header className="sticky top-0 h-14 border-b flex items-center px-4 bg-white dark:bg-slate-900 shrink-0 shadow-sm z-20">
                 <div className="flex items-center gap-3">
                     {onBack && (
                         <Button
@@ -318,7 +312,7 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 border-t bg-white dark:bg-slate-900 shrink-0">
+            <div className="p-4 pb-6 border-t bg-white dark:bg-slate-900 shrink-0">
                 <div className="max-w-3xl mx-auto space-y-2">
 
                     {/* Image Preview Area */}
@@ -369,10 +363,11 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
 
                         <div className="relative flex-1">
                             <Textarea
+                                ref={textareaRef}
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder={`Type or speak in ${lang === 'ml-IN' ? 'Malayalam' : 'English'}...`}
-                                className="min-h-[40px] max-h-[120px] resize-none border-0 bg-transparent focus-visible:ring-0 px-0 shadow-none py-2.5"
+                                placeholder="Type your message..."
+                                className="min-h-[40px] max-h-[120px] resize-none border-0 bg-transparent focus-visible:ring-0 px-0 shadow-none py-2.5 overflow-y-auto"
                                 disabled={isLoading}
                                 autoFocus
                                 onKeyDown={handleKeyDown}
@@ -380,48 +375,54 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
                             />
                         </div>
 
-                        {isSupported && (
-                            <div className="flex gap-1">
+                        <div className="flex items-center gap-1 shrink-0">
+                            {/* Send Button (Only if input exists) */}
+                            {(input.trim() || imageUrl) && (
                                 <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-xs h-10 px-2 text-slate-500 hover:bg-slate-100"
-                                    onClick={toggleLanguage}
-                                    title="Switch Language"
-                                >
-                                    {lang === 'en-US' ? '🇺🇸 ENG' : '🇮🇳 MAL'}
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant={isListening ? "destructive" : "ghost"}
+                                    type="submit"
                                     size="icon"
-                                    className={cn("shrink-0 rounded-full h-10 w-10", isListening ? "animate-pulse shadow-lg shadow-red-500/20" : "text-slate-500 hover:text-red-500 hover:bg-red-50")}
-                                    onClick={isListening ? stopListening : handleStartListening}
-                                    title={isListening ? "Stop Recording" : "Start Voice Input"}
+                                    disabled={isLoading || uploading}
+                                    className={cn(
+                                        "transition-all rounded-full h-10 w-10 shadow-lg shadow-indigo-500/20",
+                                        "bg-indigo-600 hover:bg-indigo-700 text-white order-2"
+                                    )}
                                 >
-                                    {isListening ? <StopCircle className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 ml-0.5" />}
                                 </Button>
-                            </div>
-                        )}
+                            )}
 
-                        {(input.trim() || imageUrl) && (
-                            <Button
-                                type="submit"
-                                size="icon"
-                                disabled={isLoading || uploading}
-                                className={cn(
-                                    "shrink-0 transition-all rounded-full h-10 w-10 shadow-lg shadow-indigo-500/20",
-                                    "bg-indigo-600 hover:bg-indigo-700 text-white"
-                                )}
-                            >
-                                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 ml-0.5" />}
-                            </Button>
-                        )}
+                            {/* Voice Input (Always visible if supported) */}
+                            {isSupported && (
+                                <div className={cn("flex items-center gap-1", (input.trim() || imageUrl) ? "order-1 mr-1" : "")}>
+                                    {/* Language Switcher - Always visible to allow switching mid-sentence */}
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 px-2 text-[10px] font-medium text-slate-500 hover:text-indigo-600"
+                                        onClick={() => setLang(l => l === 'en-US' ? 'ml-IN' : 'en-US')}
+                                        title="Switch Language"
+                                    >
+                                        {lang === 'en-US' ? 'EN' : 'ML'}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant={isListening ? "destructive" : "ghost"}
+                                        size="icon"
+                                        className={cn(
+                                            "rounded-full h-10 w-10",
+                                            isListening ? "animate-pulse shadow-lg shadow-red-500/20" : "text-slate-500 hover:text-red-500 hover:bg-red-50"
+                                        )}
+                                        onClick={() => isListening ? stopListening() : startListening(lang)}
+                                        title={isListening ? "Stop Recording" : "Start Voice Input"}
+                                    >
+                                        {isListening ? <StopCircle className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
                     </form>
-                    <div className="text-[10px] text-center text-slate-400">
-                        Zero-Cost Voice • Powered by ADH AI
-                    </div>
+                    {/* Branding Removed as per user request */}
                 </div>
             </div>
         </div >

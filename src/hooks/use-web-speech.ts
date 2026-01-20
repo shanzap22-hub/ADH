@@ -13,13 +13,11 @@ export function useWebSpeech() {
     const [transcript, setTranscript] = useState("");
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [isSupported, setIsSupported] = useState(false);
-    const [lang, setLang] = useState("en-US"); // Default to English, switchable to ml-IN
 
     // Refs to keep track of instances
     const recognitionRef = useRef<any>(null);
     const synthesisRef = useRef<SpeechSynthesis | null>(null);
 
-    // Initialize Speech Recognition
     useEffect(() => {
         if (typeof window !== "undefined") {
             const { webkitSpeechRecognition, SpeechRecognition } = window as unknown as IWindow;
@@ -28,38 +26,35 @@ export function useWebSpeech() {
             if (BrowserSpeechRecognition && window.speechSynthesis) {
                 setIsSupported(true);
 
-                // Create recognition instance
+                // Initialize Recognition
                 const recognition = new BrowserSpeechRecognition();
-                recognition.continuous = false; // Stop after one sentence to prevent duplication loops
-                recognition.interimResults = true; // Show words as they are spoken
+                recognition.continuous = true; // Keep listening until stopped manually or timeout
+                recognition.interimResults = true;
+                recognition.lang = "en-US"; // Default to English, can be parametrized
 
-                // Event Handlers
-                recognition.onstart = () => setIsListening(true);
+                // Use ref to accumulate final transcripts to avoid duplication
+                const accumulatedTranscript = { current: "" };
 
-                recognition.onend = () => {
-                    setIsListening(false);
+                recognition.onstart = () => {
+                    accumulatedTranscript.current = ""; // Reset on new session
+                    setIsListening(true);
                 };
-
+                recognition.onend = () => setIsListening(false);
                 recognition.onresult = (event: any) => {
-                    let finalTranscript = "";
                     let interimTranscript = "";
 
+                    // Only process new results from resultIndex
                     for (let i = event.resultIndex; i < event.results.length; ++i) {
                         if (event.results[i].isFinal) {
-                            finalTranscript += event.results[i][0].transcript;
+                            // Append only new final results to avoid duplication
+                            accumulatedTranscript.current += event.results[i][0].transcript;
                         } else {
                             interimTranscript += event.results[i][0].transcript;
                         }
                     }
 
-                    // Prioritize final, fallback to interim
-                    const currentText = finalTranscript || interimTranscript;
-                    setTranscript(currentText);
-                };
-
-                recognition.onerror = (event: any) => {
-                    console.error("Speech recognition error", event.error);
-                    setIsListening(false);
+                    // Set transcript to accumulated finals + current interim
+                    setTranscript(accumulatedTranscript.current + interimTranscript);
                 };
 
                 recognitionRef.current = recognition;
@@ -68,21 +63,14 @@ export function useWebSpeech() {
         }
     }, []);
 
-    // Update language dynamically
-    useEffect(() => {
-        if (recognitionRef.current) {
-            recognitionRef.current.lang = lang;
-        }
-    }, [lang]);
-
-    const startListening = useCallback(() => {
+    const startListening = useCallback((lang: string = "en-US") => {
         if (recognitionRef.current && !isListening) {
-            setTranscript(""); // Clear previous
+            setTranscript("");
             try {
+                recognitionRef.current.lang = lang; // Update language dynamically
                 recognitionRef.current.start();
             } catch (e) {
-                // If already started, ignore
-                console.warn("Recognition already started");
+                console.error("Speech recognition start failed", e);
             }
         }
     }, [isListening]);
@@ -95,11 +83,14 @@ export function useWebSpeech() {
 
     const speak = useCallback((text: string) => {
         if (synthesisRef.current) {
+            // Cancel any ongoing speech
             synthesisRef.current.cancel();
+
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.onstart = () => setIsSpeaking(true);
             utterance.onend = () => setIsSpeaking(false);
             utterance.onerror = () => setIsSpeaking(false);
+
             synthesisRef.current.speak(utterance);
         }
     }, []);
@@ -115,8 +106,6 @@ export function useWebSpeech() {
         isSupported,
         isListening,
         transcript,
-        lang,
-        setLang,
         startListening,
         stopListening,
         speak,

@@ -21,7 +21,8 @@ export default function ChatPageClient({ currentUserId, currentUserTier, current
     const showUpgradeBanner = ["bronze", "silver"].includes(currentUserTier);
 
     return (
-        <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-slate-50 dark:bg-black/20">
+        // Mobile: Fixed top-0 (no header), Bottom-16 to clear BottomNav
+        <div className="fixed left-0 right-0 top-0 bottom-16 md:static md:h-[calc(100vh-4rem)] flex overflow-hidden bg-slate-50 dark:bg-black/20">
             {/* Sidebar - Hidden on mobile if chat is selected */}
             <div className={cn(
                 "w-full md:w-[320px] lg:w-[380px] border-r border-slate-200 dark:border-slate-800 flex flex-col h-full bg-white dark:bg-slate-900 transition-all duration-300",

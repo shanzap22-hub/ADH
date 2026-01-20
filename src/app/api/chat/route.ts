@@ -46,7 +46,6 @@ export async function POST(req: Request) {
         }
 
         // 1. Get the new user message
-        // 1. Get the new user message
         const lastMessage = messages[messages.length - 1];
         const imageUrl = data?.imageUrl;
 
@@ -109,20 +108,43 @@ RESPONSE FORMAT:
         // 5. Initialize Google Generative AI with system instruction
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: 'gemini-2.0-flash-exp', // Using latest flash model
+            model: 'gemini-2.5-flash', // Updated to current stable 2026 model
             systemInstruction: systemInstruction
         });
 
-        // 6. Build conversation history in Gemini format
-        const chatHistory = history ? history.reverse().slice(0, -1).map((msg: any) => ({
-            role: msg.role === 'user' ? 'user' : 'model',
-            parts: [{ text: msg.content }]
-        })) : [];
+        // 6. Build conversation history in Gemini format (Strict Alternating User/Model)
+        let chatHistory: any[] = [];
+        const rawHistory = history ? history.reverse().slice(0, -1) : [];
 
-        console.log('[AI Chat] Chat history length:', chatHistory.length);
-        console.log('[AI Chat] User prompt:', lastMessage.content);
+        for (const msg of rawHistory) {
+            const role = msg.role === 'user' ? 'user' : 'model';
+            const text = msg.content || '[Image Attachment]'; // Handle empty content
 
-        // 7. Start chat with history
+            if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === role) {
+                // Merge with previous message of same role
+                chatHistory[chatHistory.length - 1].parts[0].text += "\n\n" + text;
+            } else {
+                chatHistory.push({
+                    role: role,
+                    parts: [{ text: text }]
+                });
+            }
+        }
+
+        // 7. Ensure history ends with Model (if it ends with User, merge that User message into the current prompt to avoid consecutive User turns)
+        let currentPromptText = lastMessage.content;
+
+        if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === 'user') {
+            const lastUserMsg = chatHistory.pop(); // Remove from history
+            // Prepend old user message to current prompt
+            currentPromptText = lastUserMsg.parts[0].text + "\n\n" + currentPromptText;
+            console.log('[AI Chat] Merged dangling user history into current prompt');
+        }
+
+        console.log('[AI Chat] Final Chat history length:', chatHistory.length);
+        console.log('[AI Chat] User prompt:', currentPromptText.substring(0, 50) + "...");
+
+        // 8. Start chat with sanitized history (Note: This object is created here but we use create new one in helper below)
         const chat = model.startChat({
             history: chatHistory,
             generationConfig: {
@@ -131,8 +153,8 @@ RESPONSE FORMAT:
             }
         });
 
-        // 8. Prepare message parts (Text + optional Image)
-        const messageParts: any[] = [{ text: lastMessage.content }];
+        // 9. Prepare message parts (Text + optional Image)
+        const messageParts: any[] = [{ text: currentPromptText }];
 
         if (imageUrl) {
             console.log('[AI Chat] Fetching image content for Gemini...');
@@ -149,11 +171,58 @@ RESPONSE FORMAT:
 
         // 9. Send message WITHOUT STREAMING (fixes Vercel serverless SSE issue)
         console.log('[AI Chat] Sending message (non-stream mode)...');
-        const result = await chat.sendMessage(messageParts);
 
-        // 10. Get complete response
-        const response = await result.response;
-        const fullText = response.text();
+        let fullText = "";
+
+        try {
+            // Helper to try generation
+            const generateResponse = async (modelName: string, parts: any[]) => {
+                const model = genAI.getGenerativeModel({
+                    model: modelName,
+                    systemInstruction: systemInstruction
+                });
+
+                const chat = model.startChat({
+                    history: chatHistory,
+                    generationConfig: {
+                        temperature: 0.7,
+                        maxOutputTokens: 1024,
+                    }
+                });
+
+                const result = await chat.sendMessage(parts);
+                const response = await result.response;
+                return response.text();
+            };
+
+            try {
+                // Attempt 1: Gemini 2.5 Flash (Current Standard 2026)
+                console.log('[AI Chat] Attempting with gemini-2.5-flash...');
+                fullText = await generateResponse('gemini-2.5-flash', messageParts);
+
+            } catch (flashError: any) {
+                console.warn('[AI Chat] gemini-2.5-flash failed:', flashError.message);
+
+                // Attempt 2: Gemini Pro (Fallback, text only)
+                console.log('[AI Chat] Falling back to gemini-pro...');
+
+                // Filter parts to be text-only for Gemini Pro compatibility in simple chat
+                const textParts = messageParts.filter(p => p.text);
+
+                fullText = await generateResponse('gemini-pro', textParts);
+                fullText += "\n\n*[System Note: Switched to legacy model (gemini-pro) due to error with 2.5-flash. Images may be ignored.]*";
+            }
+
+        } catch (genError: any) {
+            console.error('[AI Chat] Gemini Generation Error:', genError);
+
+            // TEMPORARY DEBUGGING: Expose error to user
+            fullText = `Technical Error: ${genError.message || JSON.stringify(genError)}`;
+
+            if (genError.message?.includes('safety')) {
+                fullText = "I cannot answer this request due to safety guidelines (**Safety Block**).";
+            }
+        }
 
         console.log('[AI Chat] Response received, length:', fullText.length);
 
