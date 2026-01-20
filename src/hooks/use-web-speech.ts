@@ -17,6 +17,7 @@ export function useWebSpeech() {
     // Refs to keep track of instances
     const recognitionRef = useRef<any>(null);
     const synthesisRef = useRef<SpeechSynthesis | null>(null);
+    const lastInterimRef = useRef<string>("");
     const accumulatedTranscriptRef = useRef<string>("");
 
     useEffect(() => {
@@ -35,25 +36,25 @@ export function useWebSpeech() {
 
 
                 recognition.onstart = () => {
-                    accumulatedTranscriptRef.current = ""; // Reset on new session
+                    // Reset last interim and accumulated transcript when starting
+                    lastInterimRef.current = "";
+                    accumulatedTranscriptRef.current = "";
                     setIsListening(true);
                 };
                 recognition.onend = () => setIsListening(false);
                 recognition.onresult = (event: any) => {
-                    let interimTranscript = "";
-
-                    // Only process new results from resultIndex
-                    for (let i = event.resultIndex; i < event.results.length; ++i) {
-                        if (event.results[i].isFinal) {
-                            // Append only new final results to avoid duplication
-                            accumulatedTranscriptRef.current += event.results[i][0].transcript;
-                        } else {
-                            interimTranscript += event.results[i][0].transcript;
-                        }
+                    // Get the most recent result (the last one in the list)
+                    const lastResult = event.results[event.results.length - 1];
+                    if (!lastResult) return;
+                    if (lastResult.isFinal) {
+                        // Append final transcript to the accumulated ref
+                        accumulatedTranscriptRef.current += lastResult[0].transcript;
+                        setTranscript(accumulatedTranscriptRef.current);
+                    } else {
+                        // Use interim transcript (replace previous interim)
+                        const interim = lastResult[0].transcript;
+                        setTranscript(accumulatedTranscriptRef.current + interim);
                     }
-
-                    // Set transcript to accumulated finals + current interim
-                    setTranscript(accumulatedTranscriptRef.current + interimTranscript);
                 };
 
                 recognitionRef.current = recognition;
