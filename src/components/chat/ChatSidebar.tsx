@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Pin } from "lucide-react"; // Changed icon
+import { Users, Pin, Bot } from "lucide-react"; // Changed icon
 import { formatDistanceToNow } from "date-fns";
 import { getGlobalGroupChat } from "@/actions/chat-actions";
 import { createClient } from "@/lib/supabase/client";
@@ -61,7 +61,7 @@ export function ChatSidebar({ currentUserId, onSelectChat, selectedConversationI
             </div>
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto p-2">
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
                 {groupChat && (
                     <div
                         onClick={() => onSelectChat(groupChat.id, {
@@ -100,6 +100,39 @@ export function ChatSidebar({ currentUserId, onSelectChat, selectedConversationI
                         <Pin className="w-3 h-3 text-slate-300 absolute right-3 bottom-3 rotate-45" />
                     </div>
                 )}
+
+                {/* ADH AI Coach Integration */}
+                <div
+                    onClick={() => onSelectChat('ai-coach', {
+                        full_name: "ADH AI Coach",
+                        is_ai: true
+                    })}
+                    className={cn(
+                        "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors relative group",
+                        selectedConversationId === 'ai-coach'
+                            ? "bg-indigo-50 dark:bg-indigo-900/20"
+                            : "hover:bg-slate-100 dark:hover:bg-slate-800/50"
+                    )}
+                >
+                    <Avatar className="h-10 w-10 bg-indigo-100 dark:bg-indigo-900">
+                        <AvatarFallback className="bg-indigo-100 text-indigo-600">
+                            <Bot className="w-5 h-5" />
+                        </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-baseline mb-0.5">
+                            <p className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate pr-2">
+                                ADH AI Coach
+                            </p>
+                            <span className="text-[10px] bg-indigo-100 text-indigo-700 font-medium px-1.5 py-0.5 rounded-full shrink-0">
+                                AI
+                            </span>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                            Your personal course facilitator
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     );

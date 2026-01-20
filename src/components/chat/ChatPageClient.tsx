@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { ChatWindow } from "@/components/chat/ChatWindow";
+import { AIChatInterface } from "@/components/chat/AIChatInterface";
 import { cn } from "@/lib/utils";
 import { MessageSquare, ShieldAlert } from "lucide-react";
 
@@ -17,8 +18,6 @@ export default function ChatPageClient({ currentUserId, currentUserTier, current
     const [selectedChatInfo, setSelectedChatInfo] = useState<any>(null);
 
     // Limited Offer Banner Logic
-    // Only show if chat is enabled for them. 
-    // Assuming tiers logic holds.
     const showUpgradeBanner = ["bronze", "silver"].includes(currentUserTier);
 
     return (
@@ -49,7 +48,11 @@ export default function ChatPageClient({ currentUserId, currentUserTier, current
                 "flex-1 h-full bg-[#f0f2f5] dark:bg-black/40",
                 selectedChatId ? "flex" : "hidden md:flex"
             )}>
-                {selectedChatId && selectedChatInfo ? (
+                {selectedChatId === 'ai-coach' ? (
+                    <div className="w-full h-full flex flex-col">
+                        <AIChatInterface onBack={() => setSelectedChatId(null)} />
+                    </div>
+                ) : selectedChatId && selectedChatInfo ? (
                     <div className="w-full h-full flex flex-col">
                         <ChatWindow
                             conversationId={selectedChatId}
@@ -65,9 +68,9 @@ export default function ChatPageClient({ currentUserId, currentUserTier, current
                             <MessageSquare className="w-16 h-16 text-slate-300 dark:text-slate-600" />
                         </div>
                         <div className="text-center">
-                            <h2 className="text-2xl font-light text-slate-600 dark:text-slate-300">Community Chat</h2>
+                            <h2 className="text-2xl font-light text-slate-600 dark:text-slate-300">Community Chat & AI Coach</h2>
                             <p className="text-sm mt-2 max-w-sm mx-auto">
-                                Select the community chat to start messaging with peers.
+                                Select a conversation from the sidebar to start messaging.
                             </p>
                         </div>
                     </div>
