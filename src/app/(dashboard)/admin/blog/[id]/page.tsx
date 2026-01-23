@@ -3,12 +3,13 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 
 interface EditBlogPageProps {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
-export default async function EditBlogPage({ params }: EditBlogPageProps) {
+export default async function EditBlogPage(props: EditBlogPageProps) {
+    const params = await props.params;
     const supabase = await createClient();
 
     // Auth Check

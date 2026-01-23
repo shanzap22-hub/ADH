@@ -1,25 +1,55 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutDashboard, Compass, GraduationCap, LogOut, Shield, Video } from "lucide-react";
+import { LayoutDashboard, Compass, BookOpen, Video, MessageSquare, Users, User, LogOut, Shield, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 const routes = [
-    // {
-    //     label: "Browse",
-    //     icon: Compass,
-    //     href: "/courses",
-    //     color: "text-sky-500",
-    // },
-    // {
-    //     label: "Dashboard",
-    //     icon: LayoutDashboard,
-    //     href: "/dashboard",
-    //     color: "text-violet-500",
-    // },
+    {
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        href: "/dashboard",
+        color: "text-slate-500",
+    },
+    {
+        label: "Browse",
+        icon: Compass,
+        href: "/search",
+        color: "text-slate-500",
+    },
+    {
+        label: "My Learning",
+        icon: BookOpen,
+        href: "/courses",
+        color: "text-slate-500",
+    },
+    {
+        label: "Live Class",
+        icon: Video,
+        href: "/live",
+        color: "text-slate-500",
+    },
+    {
+        label: "AI Mentor",
+        icon: MessageSquare,
+        href: "/chat",
+        color: "text-slate-500",
+    },
+    {
+        label: "Community",
+        icon: Users,
+        href: "/community",
+        color: "text-slate-500",
+    },
+    {
+        label: "Profile",
+        icon: User,
+        href: "/profile",
+        color: "text-slate-500",
+    },
 ];
 
 interface StudentSidebarProps {

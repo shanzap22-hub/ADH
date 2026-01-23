@@ -62,11 +62,6 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "https://adh.today",
-  },
-  icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
-    apple: "/logo.png",
   }
 };
 
@@ -80,7 +75,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={cn("min-h-screen bg-background font-sans antialiased flex flex-col", outfit.variable)} suppressHydrationWarning>
+      <body className={cn("min-h-screen bg-background font-sans antialiased flex flex-col overflow-x-hidden", outfit.variable)} suppressHydrationWarning>
         <div className="flex-1">
           {children}
         </div>

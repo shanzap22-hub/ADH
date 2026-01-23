@@ -23,9 +23,7 @@ export function Navbar() {
                     <Link href="#features" className="hover:text-foreground transition-colors">
                         Features
                     </Link>
-                    <Link href="#pricing" className="hover:text-foreground transition-colors">
-                        Pricing
-                    </Link>
+
                     <Link href="#about" className="hover:text-foreground transition-colors">
                         About
                     </Link>

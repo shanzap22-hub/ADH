@@ -28,6 +28,11 @@ export const FileUpload = ({
         const file = acceptedFiles?.[0];
         if (!file) return;
 
+        if (file.size > 10 * 1024 * 1024) {
+            toast.error("File is too large. Maximum size is 10MB.");
+            return;
+        }
+
         try {
             setIsUploading(true);
 

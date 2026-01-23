@@ -56,7 +56,7 @@ export default async function BlogListPage() {
                             <CardHeader className="space-y-2 p-6">
                                 <div className="text-xs text-muted-foreground flex items-center mb-2">
                                     <Calendar className="mr-1 h-3 w-3" />
-                                    {new Date(post.published_at!).toLocaleDateString('en-IN', { dateStyle: 'long' })}
+                                    {new Date(post.published_at || post.created_at).toLocaleDateString('en-IN', { dateStyle: 'long' })}
                                 </div>
                                 <Link href={`/blog/${post.slug}`} className="hover:underline">
                                     <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 line-clamp-2">

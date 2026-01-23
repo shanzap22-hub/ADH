@@ -1,10 +1,32 @@
+"use client";
+
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useTransition } from "react";
+import { toast } from "sonner";
+import { submitContactForm } from "@/actions/contact";
 
 export default function ContactPage() {
+    const [isPending, startTransition] = useTransition();
+
+    const handleSubmit = (formData: FormData) => {
+        startTransition(async () => {
+            const result = await submitContactForm(formData);
+            if (result.error) {
+                toast.error(result.error);
+            } else {
+                toast.success("Message sent successfully!");
+                // Optional: Reset form here if needed, but standard form submission resets usually.
+                // To reset controlled form we need state, but FormData approach clears if we reset the HTMLFormElement.
+                const form = document.getElementById("contact-form") as HTMLFormElement;
+                form?.reset();
+            }
+        });
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-20">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -88,11 +110,12 @@ export default function ContactPage() {
                     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm border border-slate-700/50 p-8">
                         <h2 className="text-2xl font-bold text-white mb-6">Send us a Message</h2>
 
-                        <form className="space-y-6">
+                        <form id="contact-form" action={handleSubmit} className="space-y-6">
                             <div>
                                 <Label htmlFor="name" className="text-white">Full Name *</Label>
                                 <Input
                                     id="name"
+                                    name="name"
                                     type="text"
                                     placeholder="Your name"
                                     className="mt-2 bg-slate-900 border-slate-700 text-white"
@@ -104,6 +127,7 @@ export default function ContactPage() {
                                 <Label htmlFor="email" className="text-white">Email Address *</Label>
                                 <Input
                                     id="email"
+                                    name="email"
                                     type="email"
                                     placeholder="you@example.com"
                                     className="mt-2 bg-slate-900 border-slate-700 text-white"
@@ -115,6 +139,7 @@ export default function ContactPage() {
                                 <Label htmlFor="phone" className="text-white">Phone Number</Label>
                                 <Input
                                     id="phone"
+                                    name="phone"
                                     type="tel"
                                     placeholder="+91 XXXXX XXXXX"
                                     className="mt-2 bg-slate-900 border-slate-700 text-white"
@@ -125,6 +150,7 @@ export default function ContactPage() {
                                 <Label htmlFor="message" className="text-white">Message *</Label>
                                 <Textarea
                                     id="message"
+                                    name="message"
                                     rows={5}
                                     placeholder="Tell us how we can help you..."
                                     className="mt-2 bg-slate-900 border-slate-700 text-white"
@@ -134,9 +160,10 @@ export default function ContactPage() {
 
                             <Button
                                 type="submit"
+                                disabled={isPending}
                                 className="w-full bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-semibold"
                             >
-                                Send Message
+                                {isPending ? "Sending..." : "Send Message"}
                             </Button>
                         </form>
                     </div>
@@ -158,3 +185,4 @@ export default function ContactPage() {
         </div>
     );
 }
+

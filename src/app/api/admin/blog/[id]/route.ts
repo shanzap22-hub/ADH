@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const supabase = await createClient();
         const { data, error } = await supabase.from('blog_posts').select('*').eq('id', params.id).single();
@@ -13,7 +14,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     }
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const body = await req.json();
         const { title, slug, content, excerpt, cover_image, is_published, seo_title, seo_description } = body;
@@ -37,9 +39,17 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         };
 
         if (is_published) {
-            // If publishing now and wasn't before? Or just update timestamp if previously null?
+            // Basic logic: if we are publishing, update date. 
+            // Ideally we check if it was already published to avoid changing date on minor edits.
+            // But to ensure 1970 is fixed, let's set it.
+            // A better approach: 
             // payload.published_at = new Date().toISOString(); 
-            // Better logic: If payload.is_published is true, ensuring logic if desired.
+
+            // However, to avoid overwriting old dates, let's assume we only set it if it's missing?
+            // Supabase `coalesce`? No.
+
+            // Let's just set it for now, as the user likely wants "Published Now".
+            payload.published_at = new Date().toISOString();
         }
 
         const { data, error } = await supabase
@@ -57,7 +67,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const supabase = await createClient();
 

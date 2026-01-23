@@ -7,12 +7,13 @@ import { Calendar, ArrowLeft, User, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface BlogPostPageProps {
-    params: {
+    params: Promise<{
         slug: string;
-    };
+    }>;
 }
 
-export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
+export async function generateMetadata(props: BlogPostPageProps): Promise<Metadata> {
+    const params = await props.params;
     const supabase = await createClient();
     const { data: post } = await supabase
         .from('blog_posts')
@@ -20,6 +21,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
         .eq('slug', params.slug)
         .eq('is_published', true)
         .single();
+
 
     if (!post) {
         return { title: 'Post Not Found | ADH Connect' };
@@ -37,13 +39,14 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
     };
 }
 
-export default async function BlogPostPage({ params }: BlogPostPageProps) {
+export default async function BlogPostPage(props: BlogPostPageProps) {
+    const params = await props.params;
     const supabase = await createClient();
 
     // Fetch Post and Author details if needed
     const { data: post, error } = await supabase
         .from('blog_posts')
-        .select('*, author:profiles(*)') // Assuming profile relation exists/linked manually
+        .select('*') // Assuming profile relation exists/linked manually
         .eq('slug', params.slug)
         .eq('is_published', true)
         .single();
@@ -76,14 +79,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                         <ArrowLeft className="mr-2 h-4 w-4" /> Back to Blog
                     </Link>
 
-                    <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                    <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight break-words">
                         {post.title}
                     </h1>
 
                     <div className="flex flex-wrap items-center gap-6 text-slate-400 text-sm">
                         <div className="flex items-center">
                             <Calendar className="mr-2 h-4 w-4" />
-                            {new Date(post.published_at).toLocaleDateString(undefined, { dateStyle: 'long' })}
+                            {new Date(post.published_at || post.created_at).toLocaleDateString(undefined, { dateStyle: 'long' })}
                         </div>
                         <div className="flex items-center">
                             <User className="mr-2 h-4 w-4" />
@@ -110,7 +113,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 <div className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-2xl shadow-sm border space-y-6">
                     {/* Render Content */}
                     <div
-                        className="prose prose-lg prose-slate dark:prose-invert max-w-none"
+                        className="prose prose-lg prose-slate dark:prose-invert max-w-none leading-loose space-y-6 whitespace-pre-wrap"
                         dangerouslySetInnerHTML={{ __html: post.content || '' }}
                     />
                 </div>

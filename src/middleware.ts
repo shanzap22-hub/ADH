@@ -79,7 +79,13 @@ export async function middleware(request: NextRequest) {
         '/onboarding',
         '/update-password',
         '/settings',
-        '/profile'
+        '/profile',
+        '/live',
+        '/chat',
+        '/community',
+        '/search',
+        '/book-session',
+        '/reschedule'
     ];
 
     // Check if current path is protected

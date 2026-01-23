@@ -126,3 +126,19 @@ export const sendBookingReminder = async (
         return { success: true };
     } catch (e) { console.error(e); return { success: false }; }
 };
+
+export const sendMail = async ({ to, subject, body }: { to: string; subject: string; body: string }) => {
+    if (!resend) return { success: true };
+    try {
+        await resend.emails.send({
+            from: "ADH Connect <onboarding@resend.dev>", // Using default for now to ensure delivery until domain verified
+            to,
+            subject,
+            html: body
+        });
+        return { success: true };
+    } catch (e) {
+        console.error(e);
+        return { success: false, error: e };
+    }
+};

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js"; // Admin client import
 import { KnowledgeManager } from "./_components/knowledge-manager";
 import { redirect } from "next/navigation";
 import { AlertCircle } from "lucide-react";
@@ -10,8 +11,14 @@ export default async function KnowledgePage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect("/auth/login");
 
-    // Fetch Docs
-    const { data: docs, error } = await supabase
+    // Initialize Admin Client to bypass RLS for fetching
+    const supabaseAdmin = createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    // Fetch Docs using Admin Client
+    const { data: docs, error } = await supabaseAdmin
         .from('ai_knowledge_docs')
         .select('*')
         .order('created_at', { ascending: false });

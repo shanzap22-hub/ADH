@@ -1,5 +1,7 @@
 "use server";
 
+
+
 export async function uploadToBunny(formData: FormData, folder: string): Promise<{ url?: string; error?: string }> {
     const file = formData.get("file") as File;
     if (!file) return { error: "No file uploaded" };
@@ -32,15 +34,8 @@ export async function uploadToBunny(formData: FormData, folder: string): Promise
         const hostname = region === 'de' ? 'storage.bunnycdn.com' : `${region}.storage.bunnycdn.com`;
         const endpoint = `https://${hostname}/${zoneName}/${uploadPath}`;
 
-        // Content Type
-        let contentType = "application/octet-stream";
-        const ext = file.name.toLowerCase().split('.').pop();
-        if (ext === 'png') contentType = 'image/png';
-        else if (ext === 'jpg' || ext === 'jpeg') contentType = 'image/jpeg';
-        else if (ext === 'gif') contentType = 'image/gif';
-        else if (ext === 'webp') contentType = 'image/webp';
-        else if (ext === 'pdf') contentType = 'application/pdf';
-        else if (ext === 'mp4') contentType = 'video/mp4';
+        // Content Type: Use file.type which is reliable, fallback to octet-stream
+        const contentType = file.type || "application/octet-stream";
 
         // Upload
         const response = await fetch(endpoint, {
