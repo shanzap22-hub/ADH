@@ -5,35 +5,41 @@ import { useEffect, useState } from "react";
 import { intervalToDuration, isBefore } from "date-fns";
 
 interface LiveCountDownProps {
-    targetDate: string; // ISO string
+    targetDate: string; // ISO string (Start)
+    endDate?: string; // ISO string (End)
 }
 
-export const LiveCountDown = ({ targetDate }: LiveCountDownProps) => {
+export const LiveCountDown = ({ targetDate, endDate }: LiveCountDownProps) => {
     const [timeLeft, setTimeLeft] = useState({
         days: 0,
         hours: 0,
         minutes: 0,
         seconds: 0
     });
-    const [isLive, setIsLive] = useState(false);
+    const [status, setStatus] = useState<'waiting' | 'live' | 'ended'>('waiting');
 
     useEffect(() => {
-        const target = new Date(targetDate);
-
         const calculateTimeLeft = () => {
             const now = new Date();
+            const start = new Date(targetDate);
+            // Default to 1 hour duration if no end date provided, for backward compatibility
+            const end = endDate ? new Date(endDate) : new Date(start.getTime() + 60 * 60 * 1000);
 
-            if (isBefore(target, now)) {
-                // Check if likely still live (e.g. within 2 hours?)
-                // For now just say "Live Now" or "Finished"
-                // Assuming it's the start time.
-                setIsLive(true);
+            if (now > end) {
+                setStatus('ended');
                 return;
             }
 
+            if (now >= start) {
+                setStatus('live');
+                return;
+            }
+
+            setStatus('waiting');
+
             const duration = intervalToDuration({
                 start: now,
-                end: target
+                end: start
             });
 
             setTimeLeft({
@@ -48,10 +54,14 @@ export const LiveCountDown = ({ targetDate }: LiveCountDownProps) => {
         const timer = setInterval(calculateTimeLeft, 1000);
 
         return () => clearInterval(timer);
-    }, [targetDate]);
+    }, [targetDate, endDate]);
 
-    if (isLive) {
-        return <div className="text-red-600 font-bold animate-pulse">🔴 LIVE NOW</div>;
+    if (status === 'live') {
+        return <div className="text-red-600 font-bold animate-pulse text-sm">🔴 LIVE NOW</div>;
+    }
+
+    if (status === 'ended') {
+        return <div className="text-gray-500 font-medium text-sm">Session Ended</div>;
     }
 
     return (

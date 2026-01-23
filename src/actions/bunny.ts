@@ -5,10 +5,6 @@ import { createHash } from "crypto";
 const BUNNY_API_KEY = process.env.BUNNY_API_KEY;
 const BUNNY_LIBRARY_ID = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID;
 
-if (!BUNNY_API_KEY || !BUNNY_LIBRARY_ID) {
-    throw new Error("Bunny.net environment variables not configured");
-}
-
 interface BunnySignature {
     videoId: string;
     libraryId: string;
@@ -26,6 +22,9 @@ export async function getBunnySignature(
     filename: string,
     filetype: string
 ): Promise<BunnySignature> {
+    if (!BUNNY_API_KEY || !BUNNY_LIBRARY_ID) {
+        throw new Error("Bunny.net environment variables not configured");
+    }
     try {
         console.log("[BUNNY] Creating video object for:", filename);
 
@@ -85,6 +84,9 @@ export async function getBunnySignature(
  * 0 = Created, 1 = Uploading, 2 = Uploaded, 3 = Processing, 4 = Finished, 5 = Failed
  */
 export async function getBunnyVideoStatus(videoId: string) {
+    if (!BUNNY_API_KEY || !BUNNY_LIBRARY_ID) {
+        throw new Error("Bunny.net environment variables not configured");
+    }
     try {
         const response = await fetch(
             `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${videoId}`,
@@ -133,6 +135,11 @@ export async function getBunnyVideoStatus(videoId: string) {
 }
 
 export async function getBunnyVideoLength(videoId: string, libraryId?: string): Promise<number> {
+
+    if (!BUNNY_API_KEY || !BUNNY_LIBRARY_ID) {
+        console.error("Bunny.net environment variables not configured");
+        return 0;
+    }
     try {
         const libId = libraryId || BUNNY_LIBRARY_ID;
         const response = await fetch(

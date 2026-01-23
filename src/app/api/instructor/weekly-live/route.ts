@@ -49,6 +49,12 @@ export async function POST(req: Request) {
         // Or if the user wants to keep history, we insert new.
         // Let's check if an ID was passed. If so update. If not, insert.
 
+        // Calculate End Time
+        const duration = parseInt(body.duration_minutes || '60');
+        const start = new Date(body.scheduled_at);
+        const end = new Date(start.getTime() + duration * 60 * 1000); // Add minutes
+        const endTimeStr = end.toISOString();
+
         let result;
         if (body.id) {
             result = await (supabase as any)
@@ -58,6 +64,7 @@ export async function POST(req: Request) {
                     banner_url: body.banner_url,
                     join_url: body.join_url,
                     scheduled_at: body.scheduled_at,
+                    end_time: endTimeStr,
                     updated_at: new Date().toISOString()
                 })
                 .eq("id", body.id)
@@ -70,7 +77,8 @@ export async function POST(req: Request) {
                     title: body.title,
                     banner_url: body.banner_url,
                     join_url: body.join_url,
-                    scheduled_at: body.scheduled_at
+                    scheduled_at: body.scheduled_at,
+                    end_time: endTimeStr
                 })
                 .select()
                 .single();

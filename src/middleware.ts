@@ -29,6 +29,11 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
+    // Allow SEO files and Blog
+    if (pathname === '/sitemap.xml' || pathname === '/robots.txt' || pathname.startsWith('/blog')) {
+        return NextResponse.next();
+    }
+
     // Allow public API routes
     if (publicApiRoutes.some(route => pathname.startsWith(route))) {
         console.log('[MIDDLEWARE] Allowing public API access:', pathname);
@@ -64,47 +69,52 @@ export async function middleware(request: NextRequest) {
     }
 
     // Define public routes that don't require authentication
-    const publicRoutes = ['/', '/login', '/signup', '/forgot-password', '/auth']
-    const isPublicRoute = publicRoutes.some(route =>
-        pathname === route || pathname.startsWith('/auth/') || pathname.startsWith('/courses/')
-    )
+    // --- NEW LOGIC: PROTECTED ROUTES STRATEGY ---
 
-    // Define auth routes (login/signup)
-    const authRoutes = ['/login', '/signup']
-    const isAuthRoute = authRoutes.includes(pathname)
+    // Explicitly protected paths
+    const protectedPaths = [
+        '/dashboard',
+        '/admin',
+        '/instructor',
+        '/onboarding',
+        '/update-password',
+        '/settings',
+        '/profile'
+    ];
 
-    // If user is authenticated and trying to access auth routes, redirect to dashboard
-    if (user && isAuthRoute) {
+    // Check if current path is protected
+    const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
+
+    // Check if it's a protected API route (Starts with /api AND NOT in publicApiRoutes)
+    const isProtectedApi = pathname.startsWith('/api') && !publicApiRoutes.some(route => pathname.startsWith(route));
+
+    // Handle Auth Redirects (If user is logged in, keep them away from login/signup)
+    if (user && ['/login', '/signup', '/forgot-password'].includes(pathname)) {
         try {
-            // Fetch user profile to determine role
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('role')
                 .eq('id', user.id)
-                .single()
+                .single();
 
-            if (profile && profile.role) {
-                // Redirect based on role
-                let redirectPath = '/dashboard'
-                if (profile.role === 'instructor') {
-                    redirectPath = '/instructor/courses'
-                } else if (profile.role === 'admin') {
-                    redirectPath = '/dashboard'
-                }
+            let redirectPath = '/dashboard';
+            if (profile?.role === 'instructor') redirectPath = '/instructor/courses';
 
-                return NextResponse.redirect(new URL(redirectPath, request.url))
-            }
-        } catch (error) {
-            console.error('Error fetching profile in middleware:', error)
+            return NextResponse.redirect(new URL(redirectPath, request.url));
+        } catch (e) {
+            // Ignore error
         }
     }
 
-    // If user is not authenticated and trying to access protected routes, redirect to login
-    if (!user && !isPublicRoute) {
-        const loginUrl = new URL('/login', request.url)
-        loginUrl.searchParams.set('redirect', pathname)
-        return NextResponse.redirect(loginUrl)
+    // BLOCK ACCESS if not authenticated and trying to access protected route
+    if (!user && (isProtectedPath || isProtectedApi)) {
+        const loginUrl = new URL('/login', request.url);
+        loginUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(loginUrl);
     }
+
+    // Allow everything else (Landing, Redirects, Public Pages)
+    return NextResponse.next();
 
     return NextResponse.next()
 }

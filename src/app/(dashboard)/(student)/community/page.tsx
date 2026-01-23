@@ -9,6 +9,10 @@ export const metadata: Metadata = {
     description: "Stay updated with the latest news",
 };
 
+import { LiveSessionsBanner } from "@/components/community/LiveSessionsBanner";
+
+// ... (imports)
+
 export default async function CommunityPage() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -18,9 +22,26 @@ export default async function CommunityPage() {
     const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
     const isAdmin = profile?.role === "super_admin" || profile?.role === "instructor";
 
+    // Fetch Live Sessions (buffer -24h to allow client timezone filtering)
+    const yesterday = new Date(Date.now() - 86400000).toISOString();
+
+    const { data: weeklySessions } = await (supabase as any)
+        .from('weekly_live_sessions')
+        .select('*')
+        .gte('scheduled_at', yesterday)
+        .order('scheduled_at', { ascending: true })
+        .limit(5);
+
+    const { data: bookings } = await supabase
+        .from('bookings')
+        .select('*, profiles:instructor_id(full_name)')
+        .eq('user_id', user.id)
+        .eq('status', 'confirmed')
+        .gte('start_time', yesterday)
+        .order('start_time', { ascending: true })
+        .limit(5);
+
     // Fetch Posts
-    // Note: RLS policies on 'posts' will automatically filter invisible posts for non-admins
-    // The policy "Users can view posts matching their tier" does the heavy lifting.
     const { data: posts } = await supabase
         .from("posts")
         .select(`
@@ -32,12 +53,18 @@ export default async function CommunityPage() {
         .order('created_at', { ascending: false });
 
     return (
-        <div className="min-h-screen bg-slate-50/50 dark:bg-black/20 p-6 lg:p-10">
+        <div className="min-h-screen bg-slate-50/50 dark:bg-black/20 p-4 lg:p-8">
             <div className="max-w-3xl mx-auto">
-                <div className="mb-10 space-y-2">
-                    <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Community Feed</h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-lg">Stay updated with the latest news and announcements.</p>
+                {/* Minimized Header */}
+                <div className="mb-6">
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Community Feed</h1>
                 </div>
+
+                {/* Live Sessions Banner */}
+                <LiveSessionsBanner
+                    weeklySessions={weeklySessions || []}
+                    bookings={bookings || []}
+                />
 
                 {isAdmin && <CreatePost />}
                 <FeedView posts={posts || []} isAdmin={isAdmin} currentUserId={user.id} />

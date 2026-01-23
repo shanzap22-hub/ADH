@@ -1,6 +1,6 @@
 -- Create table for One-on-One Session Settings
 CREATE TABLE IF NOT EXISTS one_on_one_settings (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     instructor_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
     banner_url TEXT,
     title TEXT DEFAULT '1-on-1 Strategy Call',

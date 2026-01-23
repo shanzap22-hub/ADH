@@ -65,63 +65,77 @@ export async function POST(req: Request) {
             .order('created_at', { ascending: false })
             .limit(10);
 
-        // 4. System instruction
+        // 4. System instruction (Moved below for RAG context injection)
+
+        // 5. Initialize Google Generative AI with system instruction
+        const genAI = new GoogleGenerativeAI(apiKey);
+
+        // RAG: Retrieve Context 
+        let retrievedContext = "";
+        try {
+            console.log('[AI Chat] Retrieving relevant context...');
+            const embeddingModel = genAI.getGenerativeModel({ model: "embedding-001" });
+            const embeddingResult = await embeddingModel.embedContent(lastMessage.content);
+            const embedding = embeddingResult.embedding.values;
+
+            const { data: documents, error: matchError } = await supabase.rpc('match_documents', {
+                query_embedding: embedding,
+                match_threshold: 0.5,
+                match_count: 5
+            });
+
+            if (!matchError && documents && documents.length > 0) {
+                retrievedContext = documents.map((doc: any) => doc.content).join("\n\n");
+                console.log(`[AI Chat] Found ${documents.length} relevant context chunks.`);
+            } else {
+                console.log('[AI Chat] No relevant context found or RAG not set up.');
+            }
+        } catch (ragError) {
+            console.warn('[AI Chat] RAG process failed (ignoring):', ragError);
+        }
+
         const systemInstruction = `System Prompt for ADH CONNECT AI Coach
 You are ADH CONNECT, an intelligent AI facilitator for the ADH Learning Management System (LMS). Your role is to help students with their courses, answer questions, provide motivation, and support their learning journey.
 
 CORE CAPABILITIES:
 1. Multimodal Understanding: You can process text, images, and transcribed voice inputs
 2. Context Awareness: Remember user identity and course progress
-3. Language Support: Primarily Malayalam and English
-4. Educational Support: Answer questions about course content, provide explanations, and motivate learners
+3. Knowledge Base Access: You have access to a specific library of uploaded course materials (Context).
+4. Language Support: Primarily Malayalam and English
 
 BEHAVIORAL GUIDELINES:
 - Always greet users warmly and acknowledge their identity when known
 - Provide concise, helpful responses focused on learning
 - Use emojis sparingly and appropriately (👋 😊)
-- When receiving images, analyze them carefully - they may contain:
-  * Screenshots of course material
-  * Handwritten notes or problems
-  * Diagrams or charts
-  * Code snippets
-  * Database schemas or technical documentation
+- **HYBRID ANSWERING STRATEGY:**
+  - If "Context from Knowledge Base" is provided below, USE IT as your primary source of truth.
+  - Combine this specific context with your general knowledge to explain concepts clearly.
+  - If the context answers the user's question, cite it indirectly (e.g., "According to the course notes...").
+  - If the context is empty or irrelevant, fall back completely to your general knowledge.
 
 IMAGE PROCESSING INSTRUCTIONS:
-When an image is uploaded:
-1. First acknowledge: "I can see your image. Let me analyze it..."
-2. Describe what you see briefly
-3. If it's educational content (code, diagram, text), provide relevant help
-4. If it's unclear, ask clarifying questions
-5. Never say "I cannot process images" - always attempt analysis
+... (same as before) ...
 
 VOICE INPUT HANDLING:
-- Transcribed text may contain errors, especially for Malayalam
-- If transcription seems phonetic/incorrect, acknowledge: "I noticed the transcription might have some errors. Could you rephrase or type your question?"
-- Support code-switching (മലയാളം-English mixing)
+... (same as before) ...
 
 RESPONSE FORMAT:
-- Keep responses focused and educational
-- Break complex explanations into digestible parts
-- Provide examples when helpful
-- End with a follow-up question or offer for further help`;
+... (same as before) ...`;
 
-        // 5. Initialize Google Generative AI with system instruction
-        const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash', // Updated to current stable 2026 model
+            model: 'gemini-2.5-flash',
             systemInstruction: systemInstruction
         });
 
-        // 6. Build conversation history in Gemini format (Strict Alternating User/Model)
+        // 6. Build conversation history in Gemini format
         let chatHistory: any[] = [];
         const rawHistory = history ? history.reverse().slice(0, -1) : [];
 
         for (const msg of rawHistory) {
             const role = msg.role === 'user' ? 'user' : 'model';
-            const text = msg.content || '[Image Attachment]'; // Handle empty content
+            const text = msg.content || '[Image Attachment]';
 
             if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === role) {
-                // Merge with previous message of same role
                 chatHistory[chatHistory.length - 1].parts[0].text += "\n\n" + text;
             } else {
                 chatHistory.push({
@@ -131,18 +145,22 @@ RESPONSE FORMAT:
             }
         }
 
-        // 7. Ensure history ends with Model (if it ends with User, merge that User message into the current prompt to avoid consecutive User turns)
+        // 7. Ensure history ends with Model and prepare Prompt
         let currentPromptText = lastMessage.content;
 
+        // INJECT CONTEXT
+        if (retrievedContext) {
+            currentPromptText = `[Context from Knowledge Base]:\n${retrievedContext}\n\n[User Question]:\n${currentPromptText}`;
+        }
+
         if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === 'user') {
-            const lastUserMsg = chatHistory.pop(); // Remove from history
-            // Prepend old user message to current prompt
+            const lastUserMsg = chatHistory.pop();
             currentPromptText = lastUserMsg.parts[0].text + "\n\n" + currentPromptText;
             console.log('[AI Chat] Merged dangling user history into current prompt');
         }
 
         console.log('[AI Chat] Final Chat history length:', chatHistory.length);
-        console.log('[AI Chat] User prompt:', currentPromptText.substring(0, 50) + "...");
+        console.log('[AI Chat] User prompt (with context):', currentPromptText.substring(0, 100) + "...");
 
         // 8. Start chat with sanitized history (Note: This object is created here but we use create new one in helper below)
         const chat = model.startChat({
@@ -196,21 +214,16 @@ RESPONSE FORMAT:
             };
 
             try {
-                // Attempt 1: Gemini 2.5 Flash (Current Standard 2026)
+                // Attempt 1: Gemini 2.5 Flash (Stable 2026 Model)
                 console.log('[AI Chat] Attempting with gemini-2.5-flash...');
                 fullText = await generateResponse('gemini-2.5-flash', messageParts);
 
             } catch (flashError: any) {
                 console.warn('[AI Chat] gemini-2.5-flash failed:', flashError.message);
 
-                // Attempt 2: Gemini Pro (Fallback, text only)
-                console.log('[AI Chat] Falling back to gemini-pro...');
-
-                // Filter parts to be text-only for Gemini Pro compatibility in simple chat
-                const textParts = messageParts.filter(p => p.text);
-
-                fullText = await generateResponse('gemini-pro', textParts);
-                fullText += "\n\n*[System Note: Switched to legacy model (gemini-pro) due to error with 2.5-flash. Images may be ignored.]*";
+                // Attempt 2: gemini-3-flash-preview (Latest Frontier)
+                console.log('[AI Chat] Falling back to gemini-3-flash-preview...');
+                fullText = await generateResponse('gemini-3-flash-preview', messageParts);
             }
 
         } catch (genError: any) {

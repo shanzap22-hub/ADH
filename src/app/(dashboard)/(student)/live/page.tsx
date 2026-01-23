@@ -184,7 +184,7 @@ export default function LivePage() {
                                             </div>
                                         </div>
                                         <div className="scale-95 origin-left">
-                                            <LiveCountDown targetDate={booking.start_time} />
+                                            <LiveCountDown targetDate={booking.start_time} endDate={booking.end_time} />
                                         </div>
                                     </CardContent>
 
@@ -267,7 +267,7 @@ export default function LivePage() {
                                             </div>
 
                                             <div className="scale-95 origin-left">
-                                                <LiveCountDown targetDate={latestSession.scheduled_at} />
+                                                <LiveCountDown targetDate={latestSession.scheduled_at} endDate={latestSession.end_time} />
                                             </div>
                                         </div>
                                     ) : (

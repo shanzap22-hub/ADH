@@ -153,6 +153,46 @@ export async function POST(req: Request) {
             console.warn("[RAZORPAY_VERIFY] User is NOT authenticated. Payment recorded but membership NOT upgraded automatically.");
         }
 
+        // --- SYNC TO GOOGLE SHEETS ---
+        try {
+            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwsBDuj15M1f_nHng6kQjkZIhl6FZsXNCI71Vf55jrZKjJ55EB7joj4XjJstLgVghRT/exec";
+
+            // Gather Data
+            let userName = "Guest/Unknown";
+            let userEmail = paymentEmail || "unknown@email.com";
+            let userPhone = "";
+            let userWhatsapp = whatsappNumber || paymentContact || "";
+
+            if (user) {
+                userEmail = user.email || userEmail;
+                userName = user.user_metadata?.full_name || user.user_metadata?.name || "Student";
+                userPhone = user.phone || "";
+            }
+
+            const payload = {
+                id: razorpay_order_id,
+                payment_id: razorpay_payment_id,
+                user_email: userEmail,
+                user_name: userName,
+                phone: userPhone,
+                whatsapp: userWhatsapp,
+                plan_id: 'silver', // Currently hardcoded to silver logic as seen above
+                amount: realAmount / 100, // Convert Paise to Rupees
+                status: 'verified',
+                created_at: new Date().toISOString()
+            };
+
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            console.log("[GOOGLE_SYNC] Synced transaction to Sheet");
+
+        } catch (syncError) {
+            console.error("[GOOGLE_SYNC] Failed to sync:", syncError);
+        }
+
         return NextResponse.json({ success: true });
     } catch (error: any) {
         console.error("[RAZORPAY_VERIFY] Error:", error.message);

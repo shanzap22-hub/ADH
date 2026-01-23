@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image"; // Import Image
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -8,7 +9,14 @@ export function Navbar() {
             <div className="container mx-auto flex h-16 items-center justify-between px-4">
                 <div className="flex items-center gap-2">
                     <Link href="/" className="flex items-center space-x-2">
-                        <span className="text-xl font-bold tracking-tight">ADH Connect</span>
+                        <Image
+                            src="/logo.png"
+                            alt="ADH Connect"
+                            width={160}
+                            height={40}
+                            className="h-9 w-auto object-contain"
+                            priority
+                        />
                     </Link>
                 </div>
                 <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">

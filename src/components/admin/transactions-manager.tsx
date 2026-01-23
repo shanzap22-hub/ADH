@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { format, differenceInDays, subDays } from "date-fns";
-import { Calendar as CalendarIcon, Loader2, Plus, Edit, Filter, Search, RefreshCcw, AlertTriangle } from "lucide-react";
+import { Calendar as CalendarIcon, Loader2, Plus, Edit, Filter, Search, RefreshCcw, AlertTriangle, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -205,6 +205,25 @@ export default function TransactionsManager() {
         }
     }
 
+    async function handleExportSheet() {
+        const confirmExport = confirm("This will export ALL transactions to the Google Sheet. It may take a while and result in duplicates if unrelated data exists. Continue?");
+        if (!confirmExport) return;
+
+        const toastId = toast.loading("Exporting all data to Sheet... Do not close window.");
+        try {
+            const res = await fetch("/api/admin/transactions/export-sheet", { method: "POST" });
+            const data = await res.json();
+
+            if (data.error) throw new Error(data.error);
+
+            toast.dismiss(toastId);
+            toast.success(`Export Complete! Sent ${data.count} of ${data.total} records.`);
+        } catch (error: any) {
+            toast.dismiss(toastId);
+            toast.error("Export Failed: " + error.message);
+        }
+    }
+
     // Calculations
     const totalAmount = transactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
     const totalCount = transactions.length;
@@ -217,6 +236,9 @@ export default function TransactionsManager() {
                     <p className="text-muted-foreground">Manage payments, drop-offs, and manual entries.</p>
                 </div>
                 <div className="flex gap-2">
+                    <Button variant="outline" onClick={handleExportSheet} className="border-green-600 text-green-600 hover:bg-green-50">
+                        <FileSpreadsheet className="mr-2 h-4 w-4" /> Export All to Sheet
+                    </Button>
                     <Button variant="outline" onClick={handleSync}>
                         <RefreshCcw className="mr-2 h-4 w-4" /> Sync Legacy Data
                     </Button>

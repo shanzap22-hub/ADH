@@ -23,6 +23,13 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 const formSchema = z.object({
     id: z.string().optional(),
@@ -33,6 +40,7 @@ const formSchema = z.object({
         required_error: "A date and time is required.",
     }),
     time_str: z.string().min(1, { message: "Time is required" }), // Separate time input for simplicity
+    duration_minutes: z.string().min(1, { message: "Duration is required" }),
 });
 
 export const WeeklyLiveManager = () => {
@@ -46,6 +54,7 @@ export const WeeklyLiveManager = () => {
             banner_url: "",
             join_url: "",
             time_str: "10:00",
+            duration_minutes: "60",
         },
     });
 
@@ -57,6 +66,14 @@ export const WeeklyLiveManager = () => {
 
                 if (data) {
                     const date = new Date(data.scheduled_at);
+                    // Calculate duration if end_time exists, else default 60
+                    let duration = "60";
+                    if (data.end_time) {
+                        const end = new Date(data.end_time);
+                        const diffMins = Math.round((end.getTime() - date.getTime()) / 60000);
+                        if (diffMins > 0) duration = diffMins.toString();
+                    }
+
                     form.reset({
                         id: data.id,
                         title: data.title || "",
@@ -64,6 +81,7 @@ export const WeeklyLiveManager = () => {
                         join_url: data.join_url || "",
                         scheduled_at: date,
                         time_str: format(date, "HH:mm"),
+                        duration_minutes: duration,
                     });
                 }
             } catch (error) {
@@ -221,6 +239,34 @@ export const WeeklyLiveManager = () => {
                             )}
                         />
                     </div>
+
+                    <FormField
+                        control={form.control}
+                        name="duration_minutes"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Duration</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger className="w-[200px]">
+                                            <SelectValue placeholder="Select duration" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="30">30 Minutes</SelectItem>
+                                        <SelectItem value="45">45 Minutes</SelectItem>
+                                        <SelectItem value="60">1 Hour</SelectItem>
+                                        <SelectItem value="90">1 Hour 30 Mins</SelectItem>
+                                        <SelectItem value="120">2 Hours</SelectItem>
+                                        <SelectItem value="150">2 Hours 30 Mins</SelectItem>
+                                        <SelectItem value="180">3 Hours</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormDescription>How long the session will last (Live status will hide after this time).</FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
                     <Button type="submit" disabled={isSaving}>
                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -17,7 +17,7 @@ export default async function ChatPage() {
 
     const { data: profile } = await supabase
         .from("profiles")
-        .select("membership_tier, role")
+        .select("membership_tier, role, terms_ai_accepted, terms_community_accepted")
         .eq("id", user.id)
         .single();
 
@@ -46,9 +46,6 @@ export default async function ChatPage() {
                     Your current membership plan does not include access to Community Chat.
                     Please upgrade your plan to unlock this feature.
                 </p>
-                {/* <Button asChild>
-                    <Link href="/pricing">View Plans</Link>
-                </Button> */}
             </div>
         );
     }
@@ -58,6 +55,8 @@ export default async function ChatPage() {
             currentUserId={user.id}
             currentUserTier={profile?.membership_tier || "bronze"}
             currentUserRole={profile?.role || "student"}
+            termsAcceptedAi={profile?.terms_ai_accepted || false}
+            termsAcceptedCommunity={profile?.terms_community_accepted || false}
         />
     );
 }

@@ -98,6 +98,45 @@ export async function POST(req: Request) {
             });
 
             if (dbError) console.error("DB Log Error", dbError);
+
+            // --- SYNC DROP-OFF/INITIATED TO GOOGLE SHEET ---
+            try {
+                const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwsBDuj15M1f_nHng6kQjkZIhl6FZsXNCI71Vf55jrZKjJ55EB7joj4XjJstLgVghRT/exec";
+
+                // Try to get user info if logged in
+                const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+                let userName = currentUser?.user_metadata?.full_name || "Guest";
+                let userEmail = currentUser?.email || "";
+
+                // Get Phone if available
+                let userPhone = currentUser?.phone || "";
+
+                const payload = {
+                    id: order.id,
+                    payment_id: "PENDING",
+                    user_email: userEmail,
+                    user_name: userName,
+                    phone: userPhone,
+                    whatsapp: whatsappNumber || "",
+                    plan_id: 'silver',
+                    amount: finalAmount, // Amount in Rupees
+                    status: 'initiated', // This marks it as a potential drop-off
+                    created_at: new Date().toISOString()
+                };
+
+                // Wait for the sync to complete to ensure Vercel doesn't kill the process
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                console.log("[GOOGLE_SYNC] Synced Drop-off initiated");
+
+            } catch (sheetErr) {
+                console.error("Sheet Sync Logic Error", sheetErr);
+            }
+
         } catch (dbEx) {
             console.error("DB Tracking Skipped", dbEx);
         }

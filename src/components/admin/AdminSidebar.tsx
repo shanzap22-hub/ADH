@@ -12,6 +12,9 @@ import {
     Settings,
     ArrowLeftRight,
     Tag, // Imported Tag
+    Brain,
+    PenTool,
+    Link as LinkIcon,
 } from "lucide-react";
 
 const routes = [
@@ -62,6 +65,24 @@ const routes = [
         icon: FileText,
         href: "/admin/audit-logs",
         color: "text-orange-600",
+    },
+    {
+        label: "AI Knowledge Base",
+        icon: Brain,
+        href: "/admin/knowledge",
+        color: "text-violet-600",
+    },
+    {
+        label: "Blog / SEO",
+        icon: PenTool,
+        href: "/admin/blog",
+        color: "text-pink-500",
+    },
+    {
+        label: "Short Links",
+        icon: LinkIcon,
+        href: "/admin/redirects",
+        color: "text-orange-500",
     },
     {
         label: "Settings",

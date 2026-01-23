@@ -111,7 +111,6 @@ export async function POST(req: Request) {
         if (error) throw error;
 
         // Audit Log
-        // Audit Log
         if (user) {
             await logAudit({
                 action: "CREATE_TRANSACTION",
@@ -120,6 +119,33 @@ export async function POST(req: Request) {
                 details: body,
                 userId: user.id
             });
+        }
+
+        // --- SYNC MANUAL ENTRY TO GOOGLE SHEET ---
+        try {
+            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwsBDuj15M1f_nHng6kQjkZIhl6FZsXNCI71Vf55jrZKjJ55EB7joj4XjJstLgVghRT/exec";
+
+            const payload = {
+                id: data.id,
+                payment_id: "MANUAL",
+                user_email: student_email || "",
+                user_name: student_name,
+                phone: student_phone || "",
+                whatsapp: whatsapp_number || "",
+                plan_id: membership_plan,
+                amount: amount / 100, // Stored in paise, send in rupees
+                status: status || 'verified',
+                created_at: data.created_at
+            };
+
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+        } catch (sheetErr) {
+            console.error("Sheet Sync Logic Error", sheetErr);
         }
 
         return NextResponse.json(data);

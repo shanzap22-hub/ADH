@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
@@ -66,11 +68,16 @@ export const TopHeader = () => {
             <div className="flex items-center justify-between h-16 px-4">
                 {/* Logo/Brand */}
                 <div className="flex items-center gap-8">
-                    <div className="flex items-center">
-                        <span className="text-xl font-bold bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 bg-clip-text text-transparent">
-                            ADH CONNECT
-                        </span>
-                    </div>
+                    <Link href="/dashboard" className="flex items-center gap-2">
+                        <Image
+                            src="/logo.png"
+                            alt="ADH Connect"
+                            width={160}
+                            height={50}
+                            className="h-10 w-auto object-contain"
+                            priority
+                        />
+                    </Link>
 
                     {/* Desktop Navigation Links - Hidden on mobile */}
                     <nav className="hidden md:flex items-center gap-1">

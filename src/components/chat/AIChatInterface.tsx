@@ -291,7 +291,7 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
                                         />
                                     </div>
                                 )}
-                                <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
+                                <div className="whitespace-pre-wrap leading-relaxed break-words break-all">{m.content}</div>
                             </div>
                         </div>
                     ))}

@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import Link from "next/link";
 import { LayoutDashboard, Compass, Radio, Users, Settings, Eye, UserPlus, LogOut, Shield, Calendar as CalendarIcon, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -62,7 +64,16 @@ export const Sidebar = ({ is_super_admin }: SidebarProps) => {
     return (
         <div className="h-full border-r flex flex-col overflow-y-auto bg-white shadow-sm">
             <div className="p-6">
-                <h2 className="text-xl font-semibold">Instructor Dashboard</h2>
+                <div className="flex items-center justify-center">
+                    <Image
+                        src="/logo.png"
+                        alt="ADH Connect"
+                        width={150}
+                        height={40}
+                        className="h-8 w-auto object-contain"
+                        priority
+                    />
+                </div>
             </div>
             <div className="flex flex-col w-full flex-1">
                 {routes.map((route) => (

@@ -19,9 +19,9 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
         }
 
-        // Validate File Size (5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            return NextResponse.json({ error: "File size exceeds 5MB limit" }, { status: 400 });
+        // Validate File Size (10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            return NextResponse.json({ error: "File size exceeds 10MB limit" }, { status: 400 });
         }
 
         // 3. Prepare Bunny.net Config
@@ -50,9 +50,16 @@ export async function POST(req: Request) {
         if (ext === 'jpg' || ext === 'jpeg') contentType = 'image/jpeg';
         if (ext === 'webp') contentType = 'image/webp';
 
+        // 5. Determine Folder from Query Param
+        const { searchParams } = new URL(req.url);
+        let folder = searchParams.get('folder') || 'uploads';
+
+        // Sanitize: allow only alphanumeric, dashes, underscores
+        folder = folder.replace(/[^a-zA-Z0-9-_/]/g, '');
+
         const timestamp = Date.now();
         const randomString = Math.random().toString(36).substring(2, 7);
-        const filename = `chat_images/${timestamp}-${randomString}.${ext}`;
+        const filename = `${folder}/${timestamp}-${randomString}.${ext}`;
 
         // 5. Upload to Bunny.net
         const hostname = REGION === 'de' ? 'storage.bunnycdn.com' : `${REGION}.storage.bunnycdn.com`;

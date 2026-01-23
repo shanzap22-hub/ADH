@@ -40,16 +40,30 @@ export async function GET(request: Request) {
                     if (user) {
                         const { data: profile } = await supabase
                             .from('profiles')
-                            .select('role')
+                            .select('role, membership_tier')
                             .eq('id', user.id)
                             .single()
 
                         if (profile) {
                             if (profile.role === 'student' || !profile.role) {
-                                const { count } = await supabase.from('purchases').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
-                                if (count === 0) {
-                                    await supabase.auth.signOut();
-                                    return NextResponse.redirect(`${origin}/?error=unauthorized_purchase_required`);
+                                // 1. Check if user has a valid Membership Tier assigned (Manual Enrollment often sets this directly)
+                                const hasValidTier = profile.membership_tier && ['bronze', 'silver', 'gold', 'diamond', 'platinum', 'expired'].includes(profile.membership_tier);
+
+                                if (hasValidTier) {
+                                    // Authorized by Tier - Allow Login
+                                } else {
+                                    // 2. Fallback: Check purchases and transactions (for legacy or self-serve users without explicit tier yet)
+                                    const { count: purchaseCount } = await supabase.from('purchases').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
+
+                                    const { count: txCount } = await supabase
+                                        .from('transactions')
+                                        .select('*', { count: 'exact', head: true })
+                                        .or(`user_id.eq.${user.id},student_email.eq.${user.email}`);
+
+                                    if ((purchaseCount === 0 || purchaseCount === null) && (txCount === 0 || txCount === null)) {
+                                        await supabase.auth.signOut();
+                                        return NextResponse.redirect(`${origin}/?error=unauthorized_purchase_required`);
+                                    }
                                 }
                             }
                             if (profile.role === 'instructor') redirectPath = '/instructor/courses'

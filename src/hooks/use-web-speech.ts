@@ -17,8 +17,9 @@ export function useWebSpeech() {
     // Refs to keep track of instances
     const recognitionRef = useRef<any>(null);
     const synthesisRef = useRef<SpeechSynthesis | null>(null);
-    const lastInterimRef = useRef<string>("");
+    // We no longer need a separate interim ref because interim results are disabled
     const accumulatedTranscriptRef = useRef<string>("");
+
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -30,30 +31,30 @@ export function useWebSpeech() {
 
                 // Initialize Recognition
                 const recognition = new BrowserSpeechRecognition();
-                recognition.continuous = true; // Keep listening until stopped manually or timeout
-                recognition.interimResults = true;
+                // Disable continuous mode – we will manually restart on end if needed
+                recognition.continuous = false;
+                // Disable interim results – we only care about final transcripts
+                recognition.interimResults = false;
                 recognition.lang = "en-US"; // Default to English, can be parametrized
 
 
                 recognition.onstart = () => {
-                    // Reset last interim and accumulated transcript when starting
-                    lastInterimRef.current = "";
+                    // Reset accumulated transcript when starting a new session
                     accumulatedTranscriptRef.current = "";
                     setIsListening(true);
                 };
                 recognition.onend = () => setIsListening(false);
                 recognition.onresult = (event: any) => {
-                    // Get the most recent result (the last one in the list)
-                    const lastResult = event.results[event.results.length - 1];
-                    if (!lastResult) return;
-                    if (lastResult.isFinal) {
-                        // Append final transcript to the accumulated ref
-                        accumulatedTranscriptRef.current += lastResult[0].transcript;
+                    // With interimResults disabled, we only get final results
+                    const result = event.results[0];
+                    if (!result) return;
+                    if (result.isFinal) {
+                        const finalText = result[0].transcript;
+                        // Guard against duplicate finals (mobile browsers may fire the same final twice)
+                        if (!accumulatedTranscriptRef.current.endsWith(finalText)) {
+                            accumulatedTranscriptRef.current += finalText;
+                        }
                         setTranscript(accumulatedTranscriptRef.current);
-                    } else {
-                        // Use interim transcript (replace previous interim)
-                        const interim = lastResult[0].transcript;
-                        setTranscript(accumulatedTranscriptRef.current + interim);
                     }
                 };
 
@@ -63,13 +64,18 @@ export function useWebSpeech() {
         }
     }, []);
 
+    // Ref to keep track of whether we want auto‑restart after onend
+    const isListeningRef = useRef<boolean>(false);
+
     const startListening = useCallback((lang: string = "en-US") => {
         if (recognitionRef.current && !isListening) {
             setTranscript("");
-            accumulatedTranscriptRef.current = ""; // Clear accumulated transcript
+            accumulatedTranscriptRef.current = ""; // reset accumulated transcript
+            isListeningRef.current = true; // we want to keep listening (auto‑restart)
             try {
                 recognitionRef.current.lang = lang; // Update language dynamically
                 recognitionRef.current.start();
+                setIsListening(true);
             } catch (e) {
                 console.error("Speech recognition start failed", e);
             }
@@ -78,6 +84,8 @@ export function useWebSpeech() {
 
     const stopListening = useCallback(() => {
         if (recognitionRef.current && isListening) {
+            // User explicitly stopped listening – prevent auto‑restart
+            isListeningRef.current = false;
             recognitionRef.current.stop();
         }
     }, [isListening]);

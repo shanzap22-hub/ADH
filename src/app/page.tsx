@@ -15,11 +15,11 @@ export default async function HomePage() {
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-3 hover:opacity-90 transition shrink-0">
               <Image
-                src="/adh-logo.png"
+                src="/logo.png"
                 alt="ADH CONNECT"
-                width={180}
+                width={200}
                 height={60}
-                className="h-10 sm:h-14 w-auto"
+                className="h-10 sm:h-12 w-auto object-contain"
                 priority
               />
             </Link>
@@ -198,7 +198,7 @@ export default async function HomePage() {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-slate-900 to-slate-950">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">
-            Stop Being Overwhelmed.<br />
+            Is Overwhelming.<br />
             <span className="bg-gradient-to-r from-orange-400 to-pink-500 bg-clip-text text-transparent">
               Start Being a Digital Leader.
             </span>
@@ -222,11 +222,53 @@ export default async function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 py-8 px-4">
-        <div className="max-w-7xl mx-auto text-center text-slate-500 text-sm">
-          <p>© 2026 Atcess Digital Hub. All rights reserved.</p>
+      <footer className="border-t border-slate-800 py-12 px-4 bg-slate-950">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="text-center md:text-left">
+            <p className="text-slate-400 font-medium">© 2026 ADH Connect by Atcess Digital Hub.</p>
+            <p className="text-slate-600 text-sm mt-1">Empowering Entrepreneurs through Digital Leadership.</p>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-400">
+            <Link href="/privacy" className="hover:text-orange-400 transition">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-orange-400 transition">Terms of Service</Link>
+            <Link href="/refund" className="hover:text-orange-400 transition">Refund Policy</Link>
+            <Link href="/contact" className="hover:text-orange-400 transition">Contact Us</Link>
+          </div>
         </div>
       </footer>
+
+      {/* Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "ADH Connect",
+            "url": "https://adh.today",
+            "logo": "https://adh.today/logo.png",
+            "description": "Kerala's premier digital community for business owners and entrepreneurs to master Social Media Marketing, Meta Ads, and AI Automation to scale their business.",
+            "address": {
+              "@type": "PostalAddress",
+              "addressRegion": "Kerala",
+              "addressCountry": "IN"
+            },
+            "sameAs": [
+              "https://www.instagram.com/adh.today",
+              "https://www.facebook.com/adh.today"
+            ],
+            "offers": {
+              "@type": "Offer",
+              "itemOffered": {
+                "@type": "Course",
+                "name": "Digital Marketing Mastery for Entrepreneurs",
+                "description": "Comprehensive training in Social Media Marketing, Automation, and Personal Branding for Business Owners in Malayalam."
+              }
+            }
+          })
+        }}
+      />
     </div>
   );
 }

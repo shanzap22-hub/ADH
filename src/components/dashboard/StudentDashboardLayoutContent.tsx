@@ -23,8 +23,10 @@ export const StudentDashboardLayoutContent = ({
 
     return (
         <div className="h-full">
-            {/* Top Navigation Header - Hidden on Chat Page for Full Screen */}
-            {!isChat && <TopHeader />}
+            {/* Top Navigation Header - Hidden on MOBILE Chat Page, Visible on Desktop */}
+            <div className={isChat ? "hidden md:block" : ""}>
+                <TopHeader />
+            </div>
 
             {/* Desktop Sidebar */}
             <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-40 mt-16">
@@ -32,10 +34,11 @@ export const StudentDashboardLayoutContent = ({
             </div>
 
             {/* Main Content Area */}
-            {/* Remove padding on Chat page to allow fixed chat container to fill top */}
+            {/* Remove padding on Chat page (Mobile) to allow fixed chat container to fill top 
+                But add padding back on Desktop (md:pt-16) because Header is visible there */}
             <main className={cn(
                 "md:pl-56 h-full",
-                isChat ? "pb-16 md:pb-0" : "pt-16 pb-16 md:pb-0"
+                isChat ? "pb-16 md:pb-0 md:pt-16" : "pt-16 pb-16 md:pb-0"
             )}>
                 {children}
             </main>

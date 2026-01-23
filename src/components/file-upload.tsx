@@ -9,7 +9,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 
 interface FileUploadProps {
-    endpoint: "course-thumbnails" | "chapter-videos" | "course-attachments";
+    endpoint: "course-thumbnails" | "chapter-videos" | "course-attachments" | "blog-images";
     onChange: (url?: string) => void;
     value?: string;
     disabled?: boolean;
@@ -36,7 +36,7 @@ export const FileUpload = ({
             const filePath = `${fileName}`;
 
             // Check if we should use Bunny Storage
-            if (endpoint === "course-thumbnails" || endpoint === "course-attachments") {
+            if (endpoint === "course-thumbnails" || endpoint === "course-attachments" || endpoint === "blog-images") {
                 const formData = new FormData();
                 formData.append("file", file);
 
@@ -84,14 +84,14 @@ export const FileUpload = ({
         onDrop,
         maxFiles: 1,
         disabled: disabled || isUploading,
-        accept: endpoint === "course-thumbnails"
+        accept: (endpoint === "course-thumbnails" || endpoint === "blog-images")
             ? { 'image/*': [] }
             : endpoint === "chapter-videos"
                 ? { 'video/*': [] }
                 : undefined // Accept all files for attachments
     });
 
-    if (value && endpoint === "course-thumbnails") {
+    if (value && (endpoint === "course-thumbnails" || endpoint === "blog-images")) {
         return (
             <div className="relative aspect-video w-full h-full">
                 <Image
@@ -139,7 +139,7 @@ export const FileUpload = ({
                 {isUploading ? "Uploading..." : "Drag & drop or click to select"}
             </p>
             <p className="text-xs text-muted-foreground mt-2">
-                {endpoint === "course-thumbnails" ? "Images only" : "Videos only"}
+                {(endpoint === "course-thumbnails" || endpoint === "blog-images") ? "Images only" : "Videos only"}
             </p>
         </div>
     )
