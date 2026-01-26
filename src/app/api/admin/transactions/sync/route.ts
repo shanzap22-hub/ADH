@@ -51,7 +51,6 @@ export async function POST(req: Request) {
                     student_name: p.full_name,
                     student_email: p.email,
                     whatsapp_number: p.whatsapp_number || p.phone_number,
-                    contact_number: p.phone_number || p.whatsapp_number,
                     status: 'verified',
                     amount: amount,
                     currency: 'INR',
