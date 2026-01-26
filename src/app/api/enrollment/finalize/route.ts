@@ -157,6 +157,33 @@ export async function POST(req: Request) {
             }
         }
 
+        // STEP 2.5: Insert into TRANSACTIONS table (Verified Record)
+        // This ensures the payment shows up in "Transaction Manager" with correct amount
+        try {
+            const { error: txnError } = await supabaseAdmin.from('transactions').insert({
+                user_id: userId,
+                student_name: fullName || "Student",
+                student_email: finalEmail.toLowerCase().trim(),
+                whatsapp_number: whatsappNumber,
+                amount: paymentRecord.amount, // Real amount from payment
+                currency: paymentRecord.currency || 'INR',
+                status: 'verified',
+                source: 'razorpay',
+                razorpay_payment_id: paymentId,
+                razorpay_order_id: paymentRecord.order_id,
+                membership_plan: 'silver',
+                created_at: new Date().toISOString()
+            });
+
+            if (txnError) {
+                console.error("[FINALIZE_ENROLLMENT] Transaction insert failed (non-fatal):", txnError);
+            } else {
+                console.log("[FINALIZE_ENROLLMENT] Transaction record created successfully.");
+            }
+        } catch (txnEx) {
+            console.error("[FINALIZE_ENROLLMENT] Transaction Logic Error:", txnEx);
+        }
+
         // Return success with temp password for new users
         return NextResponse.json({
             success: true,
