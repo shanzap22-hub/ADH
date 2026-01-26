@@ -69,10 +69,15 @@ export default function CompleteProfilePage() {
                 initialPassword = "********";
             }
 
+            // Name Logic: If stored name is "Student", treat as empty
+            const profileName = profile?.full_name === "Student" ? "" : profile?.full_name;
+            const metaName = metadata.full_name === "Student" ? "" : metadata.full_name;
+            const finalName = profileName || metaName || "";
+
             setFormData(prev => ({
                 ...prev,
                 email: isDummyEmail ? "" : (user.email || ""), // Empty if dummy
-                fullName: profile?.full_name || existingName, // Prefer profile name if exists
+                fullName: finalName, // Prefer cleaned profile name
                 whatsappNumber: profile?.whatsapp_number || "", // Pre-fill WhatsApp from payment
                 contactNumber: profile?.phone_number || "", // Pre-fill Phone if exists
                 password: initialPassword
