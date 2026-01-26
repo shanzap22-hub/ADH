@@ -55,6 +55,13 @@ export default function CompleteProfilePage() {
             // Pre-fill Email and Name (Only if NOT 'Student')
             const existingName = metadata.full_name === "Student" ? "" : (metadata.full_name || "");
 
+            // Fetch existing profile to pre-fill WhatsApp number (from payment)
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("whatsapp_number, phone_number, full_name")
+                .eq("id", user.id)
+                .single();
+
             // Password State Logic
             // If Password WAS changed (Reset flow), show dummy stars.
             // If Google, show empty.
@@ -67,7 +74,9 @@ export default function CompleteProfilePage() {
             setFormData(prev => ({
                 ...prev,
                 email: user.email || "",
-                fullName: existingName,
+                fullName: profile?.full_name || existingName, // Prefer profile name if exists
+                whatsappNumber: profile?.whatsapp_number || "", // Pre-fill WhatsApp from payment
+                contactNumber: profile?.phone_number || "", // Pre-fill Phone if exists
                 password: initialPassword
             }));
 

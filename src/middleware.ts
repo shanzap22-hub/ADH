@@ -18,7 +18,6 @@ export async function middleware(request: NextRequest) {
         '/api/razorpay/create-order',
         '/api/razorpay/verify',
         '/api/enrollment/finalize',
-        '/api/onboarding/complete',
         '/api/coupons/validate',  // Allow coupon validation for unauthenticated users
         '/api/webhook',   // Webhooks for Razorpay/Stripe
         '/api/cron',      // Automated tasks (Reminders)

@@ -1,74 +1,58 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+// src/app/api/user/complete-profile/route.ts
+import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+
+type Payload = {
+    fullName: string;
+    email: string;
+    contactNumber: string;
+    whatsappNumber: string;
+    password: string; // "SKIPPED" if unchanged
+};
 
 export async function POST(request: Request) {
-    try {
-        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-            console.error("Missing SUPABASE_SERVICE_ROLE_KEY");
-            return NextResponse.json({ error: "Server Configuration Error: Missing Admin Key" }, { status: 500 });
-        }
-
-        const supabase = await createClient();
-        const body = await request.json();
-        const { fullName, contactNumber, whatsappNumber, password, sameAsContact } = body;
-
-        // Verify User
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-        if (userError || !user) {
-            console.error("Auth Error", userError);
-            return NextResponse.json({ error: "Unauthorized: Please login again" }, { status: 401 });
-        }
-
-        if (!fullName || !contactNumber) {
-            return NextResponse.json(
-                { error: "Name and Contact Number are required" },
-                { status: 400 }
-            );
-        }
-
-        // Use Admin Client to bypass RLS for Profile Update
-        const supabaseAdmin = createAdminClient();
-
-        // 1. Update Profile (Upsert to be safe)
-        // 1. Update Profile (Must update, as profile is guaranteed to exist)
-        const { error: profileError } = await supabaseAdmin
-            .from("profiles")
-            .update({
-                full_name: fullName,
-                contact_number: contactNumber,
-                whatsapp_number: whatsappNumber || contactNumber,
-                updated_at: new Date().toISOString(),
-                // Do NOT update email, role, or membership_tier here
-            })
-            .eq("id", user.id);
-
-        if (profileError) {
-            console.error("Profile Update Error", profileError);
-            return NextResponse.json({ error: `Profile Error: ${profileError.message}` }, { status: 500 });
-        }
-
-        // 2. Update Auth (Password & Clear Flag)
-        const updateData: any = {
-            data: { setup_required: false, full_name: fullName }
-        };
-
-        // Only update password if provided and not skipped
-        if (password && password !== "SKIPPED" && password.length >= 6) {
-            updateData.password = password;
-        }
-
-        const { error: authError } = await supabase.auth.updateUser(updateData);
-
-        if (authError) {
-            console.error("Auth Update Error", authError);
-            return NextResponse.json({ error: `Auth Error: ${authError.message}` }, { status: 500 });
-        }
-
-        return NextResponse.json({ success: true });
-    } catch (error: any) {
-        console.error("Complete Profile Error", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
     }
+
+    const payload: Payload = await request.json();
+    const { fullName, email, contactNumber, whatsappNumber, password } = payload;
+
+    // Update profile table
+    const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+            full_name: fullName,
+            email,
+            phone_number: contactNumber,
+            whatsapp_number: whatsappNumber,
+            setup_required: false,
+        })
+        .eq('id', user.id);
+
+    if (profileError) {
+        return NextResponse.json({ error: profileError.message }, { status: 500 });
+    }
+
+    // Update auth metadata (full_name & email) if needed
+    const { error: metaError } = await supabase.auth.updateUser({
+        data: { full_name: fullName },
+        email,
+    });
+    if (metaError) {
+        // Non‑fatal – profile already updated
+        console.warn('Auth metadata update failed:', metaError.message);
+    }
+
+    // Update password if a new one was provided
+    if (password && password !== 'SKIPPED') {
+        const { error: pwError } = await supabase.auth.updateUser({ password });
+        if (pwError) {
+            return NextResponse.json({ error: pwError.message }, { status: 500 });
+        }
+    }
+
+    return NextResponse.json({ success: true });
 }

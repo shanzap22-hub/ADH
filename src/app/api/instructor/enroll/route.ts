@@ -68,7 +68,10 @@ export async function POST(req: Request) {
                 email: studentEmail.toLowerCase().trim(),
                 password: tempPassword,
                 email_confirm: true, // Auto confirm since instructor added
-                user_metadata: { role: 'student' }
+                user_metadata: {
+                    role: 'student',
+                    setup_required: true // Enforce onboarding on first login
+                }
             });
 
             if (createError) {

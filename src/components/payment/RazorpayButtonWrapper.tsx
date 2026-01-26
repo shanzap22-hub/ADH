@@ -93,11 +93,13 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
                     color: "#f97316", // Orange-500
                 },
                 handler: async function (response: any) {
-                    // Payment successful - verify and show post-payment modal
+                    // Payment successful - Step 1: Verify, Step 2: Finalize
                     const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = response;
 
                     try {
-                        // Verify payment
+                        const loadingToast = toast.loading("Verifying payment...");
+
+                        // STEP 1: Verify payment signature and store in payments_temp
                         const verifyResponse = await fetch("/api/razorpay/verify", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
@@ -109,18 +111,59 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
                             }),
                         });
 
-                        if (verifyResponse.ok) {
-                            // Close pre-payment modal
-                            setIsPrePaymentOpen(false);
-
-                            // Store payment ID and open post-payment modal
-                            setPaymentId(razorpay_payment_id);
-                            setIsPostPaymentOpen(true);
-                        } else {
-                            toast.error("Payment verification failed. Please contact support.");
+                        if (!verifyResponse.ok) {
+                            throw new Error("Payment verification failed");
                         }
-                    } catch (error) {
-                        toast.error("Failed to verify payment. Please contact support.");
+
+                        toast.dismiss(loadingToast);
+                        const finalizeToast = toast.loading("Creating your account...");
+
+                        // STEP 2: Finalize enrollment (create user, enroll in courses)
+                        const finalizeRes = await fetch("/api/enrollment/finalize", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                paymentId: razorpay_payment_id,
+                                whatsappNumber: whatsapp,
+                                // Backend fetches email from Razorpay
+                            }),
+                        });
+
+                        const data = await finalizeRes.json();
+
+                        if (!finalizeRes.ok) {
+                            throw new Error(data.error || "Enrollment failed");
+                        }
+
+                        toast.dismiss(finalizeToast);
+                        toast.success("Payment Successful! Logging you in...");
+
+                        // Auto-Login if new user credentials returned
+                        if (data.tempPassword && data.email) {
+                            const { createClient } = await import("@/lib/supabase/client");
+                            const supabase = createClient();
+
+                            const { error: signInError } = await supabase.auth.signInWithPassword({
+                                email: data.email,
+                                password: data.tempPassword
+                            });
+
+                            if (signInError) {
+                                console.error("Auto-login failed:", signInError);
+                                toast.error("Account created but auto-login failed. Please login manually.");
+                                window.location.href = "/login";
+                            } else {
+                                // Redirect to dashboard -> middleware sends to onboarding
+                                window.location.href = "/dashboard";
+                            }
+                        } else {
+                            // Existing user - just redirect
+                            window.location.href = "/dashboard";
+                        }
+
+                    } catch (error: any) {
+                        console.error("Payment Error:", error);
+                        toast.error(error.message || "Payment processing failed. Contact support.");
                     }
                 },
                 modal: {
@@ -150,13 +193,6 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
                 isOpen={isPrePaymentOpen}
                 onClose={() => setIsPrePaymentOpen(false)}
                 onProceed={handleProceedToPayment}
-            />
-
-            <PostPaymentModal
-                isOpen={isPostPaymentOpen}
-                onClose={() => { }} // Prevent closing - must complete registration
-                paymentId={paymentId}
-                whatsappNumber={whatsappNumber}
             />
         </>
     );
