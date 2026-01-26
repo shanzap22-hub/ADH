@@ -75,7 +75,9 @@ export async function POST(req: Request) {
         }
 
         if (!finalEmail) {
-            return NextResponse.json({ error: "Email not found in payment details" }, { status: 400 });
+            console.warn("[FINALIZE_ENROLLMENT] Email not found in payment details. Generating placeholder.");
+            // Generate a unique placeholder email using WhatsApp number to allow profile creation
+            finalEmail = `${whatsappNumber}@adh.pending`;
         }
 
         console.log("[FINALIZE_ENROLLMENT] Checking if user exists (Priority: WhatsApp)...");
