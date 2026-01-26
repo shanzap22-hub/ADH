@@ -19,10 +19,10 @@ export async function POST(req: Request) {
         });
 
         // Validate required fields
-        if (!fullName || !email || !contactNumber || !whatsappNumber || !paymentId) {
-            console.error("[FINALIZE_ENROLLMENT] Missing required fields");
+        if (!whatsappNumber || !paymentId) {
+            console.error("[FINALIZE_ENROLLMENT] Missing required fields: paymentId or whatsappNumber");
             return NextResponse.json(
-                { error: "All fields are required" },
+                { error: "Payment ID and WhatsApp Number are required" },
                 { status: 400 }
             );
         }
