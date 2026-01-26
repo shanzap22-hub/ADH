@@ -186,6 +186,42 @@ export default function CompleteProfilePage() {
                             <p className="text-xs text-slate-500">This will be used for login & updates.</p>
                         </div>
 
+                        {/* Set Password */}
+                        <div className="space-y-2">
+                            <Label htmlFor="password" className="text-white">
+                                {passwordChanged ? "Password (Already Set)" : "Set Password"} <span className="text-red-400">*</span>
+                            </Label>
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPasswordText ? "text" : "password"}
+                                    autoComplete="new-password"
+                                    placeholder="Min 6 chars"
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    required={!passwordChanged}
+                                    minLength={6}
+                                    disabled={isSubmitting}
+                                    className={`bg-slate-800 border-slate-700 text-white pr-10 ${passwordChanged ? 'text-green-400 border-green-800' : ''}`}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPasswordText(!showPasswordText)}
+                                    className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+                                >
+                                    {showPasswordText ? (
+                                        <EyeOff className="h-5 w-5" />
+                                    ) : (
+                                        <Eye className="h-5 w-5" />
+                                    )}
+                                </button>
+                            </div>
+                            {passwordChanged ?
+                                <p className="text-xs text-green-400">✅ Password is set. You can keep it or type a new one.</p> :
+                                <p className="text-xs text-slate-400">Create a secure password.</p>
+                            }
+                        </div>
+
                         {/* WhatsApp Number */}
                         <div className="space-y-2">
                             <Label htmlFor="whatsappNumber" className="text-white">
