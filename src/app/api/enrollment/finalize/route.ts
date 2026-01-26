@@ -143,7 +143,7 @@ export async function POST(req: Request) {
                     whatsapp_number: whatsappNumber,
                     contact_number: finalContact,
                     role: 'student',
-                    membership_tier: 'bronze',
+                    membership_tier: 'silver',
                     setup_required: true,
                     full_name: fullName || "Student"
                 });
