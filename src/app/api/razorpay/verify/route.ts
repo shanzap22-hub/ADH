@@ -116,7 +116,10 @@ export async function POST(req: Request) {
         }
 
         // Also update user profile with the phone number if authenticated
+        // Use regular client to check session
+        const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
+
         if (user) {
             console.log("[RAZORPAY_VERIFY] Authenticated user found:", user.id);
 
@@ -131,7 +134,8 @@ export async function POST(req: Request) {
 
             // 2. Upgrade Membership Tier to 'silver'
             console.log("[RAZORPAY_VERIFY] Upgrading user to SILVER tier...");
-            const { error: upgradeError } = await supabase
+            // Use Admin client for DB write (bypass RLS for membership upgrade)
+            const { error: upgradeError } = await supabaseAdmin
                 .from('profiles')
                 .update({
                     membership_tier: 'silver',
@@ -147,7 +151,7 @@ export async function POST(req: Request) {
                 console.log("[RAZORPAY_VERIFY] User upgraded to SILVER successfully");
 
                 // Link Transaction to User
-                await supabase.from('transactions').update({
+                await supabaseAdmin.from('transactions').update({
                     user_id: user.id,
                     student_email: user.email,
                     membership_plan: 'silver'
