@@ -120,7 +120,8 @@ export async function POST(req: Request) {
                     contact_number: finalContact,
                     role: 'student',
                     membership_tier: 'bronze',
-                    setup_required: true
+                    setup_required: true,
+                    full_name: fullName || "Student" // Ensure full_name is present to avoid NOT NULL violation
                 });
 
                 if (insertError) {
