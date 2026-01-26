@@ -36,14 +36,23 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: profileError.message }, { status: 500 });
     }
 
-    // Update auth metadata (full_name & email) if needed
-    const { error: metaError } = await supabase.auth.updateUser({
-        data: { full_name: fullName },
-        email,
+    // ADMIN AUTH UPDATE: Force update email and metadata
+    // We use service role to bypass email confirmation requirement so user isn't locked out
+    const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
+    const supabaseAdmin = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { error: adminError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+        email: email,
+        email_confirm: true, // Auto-confirm the new email
+        user_metadata: { full_name: fullName }
     });
-    if (metaError) {
-        // Non‑fatal – profile already updated
-        console.warn('Auth metadata update failed:', metaError.message);
+
+    if (adminError) {
+        console.error('Admin Auth Update Failed:', adminError);
+        return NextResponse.json({ error: "Failed to update login email. Please try again or contact support." }, { status: 500 });
     }
 
     // Update password if a new one was provided
