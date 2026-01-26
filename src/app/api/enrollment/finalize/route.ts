@@ -59,13 +59,12 @@ export async function POST(req: Request) {
             console.log("[FINALIZE_ENROLLMENT] User already exists with ID:", existingProfile.id);
             userId = existingProfile.id;
 
-            // Update their profile
+            // Update their profile with WhatsApp number
             const { error: updateError } = await supabaseAdmin
                 .from("profiles")
                 .update({
-                    full_name: fullName,
-                    contact_number: contactNumber,
-                    membership_tier: "silver", // Upgrade existing user too
+                    whatsapp_number: whatsappNumber,
+                    membership_tier: "silver",
                 })
                 .eq("id", userId);
 
@@ -88,43 +87,64 @@ export async function POST(req: Request) {
             });
 
             if (createError) {
-                console.error("[FINALIZE_ENROLLMENT] Admin createUser Error:", {
-                    message: createError.message,
-                    status: createError.status,
-                });
+                // Check if user exists in Auth but not Profile (e.g. failed partial signup/login)
+                if (createError.message?.includes("already registered") || createError.status === 422) {
+                    console.log("[FINALIZE_ENROLLMENT] User already registered in Auth. Fetching ID to create profile...");
 
-                return NextResponse.json(
-                    { error: `Failed to create account: ${createError.message}` },
-                    { status: 500 }
-                );
+                    // Call the secure RPC function we just created
+                    const { data: existingUserId, error: rpcError } = await supabaseAdmin
+                        .rpc('get_user_id_by_email', { user_email: email });
+
+                    if (rpcError || !existingUserId) {
+                        console.error("[FINALIZE_ENROLLMENT] Failed to recover existing user ID:", rpcError);
+                        return NextResponse.json(
+                            { error: `User exists but failed to link profile: ${rpcError?.message || 'Unknown RPC error'}` },
+                            { status: 500 }
+                        );
+                    }
+
+                    console.log("[FINALIZE_ENROLLMENT] Recovered User ID:", existingUserId);
+                    userId = existingUserId as string;
+                } else {
+                    console.error("[FINALIZE_ENROLLMENT] Admin createUser Error:", {
+                        message: createError.message,
+                        status: createError.status,
+                    });
+
+                    return NextResponse.json(
+                        { error: `Failed to create account: ${createError.message}` },
+                        { status: 500 }
+                    );
+                }
+            } else {
+                if (!authData.user) {
+                    console.error("[FINALIZE_ENROLLMENT] No user data returned from createUser");
+                    return NextResponse.json(
+                        { error: "Failed to create user account" },
+                        { status: 500 }
+                    );
+                }
+                userId = authData.user.id;
+                console.log("[FINALIZE_ENROLLMENT] New user created with ID:", userId);
             }
 
-            if (!authData.user) {
-                console.error("[FINALIZE_ENROLLMENT] No user data returned from createUser");
-                return NextResponse.json(
-                    { error: "Failed to create user account" },
-                    { status: 500 }
-                );
-            }
-
-            userId = authData.user.id;
-            console.log("[FINALIZE_ENROLLMENT] New user created with ID:", userId);
-
-            // Create/update profile
+            // Create MINIMAL profile with WhatsApp number only
+            // User will fill full details in onboarding form
             const { error: profileError } = await supabaseAdmin
                 .from("profiles")
                 .upsert({
                     id: userId,
                     email: email,
-                    full_name: fullName,
+                    whatsapp_number: whatsappNumber, // Only WhatsApp number
                     role: "student",
-                    membership_tier: "silver", // Upgrade to Silver
+                    membership_tier: "silver",
+                    // full_name will be filled in onboarding
                 }, { onConflict: "id" });
 
             if (profileError) {
                 console.error("[FINALIZE_ENROLLMENT] Profile creation error:", profileError);
             } else {
-                console.log("[FINALIZE_ENROLLMENT] Profile created successfully");
+                console.log("[FINALIZE_ENROLLMENT] Minimal profile created with WhatsApp number");
             }
         }
 

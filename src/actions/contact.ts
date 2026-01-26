@@ -23,7 +23,7 @@ export async function submitContactForm(formData: FormData) {
         `;
 
         await sendMail({
-            to: "shanzap22@gmail.com",
+            to: "info@adh.today",
             subject: `New Contact Request from ${name}`,
             body: htmlContent,
         });

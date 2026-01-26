@@ -38,7 +38,6 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
             });
 
             console.log("[PAYMENT_WRAPPER] Response status:", response.status);
-            console.log("[PAYMENT_WRAPPER] Response headers:", response.headers.get('content-type'));
 
             if (!response.ok) {
                 const contentType = response.headers.get('content-type');

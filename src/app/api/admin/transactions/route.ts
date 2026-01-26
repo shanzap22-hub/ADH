@@ -10,13 +10,21 @@ export async function GET(req: Request) {
         const startDate = searchParams.get('start_date');
         const endDate = searchParams.get('end_date');
         const tier = searchParams.get('tier');
+        const searchQuery = searchParams.get('search_query');
 
-        const supabase = await createClient();
-
-        // Check Admin
-        const { data: { user } } = await supabase.auth.getUser();
+        // 1. Authenticate User
+        const supabaseAuth = await createClient();
+        const { data: { user } } = await supabaseAuth.auth.getUser();
         if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+        // 2. data fetching client (Service Role to bypass RLS)
+        const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
+        const supabase = createSupabaseClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+
+        // Check Admin Role using service client (more reliable)
         const { data: profile } = await supabase
             .from('profiles')
             .select('role')
@@ -30,6 +38,9 @@ export async function GET(req: Request) {
         let query = supabase.from('transactions').select('*');
 
         // Filters
+        if (searchQuery) {
+            query = query.or(`student_name.ilike.%${searchQuery}%,student_email.ilike.%${searchQuery}%,whatsapp_number.ilike.%${searchQuery}%`);
+        }
         if (status && status !== 'all') {
             query = query.eq('status', status);
         }
@@ -52,27 +63,209 @@ export async function GET(req: Request) {
 
         // MANUAL PROFILE FETCH (Robust against missing FKs)
         if (transactions && transactions.length > 0) {
-            const userIds = transactions
-                .map((t: any) => t.user_id)
-                .filter((id: any) => id); // Filter nulls
+            try {
+                let userIds = transactions
+                    .map((t: any) => t.user_id)
+                    .filter((id: any) => id); // Filter nulls
 
-            const uniqueIds = Array.from(new Set(userIds));
+                // Also check for user_id via email for manual transactions
+                const manualEmails = transactions
+                    .filter((t: any) => !t.user_id && t.student_email)
+                    .map((t: any) => t.student_email);
 
-            if (uniqueIds.length > 0) {
-                const { data: profiles } = await supabase
-                    .from('profiles')
-                    .select('id, phone, membership_tier')
-                    .in('id', uniqueIds as string[]);
+                let emailMap = new Map(); // email -> profile
 
-                if (profiles) {
+                if (manualEmails.length > 0) {
+                    const { data: emailProfiles } = await supabase
+                        .from('profiles')
+                        .select('id, email, membership_tier')
+                        .in('email', manualEmails);
+
+                    if (emailProfiles) {
+                        emailProfiles.forEach((p: any) => {
+                            userIds.push(p.id);
+                            emailMap.set(p.email, p);
+                        });
+                    }
+                }
+
+                const uniqueIds = Array.from(new Set(userIds));
+
+                if (uniqueIds.length > 0) {
+
+                    // 1. Fetch Progress Data (Completed Chapters)
+                    let progressData: any[] = [];
+                    try {
+                        const { data: progress } = await supabase
+                            .from('user_progress')
+                            .select('user_id, is_completed, chapter_id')
+                            .in('user_id', uniqueIds as string[])
+                            .eq('is_completed', true);
+                        progressData = progress || [];
+                    } catch (e) {
+                        console.error("Progress fetch error", e);
+                    }
+
+                    // 2. Fetch Profiles for these users
+                    let profiles: any[] = [];
+                    if (uniqueIds.length > 0) {
+                        try {
+                            const { data: fetchedProfiles } = await supabase
+                                .from('profiles')
+                                .select('id, email, membership_tier')
+                                .in('id', uniqueIds as string[]);
+                            profiles = fetchedProfiles || [];
+                        } catch (e) {
+                            console.error("Profile fetch error", e);
+                        }
+                    }
+
+                    // 3. Fetch Tier Access & Chapter Counts
+                    const plans = Array.from(new Set(transactions.map((t: any) => (t.membership_plan || "").toLowerCase()).filter(p => p)));
+
+                    // Add tiers from profiles
+                    profiles.forEach((p: any) => {
+                        if (p.membership_tier) plans.push(p.membership_tier.toLowerCase());
+                    });
+
+                    const uniquePlans = Array.from(new Set(plans));
+
+                    let tierCoursesMap = new Map<string, string[]>(); // tier -> [course_id, ...]
+
+                    if (uniquePlans.length > 0) {
+                        // Also fetch course titles for later mapping inside loop
+                        const { data: tierAccess } = await supabase
+                            .from('course_tier_access')
+                            .select('tier, course_id, courses(id, title)')
+                            .in('tier', uniquePlans);
+
+                        tierAccess?.forEach((access: any) => {
+                            const tier = access.tier.toLowerCase();
+                            const list = tierCoursesMap.get(tier) || [];
+                            list.push(access.course_id);
+                            tierCoursesMap.set(tier, list);
+                        });
+                    }
+
+                    // Fetch ALL Courses Info (Titles and total chapters)
+                    // Efficiently: Get all course_ids from tierCoursesMap
+                    const allCourseIds = new Set<string>();
+                    tierCoursesMap.forEach((ids) => ids.forEach(id => allCourseIds.add(id)));
+
+                    let courseInfoMap = new Map<string, { title: string, totalChapters: number }>();
+                    let chapterToCourseMap = new Map<string, string>(); // chapter_id -> course_id (for progress mapping)
+
+                    if (allCourseIds.size > 0) {
+                        // Fetch Titles
+                        const { data: coursesData } = await supabase
+                            .from('courses')
+                            .select('id, title')
+                            .in('id', Array.from(allCourseIds));
+
+                        coursesData?.forEach((c: any) => {
+                            courseInfoMap.set(c.id, { title: c.title, totalChapters: 0 });
+                        });
+
+                        // Fetch Chapters for counts and mapping
+                        const { data: allChapters } = await supabase
+                            .from('chapters')
+                            .select('id, course_id') // We need ID to map progress to course
+                            .in('course_id', Array.from(allCourseIds));
+
+                        allChapters?.forEach((ch: any) => {
+                            // Update total count
+                            const info = courseInfoMap.get(ch.course_id);
+                            if (info) {
+                                info.totalChapters = (info.totalChapters || 0) + 1;
+                            }
+                            // Map chapter to course
+                            chapterToCourseMap.set(ch.id, ch.course_id);
+                        });
+                    }
+
+                    // Map Transaction Data
                     transactions = transactions.map((t: any) => {
-                        const profile = profiles.find((p: any) => p.id === t.user_id);
+                        let profile = null;
+                        if (profiles) {
+                            profile = profiles.find((p: any) => p.id === t.user_id);
+                            if (!profile && t.student_email) {
+                                profile = emailMap.get(t.student_email) || profiles.find((p: any) => p.email === t.student_email);
+                            }
+                        }
+
+                        const effectiveId = profile ? profile.id : t.user_id;
+                        const tier = (t.membership_plan || profile?.membership_tier || "").toLowerCase();
+
+                        // Default Progress Structure
+                        const defaultProgress = {
+                            courses_enrolled: 0,
+                            total_chapters: 0,
+                            completed_chapters: 0,
+                            completion_percentage: 0,
+                            course_details: []
+                        };
+
+                        if (!tier) {
+                            return { ...t, user_id: effectiveId, profiles: profile || null, student_progress: defaultProgress };
+                        }
+
+                        const availableCourses = tierCoursesMap.get(tier) || [];
+                        let totalAvailableChapters = 0;
+                        let totalCompletedChapters = 0;
+                        const courseDetails: any[] = [];
+
+                        // Get user's completed chapters
+                        const userProgress = progressData.filter((p: any) => p.user_id === effectiveId);
+
+                        availableCourses.forEach(courseId => {
+                            const info = courseInfoMap.get(courseId);
+                            const courseTotal = info?.totalChapters || 0;
+                            totalAvailableChapters += courseTotal;
+
+                            // Calculate completed for this course
+                            const courseCompletedCount = userProgress.filter((p: any) => chapterToCourseMap.get(p.chapter_id) === courseId).length;
+
+                            totalCompletedChapters += courseCompletedCount;
+
+                            courseDetails.push({
+                                id: courseId,
+                                title: info?.title || "Unknown Course",
+                                total_chapters: courseTotal,
+                                completed_chapters: courseCompletedCount,
+                                percentage: courseTotal > 0 ? Math.round((courseCompletedCount / courseTotal) * 100) : 0
+                            });
+                        });
+
+                        const completionPercentage = totalAvailableChapters > 0
+                            ? Math.round((totalCompletedChapters / totalAvailableChapters) * 100)
+                            : 0;
+
                         return {
                             ...t,
-                            profiles: profile || null
+                            user_id: effectiveId || t.user_id,
+                            profiles: profile || null,
+                            student_progress: {
+                                courses_enrolled: availableCourses.length,
+                                total_chapters: totalAvailableChapters,
+                                completed_chapters: totalCompletedChapters,
+                                completion_percentage: completionPercentage,
+                                course_details: courseDetails
+                            }
                         };
                     });
                 }
+            } catch (profileError) {
+                console.error('Profile/Progress fetch error:', profileError);
+                // Fallback: Add empty progress to all transactions if major error occurs
+                transactions = transactions.map((t: any) => ({
+                    ...t,
+                    student_progress: {
+                        courses_enrolled: 0,
+                        total_chapters: 0,
+                        completed_chapters: 0,
+                        completion_percentage: 0
+                    }
+                }));
             }
         }
 

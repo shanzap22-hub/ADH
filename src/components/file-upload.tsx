@@ -28,26 +28,80 @@ export const FileUpload = ({
         const file = acceptedFiles?.[0];
         if (!file) return;
 
-        if (file.size > 10 * 1024 * 1024) {
-            toast.error("File is too large. Maximum size is 10MB.");
+        // File size limits
+        const isVideo = endpoint === "chapter-videos";
+        const isAttachment = endpoint === "course-attachments";
+
+        // Limits: 4GB for Video, 500MB for Attachment, 10MB for Image
+        const limitAPI = isVideo ? 4 * 1024 * 1024 * 1024 : isAttachment ? 500 * 1024 * 1024 : 10 * 1024 * 1024;
+        const limitLabel = isVideo ? "4GB" : isAttachment ? "500MB" : "10MB";
+
+        if (file.size > limitAPI) {
+            toast.error(`File is too large. Maximum size is ${limitLabel}.`);
             return;
         }
 
         try {
             setIsUploading(true);
 
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random()}.${fileExt}`;
-            const filePath = `${fileName}`;
-
             // Check if we should use Bunny Storage
             if (endpoint === "course-thumbnails" || endpoint === "course-attachments" || endpoint === "blog-images") {
+
+                // For Attachments: Use Direct Client-Side Upload (to support large files > 4.5MB and bypass Vercel limits)
+                if (endpoint === "course-attachments") {
+                    try {
+                        const { getBunnyCredentials } = await import("@/actions/bunny");
+                        const creds = await getBunnyCredentials();
+
+                        const fileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+                        const uniqueFileName = `${Date.now()}-${fileName}`;
+
+                        // Determine Hostname
+                        let regionCode = creds.region.toLowerCase().trim();
+                        if (regionCode === "singapore" || regionCode === "asia") regionCode = "sg";
+                        if (regionCode === "stockholm" || regionCode === "europe") regionCode = "se";
+                        if (regionCode === "germany") regionCode = "de";
+
+                        const hostname = regionCode === 'de' ? 'storage.bunnycdn.com' : `${regionCode}.storage.bunnycdn.com`;
+
+                        const uploadPath = `${endpoint}/${uniqueFileName}`;
+                        const uploadUrl = `https://${hostname}/${creds.zoneName}/${uploadPath}`;
+
+                        // Direct PUT
+                        const response = await fetch(uploadUrl, {
+                            method: 'PUT',
+                            headers: {
+                                'AccessKey': creds.apiKey,
+                                'Content-Type': file.type || 'application/octet-stream'
+                            },
+                            body: file
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`Bunny Upload Failed: ${response.statusText}`);
+                        }
+
+                        // Construct Public URL
+                        const finalUrl = `https://${creds.pullZone}/${uploadPath}`;
+
+                        onChange(finalUrl);
+                        toast.success("File uploaded to Bunny");
+                        setIsUploading(false);
+                        return;
+
+                    } catch (e: any) {
+                        console.error(e);
+                        toast.error("Upload failed: " + (e.message || "Unknown error"));
+                        setIsUploading(false);
+                        return;
+                    }
+                }
+
+                // For Images (Thumbnails/Blog): Continue using Server Action (small files)
                 const formData = new FormData();
                 formData.append("file", file);
 
-                // We use dynamic import or updated logic for server action call in client
-                // Note: FileUpload is client component, so we can call server action
-                const { uploadToBunny } = await import("@/actions/bunny-actions");
+                const { uploadToBunny } = await import("@/actions/bunny");
                 const result = await uploadToBunny(formData, endpoint);
 
                 if (result.error) throw new Error(result.error);
@@ -59,9 +113,10 @@ export const FileUpload = ({
             }
 
             // Fallback to Supabase for other endpoints (e.g. chapter-videos)
+            const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
             const { error: uploadError } = await supabase.storage
                 .from(endpoint)
-                .upload(filePath, file);
+                .upload(fileName, file);
 
             if (uploadError) {
                 throw uploadError;
@@ -69,7 +124,7 @@ export const FileUpload = ({
 
             const { data: { publicUrl } } = supabase.storage
                 .from(endpoint)
-                .getPublicUrl(filePath);
+                .getPublicUrl(fileName);
 
             onChange(publicUrl);
             toast.success("File uploaded");
@@ -144,7 +199,11 @@ export const FileUpload = ({
                 {isUploading ? "Uploading..." : "Drag & drop or click to select"}
             </p>
             <p className="text-xs text-muted-foreground mt-2">
-                {(endpoint === "course-thumbnails" || endpoint === "blog-images") ? "Images only" : "Videos only"}
+                {endpoint === "course-attachments"
+                    ? "Any file (max 500MB)"
+                    : (endpoint === "course-thumbnails" || endpoint === "blog-images")
+                        ? "Images only (max 10MB)"
+                        : "Videos only (max 4GB)"}
             </p>
         </div>
     )

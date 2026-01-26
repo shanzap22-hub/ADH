@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(req: Request) {
     try {
@@ -44,23 +45,66 @@ export async function POST(req: Request) {
             return new NextResponse("You can only enroll students in your own courses", { status: 403 });
         }
 
+        // Use Admin Client for user creation/enrollment
+        const supabaseAdmin = createAdminClient();
+
         // Find student by email - check in auth.users via profiles
-        const { data: studentProfile, error: studentError } = await supabase
+        const { data: studentWrapper, error: studentErrorCheck } = await supabaseAdmin
             .from("profiles")
             .select("id, email, full_name")
             .eq("email", studentEmail.toLowerCase().trim())
-            .single();
+            .maybeSingle();
 
-        // If student not found, return specific error
-        if (studentError || !studentProfile) {
-            return new NextResponse("Student not found. They must sign up first.", { status: 404 });
+        let studentId = studentWrapper?.id;
+        let finalStudentName = studentWrapper?.full_name;
+
+        // If student not found, create them!
+        if (!studentId) {
+            console.log(`[INSTRUCTOR_ENROLL] Student not found: ${studentEmail}. Creating new account...`);
+
+            // 1. Create Auth User
+            const tempPassword = `ADH${Math.random().toString(36).slice(-6)}!`;
+            const { data: authData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+                email: studentEmail.toLowerCase().trim(),
+                password: tempPassword,
+                email_confirm: true, // Auto confirm since instructor added
+                user_metadata: { role: 'student' }
+            });
+
+            if (createError) {
+                // Check if user exists in Auth but not Profile (edge case)
+                if (createError.message.includes("already registered")) {
+                    console.log("User exists in Auth but no profile. Error condition.");
+                    return new NextResponse("User exists but has no profile. Please ask admin to fix.", { status: 500 });
+                }
+                return new NextResponse(`Failed to create student account: ${createError.message}`, { status: 500 });
+            }
+
+            studentId = authData.user.id;
+
+            // 2. Create Minimal Profile
+            const { error: profileError } = await supabaseAdmin
+                .from("profiles")
+                .insert({
+                    id: studentId,
+                    email: studentEmail.toLowerCase().trim(),
+                    role: 'student',
+                    membership_tier: 'bronze',
+                });
+
+            if (profileError) {
+                return new NextResponse(`Failed to create student profile: ${profileError.message}`, { status: 500 });
+            }
+            console.log(`[INSTRUCTOR_ENROLL] Created new student: ${studentId}`);
+        } else {
+            console.log(`[INSTRUCTOR_ENROLL] Found existing student: ${studentId}`);
         }
 
         // Check if already enrolled
-        const { data: existingEnrollment } = await supabase
+        const { data: existingEnrollment } = await supabaseAdmin
             .from("purchases")
             .select("id")
-            .eq("user_id", studentProfile.id)
+            .eq("user_id", studentId)
             .eq("course_id", courseId)
             .maybeSingle();
 
@@ -69,30 +113,24 @@ export async function POST(req: Request) {
         }
 
         // Create enrollment (purchase record)
-        // Use service role or ensure RLS allows instructor to insert
-        const { error: enrollError } = await supabase
+        // Use Admin client to ensure permission
+        const { error: enrollError } = await supabaseAdmin
             .from("purchases")
             .insert({
-                user_id: studentProfile.id,
+                user_id: studentId,
                 course_id: courseId,
             });
 
         if (enrollError) {
             console.error("[ENROLL_ERROR]", enrollError);
-
-            // Check if it's an RLS policy error
-            if (enrollError.code === '42501') {
-                return new NextResponse("Database permission error. Please contact support.", { status: 500 });
-            }
-
             return new NextResponse(`Failed to enroll student: ${enrollError.message}`, { status: 500 });
         }
 
         return NextResponse.json({
             success: true,
             student: {
-                email: studentProfile.email,
-                name: studentProfile.full_name,
+                email: studentEmail,
+                name: finalStudentName || "New Student",
             },
             course: {
                 title: course.title,

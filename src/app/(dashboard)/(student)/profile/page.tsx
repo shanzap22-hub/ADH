@@ -5,6 +5,7 @@ import { User } from "lucide-react";
 import { MembershipBadge } from "@/components/membership/MembershipBadge";
 import { Button } from "@/components/ui/button";
 import { ProfileSignOutButton } from "@/components/dashboard/ProfileSignOutButton";
+import { DeleteAccountButton } from "@/components/dashboard/DeleteAccountButton";
 
 export default async function ProfilePage() {
     const supabase = await createClient();
@@ -81,6 +82,9 @@ export default async function ProfilePage() {
 
             {/* Sign Out Button */}
             <ProfileSignOutButton />
+
+            {/* Delete Account Section */}
+            <DeleteAccountButton />
         </div>
     );
 }

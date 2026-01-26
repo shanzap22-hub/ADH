@@ -52,8 +52,12 @@ export const ChapterAttachmentsForm = ({
             toast.success("Attachment added");
             toggleEdit();
             router.refresh();
-        } catch {
-            toast.error("Something went wrong");
+            toggleEdit();
+            router.refresh();
+        } catch (error: any) {
+            console.error("Failed to attach:", error);
+            const msg = error.response?.data || "Something went wrong";
+            toast.error(typeof msg === 'string' ? msg : "Failed to save attachment");
         }
     }
 

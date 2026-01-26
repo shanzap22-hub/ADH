@@ -19,6 +19,7 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "processing" | "success" | "error">("idle");
     const [videoId, setVideoId] = useState<string | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const uploadRef = useRef<tus.Upload | null>(null);
 
@@ -76,6 +77,7 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                 onError: (error) => {
                     console.error("[UPLOAD] TUS upload failed:", error);
                     setUploadStatus("error");
+                    setErrorMessage(error.message);
                     setUploading(false);
                     toast.error(`Upload failed: ${error.message}`);
                 },
@@ -85,11 +87,13 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                     console.log(`[UPLOAD] Progress: ${percentage}%`);
                 },
                 onSuccess: () => {
-                    console.log("[UPLOAD] TUS upload complete! Checking status...");
-                    setUploadStatus("processing");
+                    console.log("[UPLOAD] TUS upload complete! Skipping strict status check (Fire & Forget).");
+                    setUploadStatus("success");
                     setUploadProgress(100);
                     setUploading(false);
-                    checkVideoStatus(signature.videoId);
+                    toast.success("Video uploaded successfully!");
+                    onUploadComplete(signature.videoId);
+                    // checkVideoStatus(signature.videoId); // DISABLED to restore Jan 23 behavior
                 },
             });
 
@@ -99,6 +103,7 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
         } catch (error: any) {
             console.error("[UPLOAD] Error:", error);
             setUploadStatus("error");
+            setErrorMessage(error.message);
             setUploading(false);
             toast.error(error.message || "Failed to start upload");
         }
@@ -269,7 +274,7 @@ export const VideoUpload = ({ onUploadComplete, onUploadStart }: VideoUploadProp
                         </span>
                     </div>
                     <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
-                        Check browser console for details. Verify Bunny.net credentials.
+                        {errorMessage || "Check browser console for details. Verify Bunny.net credentials."}
                     </p>
                     <Button onClick={reset} variant="outline" size="sm">
                         Try Again

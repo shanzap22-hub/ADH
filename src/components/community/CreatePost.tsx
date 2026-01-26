@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
-import { uploadToBunny } from "@/actions/bunny-actions";
+import { uploadToBunny } from "@/actions/bunny";
 
 const TIERS = [
     { value: "bronze", label: "Bronze" },

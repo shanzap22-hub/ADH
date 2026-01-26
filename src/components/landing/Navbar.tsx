@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 export function Navbar() {
     return (
         <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
-            <div className="container mx-auto flex h-16 items-center justify-between px-4">
+            <div className="container mx-auto flex h-24 items-center justify-between px-4">
                 <div className="flex items-center gap-2">
                     <Link href="/" className="flex items-center space-x-2">
                         <Image
@@ -14,7 +14,7 @@ export function Navbar() {
                             alt="ADH Connect"
                             width={160}
                             height={40}
-                            className="h-9 w-auto object-contain"
+                            className="h-20 w-auto object-contain"
                             priority
                         />
                     </Link>

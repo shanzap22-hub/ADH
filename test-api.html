@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Transaction API</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid #dee2e6;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .student-card {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+        .progress-display {
+            background: #e7f3ff;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Transaction API Test - help.avodha@gmail.com</h1>
+        
+        <div class="info">
+            <strong>Testing:</strong> Checking if progress data is correctly returned from the API
+        </div>
+
+        <button onclick="testAPI()">🚀 Test API</button>
+        <button onclick="location.href='https://adh.today/admin/transactions'">📊 Open Live Dashboard</button>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="info">⏳ Testing API...</div>';
+
+            try {
+                // Test the API endpoint
+                const response = await fetch('https://adh.today/api/admin/transactions?status=verified');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                // Find the specific student
+                const student = data.find(t => t.student_email === 'help.avodha@gmail.com');
+
+                let html = '<div class="success">✅ API Response Received</div>';
+                html += `<p><strong>Total Transactions:</strong> ${data.length}</p>`;
+
+                if (student) {
+                    html += '<div class="student-card">';
+                    html += '<h2>✅ Student Found!</h2>';
+                    html += `<p><strong>Email:</strong> ${student.student_email}</p>`;
+                    html += `<p><strong>Name:</strong> ${student.student_name || 'N/A'}</p>`;
+                    html += `<p><strong>Plan:</strong> ${student.membership_plan}</p>`;
+                    html += `<p><strong>Status:</strong> ${student.status}</p>`;
+                    html += '</div>';
+
+                    if (student.student_progress) {
+                        html += '<div class="progress-display">';
+                        html += '<h3>📊 Progress Data</h3>';
+                        html += `<p><strong>Courses Enrolled:</strong> ${student.student_progress.courses_enrolled || 0}</p>`;
+                        html += `<p><strong>Total Chapters:</strong> ${student.student_progress.total_chapters || 0}</p>`;
+                        html += `<p><strong>Completed Chapters:</strong> ${student.student_progress.completed_chapters || 0}</p>`;
+                        html += `<p><strong>Completion:</strong> <span style="font-size: 24px; color: #4CAF50; font-weight: bold;">${student.student_progress.completion_percentage || 0}%</span></p>`;
+                        html += '</div>';
+                    } else {
+                        html += '<div class="error">❌ No progress data found in response</div>';
+                    }
+
+                    html += '<h3>Raw Transaction Data:</h3>';
+                    html += `<pre>${JSON.stringify(student, null, 2)}</pre>`;
+                } else {
+                    html += '<div class="error">❌ Student not found in API response</div>';
+                    html += '<p>Showing first 3 transactions:</p>';
+                    html += `<pre>${JSON.stringify(data.slice(0, 3), null, 2)}</pre>`;
+                }
+
+                resultsDiv.innerHTML = html;
+
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Error</h3>
+                        <p>${error.message}</p>
+                        <p><strong>Note:</strong> You may need to be logged in as admin to access this API.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-run on page load
+        window.onload = () => {
+            setTimeout(testAPI, 500);
+        };
+    </script>
+</body>
+</html>

@@ -32,16 +32,17 @@ export async function POST(request: Request) {
         const supabaseAdmin = createAdminClient();
 
         // 1. Update Profile (Upsert to be safe)
+        // 1. Update Profile (Must update, as profile is guaranteed to exist)
         const { error: profileError } = await supabaseAdmin
             .from("profiles")
-            .upsert({
-                id: user.id,
+            .update({
                 full_name: fullName,
-                phone_number: contactNumber,
+                contact_number: contactNumber,
                 whatsapp_number: whatsappNumber || contactNumber,
                 updated_at: new Date().toISOString(),
-                email: user.email // Ensure email is set if creating
-            });
+                // Do NOT update email, role, or membership_tier here
+            })
+            .eq("id", user.id);
 
         if (profileError) {
             console.error("Profile Update Error", profileError);

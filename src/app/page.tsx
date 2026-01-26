@@ -11,7 +11,7 @@ export default async function HomePage() {
       {/* Premium Navbar */}
       <nav className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-lg border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+          <div className="flex justify-between items-center h-24">
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-3 hover:opacity-90 transition shrink-0">
               <Image
@@ -19,7 +19,7 @@ export default async function HomePage() {
                 alt="ADH CONNECT"
                 width={200}
                 height={60}
-                className="h-10 sm:h-12 w-auto object-contain"
+                className="h-20 w-auto object-contain"
                 priority
               />
             </Link>

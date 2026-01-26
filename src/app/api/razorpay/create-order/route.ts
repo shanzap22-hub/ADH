@@ -108,8 +108,6 @@ export async function POST(req: Request) {
 
                 let userName = currentUser?.user_metadata?.full_name || "Guest";
                 let userEmail = currentUser?.email || "";
-
-                // Get Phone if available
                 let userPhone = currentUser?.phone || "";
 
                 const payload = {

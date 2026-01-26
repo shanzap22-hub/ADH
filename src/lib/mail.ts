@@ -19,7 +19,7 @@ export const sendBookingConfirmation = async (
     try {
         console.log("DEBUG_MAIL: Attempting to send email to:", email);
         const data = await resend.emails.send({
-            from: "ADH Connect <booking@adh.today>", // Updated to Verified Domain
+            from: "ADH Connect <info@adh.today>", // Updated to Verified Domain
             to: email,
             subject: "Booking Confirmed: 1-on-1 Session",
             html: `
@@ -53,7 +53,7 @@ export const sendBookingCancellation = async (
     if (!resend) return { success: true };
     try {
         await resend.emails.send({
-            from: "ADH Connect <booking@adh.today>",
+            from: "ADH Connect <info@adh.today>",
             to: email,
             subject: "Booking Cancelled: 1-on-1 Session",
             html: `
@@ -79,7 +79,7 @@ export const sendBookingRescheduled = async (
     if (!resend) return { success: true };
     try {
         await resend.emails.send({
-            from: "ADH Connect <booking@adh.today>",
+            from: "ADH Connect <info@adh.today>",
             to: email,
             subject: "Session Rescheduled: 1-on-1 Session",
             html: `
@@ -109,7 +109,7 @@ export const sendBookingReminder = async (
     if (!resend) return { success: true };
     try {
         await resend.emails.send({
-            from: "ADH LMS <booking@adh.today>",
+            from: "ADH LMS <info@adh.today>",
             to: email,
             subject: `Reminder: Session in ${timeLeft}`,
             html: `
@@ -131,7 +131,7 @@ export const sendMail = async ({ to, subject, body }: { to: string; subject: str
     if (!resend) return { success: true };
     try {
         await resend.emails.send({
-            from: "ADH Connect <onboarding@resend.dev>", // Using default for now to ensure delivery until domain verified
+            from: "ADH Connect <info@adh.today>", // Updated to Verified Domain
             to,
             subject,
             html: body

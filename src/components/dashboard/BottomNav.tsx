@@ -9,9 +9,9 @@ import { createClient } from "@/lib/supabase/client";
 
 const navItems = [
     {
-        label: "Community",
+        label: "Home",
         icon: Home,
-        href: "/community",
+        href: "/dashboard",
     },
     {
         label: "Courses",
@@ -29,6 +29,7 @@ const navItems = [
         href: "/chat",
     },
 ];
+
 
 export const BottomNav = () => {
     const pathname = usePathname();

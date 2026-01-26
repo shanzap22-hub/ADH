@@ -39,6 +39,9 @@ export async function GET(request: Request) {
                 try {
                     const { data: { user } } = await supabase.auth.getUser()
                     if (user) {
+                        // STRICT PROFILE CHECK
+                        // Random Google Logins will NOT have a profile (since trigger is disabled)
+                        // Only Paid Users (via finalize API) or Instructor Enrolled (via admin) will have a profile
                         const { data: profile } = await supabase
                             .from('profiles')
                             .select('role, membership_tier')
@@ -46,37 +49,7 @@ export async function GET(request: Request) {
                             .single()
 
                         if (profile) {
-                            if (profile.role === 'student' || !profile.role) {
-                                // 1. Check if user has a valid Membership Tier assigned
-                                const hasValidTier = profile.membership_tier && ['bronze', 'silver', 'gold', 'diamond', 'platinum', 'expired'].includes(profile.membership_tier);
-
-                                if (!hasValidTier) {
-                                    // 2. Fallback: Check purchases, transactions, and enrollments
-                                    const { count: purchaseCount } = await supabase.from('purchases').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
-
-                                    const { count: txCount } = await supabase
-                                        .from('transactions')
-                                        .select('*', { count: 'exact', head: true })
-                                        .or(`user_id.eq.${user.id},student_email.eq.${user.email}`);
-
-                                    const { count: enrollmentCount } = await supabase
-                                        .from('enrollments')
-                                        .select('*', { count: 'exact', head: true })
-                                        .eq('student_id', user.id);
-
-                                    // Allow if ANY of these exist
-                                    const hasAccess = (purchaseCount && purchaseCount > 0) ||
-                                        (txCount && txCount > 0) ||
-                                        (enrollmentCount && enrollmentCount > 0);
-
-                                    if (!hasAccess) {
-                                        console.log('[AUTH_CALLBACK] Access denied - no valid enrollment/purchase/transaction');
-                                        await supabase.auth.signOut();
-                                        return NextResponse.redirect(`${origin}/?error=unauthorized_purchase_required`);
-                                    }
-                                }
-                            }
-
+                            // User authorized! 
                             // Determine redirect path based on role
                             if (next === '/') {
                                 if (profile.role === 'instructor') redirectPath = '/instructor/courses'
@@ -87,9 +60,9 @@ export async function GET(request: Request) {
                             }
                         } else {
                             // CRITICAL: No profile found - unauthorized access attempt
-                            console.log('[AUTH_CALLBACK] Profile not found for user:', user.id);
+                            console.log('[AUTH_CALLBACK] Access Denied: No profile found for user:', user.email);
                             await supabase.auth.signOut();
-                            return NextResponse.redirect(`${origin}/?error=profile_not_found`);
+                            return NextResponse.redirect(`${origin}/?error=unauthorized_no_profile`);
                         }
                     }
                 } catch (e) {
@@ -99,7 +72,6 @@ export async function GET(request: Request) {
                     return NextResponse.redirect(`${origin}/?error=authorization_failed`);
                 }
             }
-
             if (isLocalEnv) return NextResponse.redirect(`${origin}${redirectPath}`)
             else if (forwardedHost) return NextResponse.redirect(`https://${forwardedHost}${redirectPath}`)
             else return NextResponse.redirect(`${origin}${redirectPath}`)

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ADH CONNECT</string>
+    <string name="title_activity_main">ADH CONNECT</string>
+    <string name="package_name">today.adh.app</string>
+    <string name="custom_url_scheme">today.adh.app</string>
+</resources>

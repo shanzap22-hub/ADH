@@ -70,7 +70,7 @@ export const Sidebar = ({ is_super_admin }: SidebarProps) => {
                         alt="ADH Connect"
                         width={150}
                         height={40}
-                        className="h-8 w-auto object-contain"
+                        className="h-20 w-auto object-contain"
                         priority
                     />
                 </div>
