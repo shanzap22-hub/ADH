@@ -56,6 +56,19 @@ export default function CompleteProfilePage() {
             const isDummyEmail = user.email?.includes("adh.pending");
             const existingName = metadata.full_name === "Student" ? "" : (metadata.full_name || "");
 
+            // Fetch existing profile to pre-fill WhatsApp number (from payment)
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("whatsapp_number, phone_number, full_name")
+                .eq("id", user.id)
+                .single();
+
+            // Password State Logic
+            let initialPassword = "";
+            if (hasChangedPw) {
+                initialPassword = "********";
+            }
+
             setFormData(prev => ({
                 ...prev,
                 email: isDummyEmail ? "" : (user.email || ""), // Empty if dummy
