@@ -43,9 +43,10 @@ export async function POST(req: Request) {
         }
 
         // Payment verified - store in temporary table
-        const supabase = await createClient();
+        // Payment verified - store in temporary table
+        const supabaseAdmin = (await import("@/lib/supabase/admin")).createAdminClient();
 
-        const { error } = await supabase.from("payments_temp").insert({
+        const { error } = await supabaseAdmin.from("payments_temp").insert({
             payment_id: razorpay_payment_id,
             order_id: razorpay_order_id,
             whatsapp_number: whatsappNumber,
@@ -55,9 +56,13 @@ export async function POST(req: Request) {
 
         if (error) {
             console.error("[PAYMENT_VERIFY_DB_ERROR]", error);
-            // Continue anyway - we can manually verify later
+            // Critical: If we cannot record the payment, we should not proceed.
+            return NextResponse.json(
+                { error: "Internal Server Error: Failed to record payment verification" },
+                { status: 500 }
+            );
         } else {
-            console.log("[RAZORPAY_VERIFY] Payment stored successfully");
+            console.log("[RAZORPAY_VERIFY] Payment stored successfully in payments_temp");
         }
 
         // Initialize Razorpay to fetch exact details
@@ -87,12 +92,11 @@ export async function POST(req: Request) {
         }
 
         // UPDATE TRANSACTIONS TABLE (Super Admin Features)
-        const { count: txnUpdateCount } = await supabase.from('transactions')
+        const { count: txnUpdateCount } = await supabaseAdmin.from('transactions')
             .update({
                 status: 'verified',
                 razorpay_payment_id: razorpay_payment_id,
                 amount: realAmount, // Update with REAL amount
-                // We might want to store method too if we added column, but amount is priority
                 updated_at: new Date().toISOString()
             })
             .eq('razorpay_order_id', razorpay_order_id)
@@ -100,7 +104,7 @@ export async function POST(req: Request) {
 
         if (txnUpdateCount === 0) {
             console.log("[RAZORPAY_VERIFY] Transaction not found, inserting new Verified record.");
-            await supabase.from('transactions').insert({
+            await supabaseAdmin.from('transactions').insert({
                 status: 'verified',
                 razorpay_payment_id: razorpay_payment_id,
                 razorpay_order_id: razorpay_order_id,
