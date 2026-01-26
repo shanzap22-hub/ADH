@@ -52,28 +52,13 @@ export default function CompleteProfilePage() {
 
             const showPassword = true; // Always show password field container
 
-            // Pre-fill Email and Name (Only if NOT 'Student')
+            // Pre-fill Logic
+            const isDummyEmail = user.email?.includes("adh.pending");
             const existingName = metadata.full_name === "Student" ? "" : (metadata.full_name || "");
-
-            // Fetch existing profile to pre-fill WhatsApp number (from payment)
-            const { data: profile } = await supabase
-                .from("profiles")
-                .select("whatsapp_number, phone_number, full_name")
-                .eq("id", user.id)
-                .single();
-
-            // Password State Logic
-            // If Password WAS changed (Reset flow), show dummy stars.
-            // If Google, show empty.
-            // If Manual (New), show empty.
-            let initialPassword = "";
-            if (hasChangedPw) {
-                initialPassword = "********";
-            }
 
             setFormData(prev => ({
                 ...prev,
-                email: user.email || "",
+                email: isDummyEmail ? "" : (user.email || ""), // Empty if dummy
                 fullName: profile?.full_name || existingName, // Prefer profile name if exists
                 whatsappNumber: profile?.whatsapp_number || "", // Pre-fill WhatsApp from payment
                 contactNumber: profile?.phone_number || "", // Pre-fill Phone if exists
@@ -85,20 +70,9 @@ export default function CompleteProfilePage() {
         checkUser();
     }, [router, supabase]);
 
+    // Simple handlers
     const handleContactChange = (value: string) => {
-        setFormData((prev) => ({
-            ...prev,
-            contactNumber: value,
-            whatsappNumber: prev.sameAsContact ? value : prev.whatsappNumber,
-        }));
-    };
-
-    const handleCheckboxChange = (checked: boolean) => {
-        setFormData((prev) => ({
-            ...prev,
-            sameAsContact: checked,
-            whatsappNumber: checked ? prev.contactNumber : prev.whatsappNumber,
-        }));
+        setFormData((prev) => ({ ...prev, contactNumber: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -106,7 +80,7 @@ export default function CompleteProfilePage() {
         setIsSubmitting(true);
 
         try {
-            if (!formData.fullName || !formData.contactNumber) {
+            if (!formData.fullName || !formData.contactNumber || !formData.whatsappNumber || !formData.email) {
                 toast.error("Please fill all required fields");
                 setIsSubmitting(false);
                 return;
@@ -120,7 +94,6 @@ export default function CompleteProfilePage() {
             }
 
             // Prepare payload
-            // If password is still dummy '********', send SKIPPED
             const payload = {
                 ...formData,
                 password: formData.password === "********" ? "SKIPPED" : formData.password
@@ -165,16 +138,6 @@ export default function CompleteProfilePage() {
 
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Email (Read-only) */}
-                        <div className="space-y-2">
-                            <Label htmlFor="email" className="text-white">Email Address</Label>
-                            <Input
-                                id="email"
-                                value={formData.email}
-                                disabled
-                                className="bg-slate-800/50 border-slate-700 text-slate-400 cursor-not-allowed"
-                            />
-                        </div>
 
                         {/* Full Name */}
                         <div className="space-y-2">
@@ -183,9 +146,44 @@ export default function CompleteProfilePage() {
                             </Label>
                             <Input
                                 id="fullName"
-                                placeholder="John Doe"
+                                placeholder="Enter your full name"
                                 value={formData.fullName}
                                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                required
+                                disabled={isSubmitting}
+                                className="bg-slate-800 border-slate-700 text-white"
+                            />
+                        </div>
+
+                        {/* Email (Editable now) */}
+                        <div className="space-y-2">
+                            <Label htmlFor="email" className="text-white">
+                                Email Address <span className="text-red-400">*</span>
+                            </Label>
+                            <Input
+                                id="email"
+                                placeholder="Enter your email address"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                disabled={isSubmitting}
+                                required
+                                type="email"
+                                className="bg-slate-800 border-slate-700 text-white"
+                            />
+                            <p className="text-xs text-slate-500">This will be used for login & updates.</p>
+                        </div>
+
+                        {/* WhatsApp Number */}
+                        <div className="space-y-2">
+                            <Label htmlFor="whatsappNumber" className="text-white">
+                                WhatsApp Number <span className="text-red-400">*</span>
+                            </Label>
+                            <Input
+                                id="whatsappNumber"
+                                type="tel"
+                                placeholder="9876543210"
+                                value={formData.whatsappNumber}
+                                onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
                                 required
                                 disabled={isSubmitting}
                                 className="bg-slate-800 border-slate-700 text-white"
@@ -206,77 +204,6 @@ export default function CompleteProfilePage() {
                                 required
                                 className="bg-slate-800 border-slate-700 text-white"
                             />
-                        </div>
-
-                        {/* Set Password */}
-                        <div className="space-y-2">
-                            <Label htmlFor="password" className="text-white">
-                                {passwordChanged ? "Password (Already Set)" : "Set Password"} <span className="text-red-400">*</span>
-                            </Label>
-                            <div className="relative">
-                                <Input
-                                    id="password"
-                                    type={showPasswordText ? "text" : "password"}
-                                    autoComplete="new-password"
-                                    placeholder="Min 6 chars"
-                                    value={formData.password}
-                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                    required
-                                    minLength={6}
-                                    disabled={isSubmitting}
-                                    className={`bg-slate-800 border-slate-700 text-white pr-10 ${passwordChanged ? 'text-green-400 border-green-800' : ''}`}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPasswordText(!showPasswordText)}
-                                    className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
-                                >
-                                    {showPasswordText ? (
-                                        <EyeOff className="h-5 w-5" />
-                                    ) : (
-                                        <Eye className="h-5 w-5" />
-                                    )}
-                                </button>
-                            </div>
-                            {passwordChanged ?
-                                <p className="text-xs text-green-400">✅ Password is set. You can keep it or type a new one.</p> :
-                                <p className="text-xs text-slate-400">Create a secure password.</p>
-                            }
-                        </div>
-
-                        {/* WhatsApp Number */}
-                        <div className="space-y-2">
-                            <Label htmlFor="whatsappNumber" className="text-white">
-                                WhatsApp Number <span className="text-red-400">*</span>
-                            </Label>
-                            <div className="relative">
-                                <Input
-                                    id="whatsappNumber"
-                                    type="tel"
-                                    placeholder="9876543210"
-                                    value={formData.whatsappNumber}
-                                    onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
-                                    required
-                                    readOnly={formData.sameAsContact}
-                                    disabled={isSubmitting}
-                                    className={`bg-slate-800 border-slate-700 text-white ${formData.sameAsContact ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                />
-                            </div>
-                            <div className="flex items-center space-x-2 mt-2">
-                                <Checkbox
-                                    id="sameAsContact"
-                                    checked={formData.sameAsContact}
-                                    onCheckedChange={handleCheckboxChange}
-                                    disabled={isSubmitting}
-                                    className="border-slate-500 data-[state=checked]:bg-orange-500 data-[state=checked]:text-slate-900"
-                                />
-                                <label
-                                    htmlFor="sameAsContact"
-                                    className="text-sm text-slate-300 cursor-pointer select-none"
-                                >
-                                    Same as Contact Number
-                                </label>
-                            </div>
                         </div>
 
                         <Button
