@@ -24,8 +24,8 @@ export default async function ChatPage() {
     // Check tier capabilities
     const { data: tierSettings } = await supabase
         .from("tier_pricing")
-        .select("has_chat_access")
-        .eq("tier", profile?.membership_tier || "bronze")
+        .select("has_ai_access")
+        .eq("tier", profile?.membership_tier || "free")
         .single();
 
     const isAdmin =
@@ -33,21 +33,11 @@ export default async function ChatPage() {
         profile?.role === "instructor" ||
         profile?.role === "admin";
 
-    const hasAccess = isAdmin || tierSettings?.has_chat_access === true;
+    const hasAccess = isAdmin || tierSettings?.has_ai_access === true;
 
     if (!hasAccess) {
-        return (
-            <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-4">
-                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
-                    <span className="text-3xl">🔒</span>
-                </div>
-                <h2 className="text-xl font-bold">Chat Access Restricted</h2>
-                <p className="text-slate-500 max-w-md">
-                    Your current membership plan does not include access to Community Chat.
-                    Please upgrade your plan to unlock this feature.
-                </p>
-            </div>
-        );
+        const { UpgradeTierMessage } = await import("@/components/UpgradeTierMessage");
+        return <UpgradeTierMessage feature="AI Mentor" />;
     }
 
     return (

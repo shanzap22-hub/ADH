@@ -16,6 +16,7 @@ export default async function SearchPage() {
     let courses: any[] = [];
     let fetchError = null;
     let userTier = 'free';
+    let maxCoursesAllowed = 0;
 
     try {
         // Step 1: Get user's membership tier
@@ -27,13 +28,22 @@ export default async function SearchPage() {
 
         userTier = profile?.membership_tier || 'free';
 
-        // Step 2: Get tier hierarchy (which tiers this user can access)
+        // Step 2: Get tier's max_courses limit from tier_pricing
+        const { data: tierPricing } = await supabase
+            .from("tier_pricing")
+            .select("max_courses")
+            .eq("tier", userTier)
+            .single();
+
+        maxCoursesAllowed = tierPricing?.max_courses || 0;
+
+        // Step 3: Get tier hierarchy (which tiers this user can access)
         const { data: tierHierarchy } = await supabase
             .rpc('get_user_tier_hierarchy', { user_tier: userTier });
 
         const accessibleTiers = tierHierarchy || [userTier];
 
-        // Step 3: Get courses accessible by tier OR already enrolled
+        // Step 4: Get courses accessible by tier
         const { data, error } = await supabase
             .from("courses")
             .select(`
@@ -49,7 +59,7 @@ export default async function SearchPage() {
             .in("course_tier_access.tier", accessibleTiers)
             .order("created_at", { ascending: false });
 
-        // Step 4: Get enrolled courses (purchased courses should always be visible)
+        // Step 5: Get enrolled courses (purchased courses)
         const { data: enrolledCourses } = await supabase
             .from("purchases")
             .select(`
@@ -78,13 +88,32 @@ export default async function SearchPage() {
                 courseMap.set(course.id, course);
             });
 
+            // Add enrolled courses (even if not in tier)
             enrolledCoursesList.forEach(course => {
                 if (course && !courseMap.has(course.id)) {
                     courseMap.set(course.id, course);
                 }
             });
 
-            courses = Array.from(courseMap.values());
+            // CRITICAL: Enforce max_courses limit
+            // Admin decides the limit - system must respect it
+            let allCourses = Array.from(courseMap.values());
+
+            if (maxCoursesAllowed > 0 && maxCoursesAllowed < 999) {
+                // Limit to max_courses (prioritize enrolled courses)
+                const enrolledIds = new Set(enrolledCoursesList.map(c => c?.id).filter(Boolean));
+                const enrolled = allCourses.filter(c => enrolledIds.has(c.id));
+                const notEnrolled = allCourses.filter(c => !enrolledIds.has(c.id));
+
+                // Take enrolled first, then fill remaining slots with tier courses
+                courses = [
+                    ...enrolled.slice(0, maxCoursesAllowed),
+                    ...notEnrolled.slice(0, Math.max(0, maxCoursesAllowed - enrolled.length))
+                ];
+            } else {
+                // Unlimited or very high limit (999)
+                courses = allCourses;
+            }
         }
     } catch (error: any) {
         console.error("[SEARCH_PAGE] Fetch exception:", error);
@@ -110,7 +139,7 @@ export default async function SearchPage() {
                     <div>
                         <h1 className="text-xl font-bold">Explore Courses</h1>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                            {courses.length} courses available for {userTier} tier
+                            {courses.length} of {maxCoursesAllowed === 999 ? 'unlimited' : maxCoursesAllowed} courses ({userTier} tier)
                         </p>
                     </div>
                 </div>

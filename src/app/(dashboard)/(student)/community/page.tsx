@@ -19,8 +19,33 @@ export default async function CommunityPage() {
 
     if (!user) return redirect("/login");
 
-    const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-    const isAdmin = profile?.role === "super_admin" || profile?.role === "instructor";
+    // CRITICAL: Check tier-based community access
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("membership_tier")
+        .eq("id", user.id)
+        .single();
+
+    const userTier = profile?.membership_tier || 'free';
+
+    // Check if user's tier has community access
+    const { data: tierData } = await supabase
+        .from("tier_pricing")
+        .select("has_community_access")
+        .eq("tier", userTier)
+        .single();
+
+    const hasCommunityAccess = tierData?.has_community_access || false;
+
+    // If no access, show upgrade message
+    if (!hasCommunityAccess) {
+        const { UpgradeTierMessage } = await import("@/components/UpgradeTierMessage");
+        return <UpgradeTierMessage feature="Community" />;
+    }
+
+    // Get full profile for admin check
+    const { data: fullProfile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+    const isAdmin = fullProfile?.role === "super_admin" || fullProfile?.role === "instructor";
 
     // Fetch Live Sessions (buffer -24h to allow client timezone filtering)
     const yesterday = new Date(Date.now() - 86400000).toISOString();
