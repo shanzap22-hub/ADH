@@ -75,9 +75,6 @@ export default async function CourseTiersPage() {
                         <div className="text-2xl font-bold text-purple-600">
                             {tier.price === 0 ? "Free" : `₹${tier.price.toLocaleString("en-IN")}`}
                         </div>
-                        <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                            {tier.max_courses === 999 ? "All courses" : `${tier.max_courses} courses`}
-                        </div>
                         <div className="mt-2 text-xs font-medium text-emerald-600">
                             {tier.has_booking_access && "✨ Includes 1-on-1 Sessions"}
                         </div>

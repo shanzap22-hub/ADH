@@ -11,7 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 interface TierFeature {
     tier: string;
-    has_chat_access: boolean;
+    has_community_access: boolean;
+    has_ai_access: boolean;
     has_weekly_live_access?: boolean;
 }
 
@@ -37,7 +38,7 @@ export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps)
         has_weekly_live_access: f.has_weekly_live_access ?? true
     })));
 
-    const toggleFeature = (tierValue: string, featureKey: 'has_chat_access' | 'has_weekly_live_access') => {
+    const toggleFeature = (tierValue: string, featureKey: 'has_community_access' | 'has_ai_access' | 'has_weekly_live_access') => {
         setFeatures(prev => {
             return prev.map(f => {
                 if (f.tier === tierValue) {
@@ -49,7 +50,12 @@ export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps)
     };
 
     const getFeature = (tierValue: string) => {
-        return features.find(f => f.tier === tierValue) || { tier: tierValue, has_chat_access: false, has_weekly_live_access: false };
+        return features.find(f => f.tier === tierValue) || {
+            tier: tierValue,
+            has_community_access: false,
+            has_ai_access: false,
+            has_weekly_live_access: false
+        };
     };
 
     const handleSave = async () => {
@@ -81,7 +87,7 @@ export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps)
                     Tier Feature Control
                 </CardTitle>
                 <CardDescription>
-                    Control access to Chat and Weekly Live sessions for each tier.
+                    Control access to Community, AI Mentor, and Weekly Live sessions for each tier.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -94,17 +100,31 @@ export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps)
                                     <span className={`font-semibold mb-3 text-center ${tier.color}`}>{tier.label}</span>
 
                                     <div className="space-y-3">
+                                        {/* Community Access */}
                                         <div className="flex items-center gap-2">
                                             <Checkbox
-                                                id={`chat-${tier.value}`}
-                                                checked={feature.has_chat_access}
-                                                onCheckedChange={() => toggleFeature(tier.value, 'has_chat_access')}
+                                                id={`community-${tier.value}`}
+                                                checked={feature.has_community_access}
+                                                onCheckedChange={() => toggleFeature(tier.value, 'has_community_access')}
                                             />
-                                            <label htmlFor={`chat-${tier.value}`} className="text-sm cursor-pointer select-none">
-                                                Chat Access
+                                            <label htmlFor={`community-${tier.value}`} className="text-sm cursor-pointer select-none">
+                                                Community
                                             </label>
                                         </div>
 
+                                        {/* AI Mentor Access */}
+                                        <div className="flex items-center gap-2">
+                                            <Checkbox
+                                                id={`ai-${tier.value}`}
+                                                checked={feature.has_ai_access}
+                                                onCheckedChange={() => toggleFeature(tier.value, 'has_ai_access')}
+                                            />
+                                            <label htmlFor={`ai-${tier.value}`} className="text-sm cursor-pointer select-none">
+                                                AI Mentor
+                                            </label>
+                                        </div>
+
+                                        {/* Weekly Live */}
                                         <div className="flex items-center gap-2">
                                             <Checkbox
                                                 id={`live-${tier.value}`}

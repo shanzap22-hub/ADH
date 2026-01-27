@@ -30,15 +30,15 @@ export async function POST(req: Request) {
             const { error } = await supabase
                 .from("tier_pricing")
                 .update({
-                    has_chat_access: feature.has_chat_access,
+                    has_community_access: feature.has_community_access,
+                    has_ai_access: feature.has_ai_access,
                     has_weekly_live_access: feature.has_weekly_live_access
                 })
                 .eq('tier', feature.tier);
 
             if (error) {
                 console.error("Error updating tier:", feature.tier, error);
-                // Continue with next or fail? 
-                // Usually better to fail or log.
+                return new NextResponse(`Failed to update tier ${feature.tier}: ${error.message}`, { status: 500 });
             }
         }
 
