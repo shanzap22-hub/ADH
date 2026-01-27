@@ -352,7 +352,7 @@ export async function PUT(req: Request) {
     // Edit Transaction
     try {
         const body = await req.json();
-        const { id, amount, notes, membership_plan, whatsapp_number } = body;
+        const { id, amount, notes, membership_plan, whatsapp_number, status } = body;
 
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -365,6 +365,7 @@ export async function PUT(req: Request) {
             notes,
             membership_plan,
             whatsapp_number,
+            status, // Allow status update
             updated_at: new Date().toISOString()
         }).eq('id', id).select().single();
 

@@ -401,18 +401,12 @@ export default function TransactionsManager() {
                                             // Group Transactions
                                             const grouped: Record<string, any[]> = {};
                                             transactions.forEach(txn => {
-                                                // Group key preference: User ID > Email > Phone > ID (fallback)
                                                 const key = txn.user_id || txn.student_email?.toLowerCase() || txn.student_phone || txn.id;
                                                 if (!grouped[key]) grouped[key] = [];
                                                 grouped[key].push(txn);
                                             });
 
-                                            // Since transactions are already sorted by date desc from API, 
-                                            // the first item in each group is the latest.
-                                            // We keep groups sorted by their latest transaction date (which is just preserving array order mostly)
-                                            // But map iteration order on objects is not guaranteed strictly, though usually insertion order.
-                                            // Let's rely on array mapping of values if we assume reliability or re-sort.
-                                            // Re-sorting groups by latest date is safer.
+                                            // Sort groups by latest transaction date
                                             const sortedGroups = Object.values(grouped).sort((a, b) => {
                                                 return new Date(b[0].created_at).getTime() - new Date(a[0].created_at).getTime();
                                             });
@@ -420,29 +414,29 @@ export default function TransactionsManager() {
                                             return sortedGroups.flatMap((group) => {
                                                 return group.map((txn, index) => {
                                                     const isMain = index === 0;
-                                                    const isHistory = index > 0;
+                                                    const isSub = index > 0;
                                                     const daysAgo = differenceInDays(new Date(), new Date(txn.created_at));
 
                                                     return (
                                                         <TableRow
                                                             key={txn.id}
-                                                            className={isHistory ? "bg-muted/30 hover:bg-muted/50 border-0" : "hover:bg-slate-50"}
+                                                            className={isSub ? "bg-muted/20 hover:bg-muted/30" : "hover:bg-slate-50"}
                                                         >
-                                                            <TableCell className={`font-bold text-slate-600 ${isHistory ? 'pl-6 text-xs font-normal' : ''}`}>
-                                                                {isHistory && <span className="mr-2 text-muted-foreground">↳</span>}
+                                                            <TableCell className="font-medium text-slate-600">
+                                                                {isSub && <span className="mr-2 text-muted-foreground">↳</span>}
                                                                 {daysAgo} days
                                                             </TableCell>
                                                             <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
                                                                 {format(new Date(txn.created_at), "dd MMM yyyy")}
                                                             </TableCell>
-                                                            <TableCell className={isHistory ? "opacity-70" : ""}>
+                                                            <TableCell>
                                                                 {isMain ? (
                                                                     <>
                                                                         <div className="font-medium text-sm">{txn.student_name || "Unknown"}</div>
                                                                         <div className="text-xs text-muted-foreground">{txn.student_email}</div>
                                                                     </>
                                                                 ) : (
-                                                                    <div className="text-xs text-muted-foreground">History (Plan Upgrade/Renew)</div>
+                                                                    <div className="text-xs text-muted-foreground opacity-50">Same as above</div>
                                                                 )}
                                                             </TableCell>
                                                             <TableCell className="text-sm">
@@ -462,7 +456,7 @@ export default function TransactionsManager() {
                                                                 ) : "-"}
                                                             </TableCell>
                                                             <TableCell>
-                                                                {/* Show Progress Only on Main Row to avoid clutter, or latest progress */}
+                                                                {/* Only show progress on latest/main row to avoid confusion, or show for all if tracked separately? usually progress is user-level */}
                                                                 {isMain && txn.student_progress ? (
                                                                     <div
                                                                         className="text-xs space-y-1 cursor-pointer hover:bg-white hover:shadow-sm p-1.5 rounded-md transition-all border border-transparent hover:border-slate-200"
@@ -484,7 +478,7 @@ export default function TransactionsManager() {
                                                                         </div>
                                                                     </div>
                                                                 ) : (
-                                                                    isMain ? <span className="text-xs text-muted-foreground text-center block">-</span> : null
+                                                                    isMain ? <span className="text-xs text-muted-foreground text-center block">-</span> : <span className="text-xs text-center block opacity-30">-</span>
                                                                 )}
                                                             </TableCell>
                                                             <TableCell className="capitalize text-xs">{txn.source}</TableCell>
@@ -509,7 +503,9 @@ export default function TransactionsManager() {
                                                                             student_email: txn.student_email || "",
                                                                             membership_plan: txn.membership_plan || "silver",
                                                                             notes: txn.notes || "",
-                                                                            source: txn.source || "manual"
+                                                                            source: txn.source || "manual",
+                                                                            // @ts-ignore
+                                                                            status: txn.status || "verified"
                                                                         });
                                                                         setIsEditOpen(true);
                                                                     }}>
@@ -619,6 +615,18 @@ export default function TransactionsManager() {
                                     <SelectItem value="diamond">Diamond</SelectItem>
                                     <SelectItem value="platinum">Platinum</SelectItem>
                                     <SelectItem value="expired">Expired</SelectItem>
+                                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right">Status</Label>
+                            <Select value={(formData as any).status || "verified"} onValueChange={e => setFormData({ ...formData, status: e } as any)}>
+                                <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="verified">Verified</SelectItem>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="refunded">Refunded</SelectItem>
                                     <SelectItem value="cancelled">Cancelled</SelectItem>
                                 </SelectContent>
                             </Select>

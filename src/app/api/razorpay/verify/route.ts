@@ -42,29 +42,6 @@ export async function POST(req: Request) {
             console.warn("[RAZORPAY_VERIFY] Signature mismatch but payment ID present - proceeding in test mode");
         }
 
-        // Payment verified - store in temporary table
-        // Payment verified - store in temporary table
-        const supabaseAdmin = (await import("@/lib/supabase/admin")).createAdminClient();
-
-        const { error } = await supabaseAdmin.from("payments_temp").insert({
-            payment_id: razorpay_payment_id,
-            order_id: razorpay_order_id,
-            whatsapp_number: whatsappNumber,
-            amount: 499900,
-            status: "verified",
-        });
-
-        if (error) {
-            console.error("[PAYMENT_VERIFY_DB_ERROR]", error);
-            // Critical: If we cannot record the payment, we should not proceed.
-            return NextResponse.json(
-                { error: "Internal Server Error: Failed to record payment verification" },
-                { status: 500 }
-            );
-        } else {
-            console.log("[RAZORPAY_VERIFY] Payment stored successfully in payments_temp");
-        }
-
         // Initialize Razorpay to fetch exact details
         const Razorpay = (await import("razorpay")).default; // Dynamic import to be safe
         const instance = new Razorpay({
@@ -87,9 +64,35 @@ export async function POST(req: Request) {
             console.log(`[RAZORPAY_FETCH] Amount: ${realAmount}, Method: ${paymentMethod}`);
         } catch (e) {
             console.error("Failed to fetch Razorpay payment details", e);
-            // Fallback to existing or hardcoded if fetch fails (should not happen usually)
+            // Fallback: If fetch fails, we can't reliably get the amount. 
+            // However, we shouldn't hardcode 499900 blindly if we can avoid it.
+            // For now, keeping legacy fallback but logging critical error.
             realAmount = 499900;
         }
+
+        // Payment verified - store in temporary table
+        const supabaseAdmin = (await import("@/lib/supabase/admin")).createAdminClient();
+
+        const { error } = await supabaseAdmin.from("payments_temp").insert({
+            payment_id: razorpay_payment_id,
+            order_id: razorpay_order_id,
+            whatsapp_number: whatsappNumber,
+            amount: realAmount, // Use REAL amount fetched from Razorpay
+            status: "verified",
+        });
+
+        if (error) {
+            console.error("[PAYMENT_VERIFY_DB_ERROR]", error);
+            // Critical: If we cannot record the payment, we should not proceed.
+            return NextResponse.json(
+                { error: "Internal Server Error: Failed to record payment verification" },
+                { status: 500 }
+            );
+        } else {
+            console.log("[RAZORPAY_VERIFY] Payment stored successfully in payments_temp");
+        }
+
+
 
         // UPDATE TRANSACTIONS TABLE (Super Admin Features)
         const { count: txnUpdateCount } = await supabaseAdmin.from('transactions')
