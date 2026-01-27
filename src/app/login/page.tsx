@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, AlertCircle } from 'lucide-react'
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 function LoginForm() {
     const [email, setEmail] = useState('')
@@ -125,11 +124,10 @@ function LoginForm() {
                 </CardHeader>
                 <CardContent>
                     {error && (
-                        <Alert variant="destructive" className="mb-4">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Error</AlertTitle>
-                            <AlertDescription>{error}</AlertDescription>
-                        </Alert>
+                        <div className="mb-4 p-4 rounded-lg bg-destructive/15 text-destructive flex items-center gap-2 border border-destructive/20">
+                            <AlertCircle className="h-5 w-5 shrink-0" />
+                            <div className="text-sm font-medium">{error}</div>
+                        </div>
                     )}
 
                     {/* Google OAuth Button */}
