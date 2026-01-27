@@ -4,7 +4,6 @@ import { Settings } from "lucide-react";
 import { CourseTierManager } from "@/components/admin/CourseTierManager";
 import { TierBookingToggle } from "@/components/admin/TierBookingToggle";
 import { TierFeatureManager } from "@/components/admin/TierFeatureManager";
-import { TierPricingEditor } from "@/components/admin/TierPricingEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -60,13 +59,10 @@ export default async function CourseTiersPage() {
                 <div>
                     <h1 className="text-2xl font-bold">Course Tier Management</h1>
                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                        Assign courses to membership tiers and customize tier pricing
+                        Assign courses to membership tiers
                     </p>
                 </div>
             </div>
-
-            {/* Tier Pricing Editor - Admin can customize everything */}
-            <TierPricingEditor />
 
             {/* Tier Info Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
