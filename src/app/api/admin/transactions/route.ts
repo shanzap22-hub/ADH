@@ -280,7 +280,7 @@ export async function POST(req: Request) {
     // We'll implement basic CREATE first.
     try {
         const body = await req.json();
-        const { amount, student_name, student_phone, whatsapp_number, student_email, notes, status, source, membership_plan } = body;
+        const { amount, student_name, whatsapp_number, student_email, notes, status, source, membership_plan } = body;
 
         const supabase = await createClient();
 
@@ -291,8 +291,7 @@ export async function POST(req: Request) {
         const { data, error } = await supabase.from('transactions').insert({
             amount,
             student_name,
-            student_phone, // GPay Number usually
-            whatsapp_number: whatsapp_number || student_phone, // Use provided WA or fallback to Phone
+            whatsapp_number,
             student_email,
             notes,
             status: status || 'verified',
@@ -323,7 +322,7 @@ export async function POST(req: Request) {
                 payment_id: "MANUAL",
                 user_email: student_email || "",
                 user_name: student_name,
-                phone: student_phone || "",
+                phone: whatsapp_number || "",
                 whatsapp: whatsapp_number || "",
                 plan_id: membership_plan,
                 amount: amount / 100, // Stored in paise, send in rupees

@@ -25,6 +25,7 @@ interface CourseTierManagerProps {
 }
 
 const TIERS = [
+    { value: "free", label: "Free 🆓", color: "text-gray-500" },
     { value: "bronze", label: "Bronze 🥉", color: "text-orange-700" },
     { value: "silver", label: "Silver 🥈", color: "text-gray-600" },
     { value: "gold", label: "Gold 🥇", color: "text-yellow-600" },

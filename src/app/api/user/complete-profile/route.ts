@@ -47,7 +47,10 @@ export async function POST(request: Request) {
     const { error: adminError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
         email: email,
         email_confirm: true, // Auto-confirm the new email
-        user_metadata: { full_name: fullName }
+        user_metadata: {
+            full_name: fullName,
+            setup_required: false // CRITICAL FIX: Update metadata to exit middleware loop
+        }
     });
 
     if (adminError) {
@@ -61,6 +64,37 @@ export async function POST(request: Request) {
         if (pwError) {
             return NextResponse.json({ error: pwError.message }, { status: 500 });
         }
+    }
+
+    // --- SEND RECEIPT EMAIL (New) ---
+    try {
+        // Fetch the latest verified transaction for this user
+        const { data: transaction } = await supabaseAdmin
+            .from('transactions')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('status', 'verified')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (transaction) {
+            const { sendPaymentReceipt } = await import('@/lib/mail');
+            await sendPaymentReceipt(
+                email,
+                fullName,
+                transaction.amount,
+                transaction.created_at,
+                transaction.razorpay_payment_id || transaction.id, // Fallback to internal ID if razorpay ID missing
+                transaction.coupon_code
+            );
+            console.log("DEBUG: Receipt matched and sent for user:", user.id);
+        } else {
+            console.log("DEBUG: No verified transaction found for receipt sending. User:", user.id);
+        }
+    } catch (mailError) {
+        console.error("DEBUG: Failed to send receipt email:", mailError);
+        // Do not block the response, just log error
     }
 
     return NextResponse.json({ success: true });

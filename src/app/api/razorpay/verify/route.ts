@@ -138,7 +138,7 @@ export async function POST(req: Request) {
             // 2. Upgrade Membership Tier to 'silver'
             console.log("[RAZORPAY_VERIFY] Upgrading user to SILVER tier...");
             // Use Admin client for DB write (bypass RLS for membership upgrade)
-            const { error: upgradeError } = await supabaseAdmin
+            const { data: profileData, error: upgradeError } = await supabaseAdmin
                 .from('profiles')
                 .update({
                     membership_tier: 'silver',
@@ -146,17 +146,19 @@ export async function POST(req: Request) {
                     whatsapp_number: whatsappNumber, // Auto-update WhatsApp Number
                     phone_number: whatsappNumber // Also set as primary phone
                 })
-                .eq('id', user.id);
+                .eq('id', user.id)
+                .select('email') // Select email to use for transaction record
+                .single();
 
             if (upgradeError) {
                 console.error("[RAZORPAY_VERIFY] Failed to upgrade membership:", upgradeError);
             } else {
                 console.log("[RAZORPAY_VERIFY] User upgraded to SILVER successfully");
 
-                // Link Transaction to User
+                // Link Transaction to User and use PROFILE email
                 await supabaseAdmin.from('transactions').update({
                     user_id: user.id,
-                    student_email: user.email,
+                    student_email: profileData?.email || user.email, // Prefer Profile Email
                     membership_plan: 'silver'
                 }).eq('razorpay_order_id', razorpay_order_id);
             }

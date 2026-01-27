@@ -67,13 +67,27 @@ export default function TransactionsManager() {
     const [formData, setFormData] = useState({
         amount: "",
         student_name: "",
-        student_phone: "",
         whatsapp_number: "",
-        student_email: "",
+        email: "",
         membership_plan: "silver",
         notes: "",
         source: "manual"
     });
+
+    // ... (lines 78-151 are mostly fine, check handleSave payload construction if generic)
+    // handleSave spreads formData. If we changed keys, payload changes. API expects `email`, `whatsapp_number`.
+    // My API change above expects `email`, `whatsapp_number`. So this matches!
+
+    // Need to check handleEdit (line 494) and Inputs.
+
+    /* ... Skipping to handleEdit implementation below ... */
+
+    // --- 2. Edit Transaction --- (This part needs manual update in replace)
+    /* 
+       Note: I will perform multiple replace calls or one large one. 
+       This replacement covers state init.
+    */
+
 
     // Refund Confirmation
     const [refundConfirmText, setRefundConfirmText] = useState("");
@@ -240,16 +254,30 @@ export default function TransactionsManager() {
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={handleExportSheet} className="border-green-600 text-green-600 hover:bg-green-50">
-                        <FileSpreadsheet className="mr-2 h-4 w-4" /> Export All to Sheet
+                        <FileSpreadsheet className="mr-2 h-4 w-4" /> Sync New Data to Sheet
                     </Button>
                     <Button variant="outline" onClick={handleSync}>
                         <RefreshCcw className="mr-2 h-4 w-4" /> Sync Legacy Data
                     </Button>
-                    <Button onClick={() => setIsAddOpen(true)} className="bg-primary">
+                    <Button onClick={() => {
+                        setEditingTxn(null);
+                        setFormData({
+                            email: "",
+                            student_name: "",
+                            whatsapp_number: "",
+                            amount: "",
+                            membership_plan: "silver",
+                            notes: "",
+                            source: "manual"
+                        });
+                        setIsAddOpen(true);
+                    }} className="bg-primary">
                         <Plus className="mr-2 h-4 w-4" /> Add Manual Payment
                     </Button>
                 </div>
+
             </div>
+
 
             {/* Stats */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -433,19 +461,19 @@ export default function TransactionsManager() {
                                                                 {isMain ? (
                                                                     <>
                                                                         <div className="font-medium text-sm">{txn.student_name || "Unknown"}</div>
-                                                                        <div className="text-xs text-muted-foreground">{txn.student_email}</div>
+                                                                        <div className="text-xs text-muted-foreground">{txn.email}</div>
                                                                     </>
                                                                 ) : (
                                                                     <div className="text-xs text-muted-foreground opacity-50">Same as above</div>
                                                                 )}
                                                             </TableCell>
                                                             <TableCell className="text-sm">
-                                                                {isMain ? (txn.student_phone || txn.profiles?.phone || txn.whatsapp_number || "-") : ""}
+                                                                {isMain ? (txn.whatsapp_number || txn.profiles?.phone || "-") : ""}
                                                             </TableCell>
                                                             <TableCell className="text-sm text-green-600 font-medium">
                                                                 {isMain && (
                                                                     <div className="flex items-center gap-1">
-                                                                        <span>{txn.whatsapp_number || txn.student_phone || "-"}</span>
+                                                                        <span>{txn.whatsapp_number || "-"}</span>
                                                                     </div>
                                                                 )}
                                                             </TableCell>
@@ -461,7 +489,7 @@ export default function TransactionsManager() {
                                                                     <div
                                                                         className="text-xs space-y-1 cursor-pointer hover:bg-white hover:shadow-sm p-1.5 rounded-md transition-all border border-transparent hover:border-slate-200"
                                                                         onClick={() => setSelectedProgress({
-                                                                            student: txn.student_name || txn.student_email,
+                                                                            student: txn.student_name || txn.email,
                                                                             progress: txn.student_progress
                                                                         })}
                                                                         title="Click to view detailed progress"
@@ -498,9 +526,8 @@ export default function TransactionsManager() {
                                                                         setFormData({
                                                                             amount: txn.amount ? (Number(txn.amount) / 100).toString() : "",
                                                                             student_name: txn.student_name || "",
-                                                                            student_phone: txn.student_phone || "",
                                                                             whatsapp_number: txn.whatsapp_number || "",
-                                                                            student_email: txn.student_email || "",
+                                                                            student_email: txn.student_email || txn.email || "", // Handle both just in case, but prefer student_email for edit
                                                                             membership_plan: txn.membership_plan || "silver",
                                                                             notes: txn.notes || "",
                                                                             source: txn.source || "manual",
@@ -548,16 +575,12 @@ export default function TransactionsManager() {
                             <Input className="col-span-3" value={formData.student_name} onChange={e => setFormData({ ...formData, student_name: e.target.value })} />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label className="text-right">Phone (GPay)</Label>
-                            <Input className="col-span-3" value={formData.student_phone} onChange={e => setFormData({ ...formData, student_phone: e.target.value })} />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
                             <Label className="text-right">WhatsApp</Label>
-                            <Input className="col-span-3" value={formData.whatsapp_number} onChange={e => setFormData({ ...formData, whatsapp_number: e.target.value })} />
+                            <Input type="tel" className="col-span-3" value={formData.whatsapp_number} onChange={e => setFormData({ ...formData, whatsapp_number: e.target.value })} />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label className="text-right">Email</Label>
-                            <Input className="col-span-3" value={formData.student_email} onChange={e => setFormData({ ...formData, student_email: e.target.value })} />
+                            <Input type="email" className="col-span-3" value={formData.student_email} onChange={e => setFormData({ ...formData, student_email: e.target.value })} />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label className="text-right">Amount (₹)</Label>
@@ -598,7 +621,7 @@ export default function TransactionsManager() {
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label className="text-right">WhatsApp</Label>
-                            <Input className="col-span-3" value={formData.whatsapp_number} onChange={e => setFormData({ ...formData, whatsapp_number: e.target.value })} />
+                            <Input type="tel" className="col-span-3" value={formData.whatsapp_number} onChange={e => setFormData({ ...formData, whatsapp_number: e.target.value })} />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label className="text-right">Amount (₹)</Label>
@@ -721,7 +744,7 @@ export default function TransactionsManager() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     );
 }
 

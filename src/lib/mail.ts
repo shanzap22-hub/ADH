@@ -142,3 +142,65 @@ export const sendMail = async ({ to, subject, body }: { to: string; subject: str
         return { success: false, error: e };
     }
 };
+
+export const sendPaymentReceipt = async (
+    email: string,
+    name: string,
+    amount: number,
+    date: string,
+    transactionId: string,
+    couponCode?: string
+) => {
+    if (!resend) return { success: true };
+    try {
+        await resend.emails.send({
+            from: "ADH Connect <info@adh.today>",
+            to: email,
+            subject: "Payment Receipt - Welcome to ADH Connect",
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+                    <div style="background-color: #000; padding: 20px; text-align: center;">
+                        <h1 style="color: #fff; margin: 0; font-size: 24px;">ADH Connect</h1>
+                    </div>
+                    <div style="padding: 30px; background-color: #fff;">
+                        <h2 style="color: #333; margin-top: 0;">Payment Receipt</h2>
+                        <p style="color: #666;">Hi ${name},</p>
+                        <p style="color: #666;">Thank you for joining ADH Connect. Here is your payment receipt.</p>
+                        
+                        <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 20px; margin: 20px 0;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 8px 0; color: #666;">Transaction ID:</td>
+                                    <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #333;">${transactionId}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; color: #666;">Date:</td>
+                                    <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #333;">${new Date(date).toLocaleDateString()}</td>
+                                </tr>
+                                ${couponCode ? `
+                                <tr>
+                                    <td style="padding: 8px 0; color: #666;">Coupon Applied:</td>
+                                    <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #2ecc71;">${couponCode}</td>
+                                </tr>
+                                ` : ''}
+                                <tr style="border-top: 2px solid #e9ecef;">
+                                    <td style="padding: 12px 0; font-size: 16px; font-weight: bold; color: #333;">Total Amount Paid:</td>
+                                    <td style="padding: 12px 0; text-align: right; font-size: 18px; font-weight: bold; color: #000;">₹${amount}</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <p style="color: #666; font-size: 14px;">If you have any questions, simply reply to this email.</p>
+                    </div>
+                    <div style="background-color: #f1f3f5; padding: 15px; text-align: center; color: #868e96; font-size: 12px;">
+                        &copy; ${new Date().getFullYear()} ADH Connect. All rights reserved.
+                    </div>
+                </div>
+            `
+        });
+        return { success: true };
+    } catch (e) {
+        console.error("DEBUG_MAIL: Receipt send error:", e);
+        return { success: false, error: e };
+    }
+};

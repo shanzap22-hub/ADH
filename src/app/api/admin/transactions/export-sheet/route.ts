@@ -17,19 +17,21 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
-        // 2. Fetch All Transactions
+        // 2. Fetch UNSYNCED Transactions Only
         // Sort by created_at ascending so we insert old->new
         const { data: transactions, error } = await supabase
             .from('transactions')
             .select('*, profiles(full_name, phone_number, email)')
+            .eq('is_synced_to_sheet', false) // Only unsynced
             .order('created_at', { ascending: true });
 
         if (error) throw error;
-        if (!transactions || transactions.length === 0) return NextResponse.json({ count: 0 });
+        if (!transactions || transactions.length === 0) return NextResponse.json({ count: 0, total: 0, message: "No new records to sync" });
 
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwsBDuj15M1f_nHng6kQjkZIhl6FZsXNCI71Vf55jrZKjJ55EB7joj4XjJstLgVghRT/exec";
 
         let successCount = 0;
+        const syncedIds: string[] = [];
 
         // 3. Serial Sync to avoid Race Conditions/Rate Limits
         for (const txn of transactions) {
@@ -38,8 +40,11 @@ export async function POST(req: Request) {
                 let name = txn.student_name || txn.profiles?.full_name || "Unknown";
                 let email = txn.student_email || txn.profiles?.email || "";
 
+                // Fallback for legacy data
+                if (!email && txn.student_email) email = txn.student_email;
+
                 // Get Phone & WhatsApp
-                const phone = txn.student_phone || txn.profiles?.phone_number || "";
+                const phone = txn.whatsapp_number || txn.profiles?.phone_number || "";
                 const whatsapp = txn.whatsapp_number || "";
 
                 const payload = {
@@ -47,23 +52,34 @@ export async function POST(req: Request) {
                     payment_id: txn.razorpay_payment_id || "MANUAL",
                     user_email: email,
                     user_name: name,
-                    phone: phone,          // New Field
-                    whatsapp: whatsapp,    // New Field
+                    phone: phone,
+                    whatsapp: whatsapp,
                     plan_id: txn.membership_plan,
                     amount: (Number(txn.amount) || 0) / 100,
                     status: txn.status || 'verified',
                     created_at: txn.created_at
                 };
 
-                await fetch(GOOGLE_SCRIPT_URL, {
+                const res = await fetch(GOOGLE_SCRIPT_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
                 });
-                successCount++;
+
+                if (res.ok) {
+                    successCount++;
+                    syncedIds.push(txn.id);
+                }
             } catch (innerErr) {
                 console.error(`Failed to sync ID ${txn.id}`, innerErr);
             }
+        }
+
+        // 4. Mark Synced Records in DB
+        if (syncedIds.length > 0) {
+            await supabase.from('transactions')
+                .update({ is_synced_to_sheet: true })
+                .in('id', syncedIds);
         }
 
         return NextResponse.json({ count: successCount, total: transactions.length });

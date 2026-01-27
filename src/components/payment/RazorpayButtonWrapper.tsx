@@ -28,8 +28,20 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
         const fetchUser = async () => {
             const supabase = createClient();
             const { data: { user } } = await supabase.auth.getUser();
-            if (user?.email) {
-                setUserEmail(user.email);
+
+            if (user) {
+                // Fetch profile email (User's preferred email)
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('email')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profile?.email) {
+                    setUserEmail(profile.email);
+                } else if (user.email) {
+                    setUserEmail(user.email);
+                }
             }
         };
         fetchUser();
