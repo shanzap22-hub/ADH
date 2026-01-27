@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PrePaymentModal } from "./PrePaymentModal";
 import { PostPaymentModal } from "./PostPaymentModal";
 import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
 
 declare global {
     interface Window {
@@ -19,7 +20,20 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
     const [isPrePaymentOpen, setIsPrePaymentOpen] = useState(false);
     const [isPostPaymentOpen, setIsPostPaymentOpen] = useState(false);
     const [whatsappNumber, setWhatsappNumber] = useState("");
+    const [userEmail, setUserEmail] = useState("");
     const [paymentId, setPaymentId] = useState("");
+
+    // Fetch User Email on Mount
+    useEffect(() => {
+        const fetchUser = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user?.email) {
+                setUserEmail(user.email);
+            }
+        };
+        fetchUser();
+    }, []);
 
     const handleProceedToPayment = async (whatsapp: string, couponCode?: string) => {
         setWhatsappNumber(whatsapp);
@@ -85,6 +99,7 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
                 order_id: orderId,
                 prefill: {
                     contact: whatsapp,
+                    email: userEmail || undefined // Prefill Auth Email
                 },
                 notes: {
                     whatsappNumber: whatsapp,
