@@ -40,7 +40,9 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    const supabase = await createClient()
+    // Create Supabase Client for Middleware
+    const { createClient } = await import('@/lib/supabase/middleware');
+    const { supabase, response } = await createClient(request);
 
     // Check if user is authenticated
     const { data: { user } } = await supabase.auth.getUser()
@@ -51,8 +53,28 @@ export async function middleware(request: NextRequest) {
         const setupRequired = user.user_metadata?.setup_required;
         const allowedSetupPaths = ['/onboarding/complete', '/api/user/complete-profile'];
 
-        // Allow logout/auth paths to let them escape if needed
+        // Allow logout/auth paths
         const isAuthRelated = pathname.startsWith('/auth') || pathname === '/signout';
+
+        // 0. Priority: Membership Cancelled Check
+        // Fetch profile to check tier
+        if (!isAuthRelated && !pathname.startsWith('/api/user')) { // Allow critical APIs
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('membership_tier, role')
+                .eq('id', user.id)
+                .single();
+
+            if (profile?.membership_tier === 'cancelled' && profile?.role !== 'super_admin') {
+                console.log('[MIDDLEWARE] BLOCKING CANCELLED USER:', user.email);
+                // Sign out logic is complex in middleware, so we force redirect to a specific error page or login
+                // We will append a query param to login to show a specific message
+                const url = request.nextUrl.clone()
+                url.pathname = '/login'
+                url.searchParams.set('error', 'Membership Cancelled')
+                return NextResponse.redirect(url)
+            }
+        }
 
         // 1. Priority: Password Reset Lockdown
         // Prevent access to ANY page except update-password until reset is done
@@ -107,6 +129,11 @@ export async function middleware(request: NextRequest) {
             let redirectPath = '/dashboard';
             if (profile?.role === 'instructor') redirectPath = '/instructor/courses';
 
+            // If strictly cancelled, they will be caught by the check above next time or now
+            // But if we are here, we redirect to dashboard, which will then trigger the cancelled check on next nav
+            // Ideally we check here too but the top check handles it for protected routes.
+            // For login page, we let them go to dashboard and get blocked.
+
             return NextResponse.redirect(new URL(redirectPath, request.url));
         } catch (e) {
             // Ignore error
@@ -121,7 +148,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // Allow everything else (Landing, Redirects, Public Pages)
-    return NextResponse.next();
+    return response;
 
     return NextResponse.next()
 }

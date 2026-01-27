@@ -1,23 +1,34 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2 } from 'lucide-react'
+import { Loader2, AlertCircle } from 'lucide-react'
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
-export default function LoginPage() {
+function LoginForm() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [googleLoading, setGoogleLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const router = useRouter()
+    const searchParams = useSearchParams()
     const supabase = createClient()
+
+    useEffect(() => {
+        const errorParam = searchParams.get('error')
+        if (errorParam === 'Membership Cancelled') {
+            setError('Your membership has been cancelled. Access is denied. Please contact support if this is a mistake.')
+        } else if (errorParam) {
+            setError(decodeURIComponent(errorParam))
+        }
+    }, [searchParams])
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -25,13 +36,17 @@ export default function LoginPage() {
         setError(null)
 
         try {
-            const { error } = await supabase.auth.signInWithPassword({
+            const { error: signInError } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             })
 
-            if (error) {
-                setError(error.message)
+            if (signInError) {
+                if (signInError.message === 'Invalid login credentials') {
+                    setError('Invalid email or password')
+                } else {
+                    setError(signInError.message)
+                }
             } else {
                 // Fetch user profile to determine role
                 const { data: { user } } = await supabase.auth.getUser()
@@ -40,12 +55,20 @@ export default function LoginPage() {
                     // Get user profile from profiles table
                     const { data: profile, error: profileError } = await supabase
                         .from('profiles')
-                        .select('role')
+                        .select('role, membership_tier')
                         .eq('id', user.id)
                         .single()
 
                     if (profileError || !profile) {
                         setError('Could not fetch user profile')
+                        setLoading(false)
+                        return
+                    }
+
+                    // STRICT CHECK: Membership Cancelled
+                    if (profile.membership_tier === 'cancelled' && profile.role !== 'super_admin') {
+                        setError('Your membership has been cancelled. You cannot log in.')
+                        await supabase.auth.signOut()
                         setLoading(false)
                         return
                     }
@@ -101,6 +124,14 @@ export default function LoginPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
+                    {error && (
+                        <Alert variant="destructive" className="mb-4">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Error</AlertTitle>
+                            <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                    )}
+
                     {/* Google OAuth Button */}
                     <Button
                         type="button"
@@ -177,11 +208,7 @@ export default function LoginPage() {
                                 required
                             />
                         </div>
-                        {error && (
-                            <div className="text-sm text-destructive font-medium">
-                                {error}
-                            </div>
-                        )}
+
                         <Button type="submit" className="w-full" disabled={loading || googleLoading}>
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Sign In
@@ -192,3 +219,12 @@ export default function LoginPage() {
         </div>
     )
 }
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+            <LoginForm />
+        </Suspense>
+    )
+}
+
