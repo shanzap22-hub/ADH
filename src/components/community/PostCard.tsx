@@ -77,11 +77,11 @@ export function PostCard({ post, isAdmin, currentUserId }: PostCardProps) {
     };
 
     const ImageContent = (
-        <div className="mt-3 relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 aspect-square w-full">
+        <div className="mt-3 relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex justify-center">
             <img
                 src={post.image_url!}
                 alt="Post attachment"
-                className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
+                className="w-auto h-auto max-w-full max-h-[500px] object-contain"
             />
         </div>
     );
