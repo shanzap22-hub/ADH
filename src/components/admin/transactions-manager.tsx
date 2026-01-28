@@ -67,6 +67,7 @@ export default function TransactionsManager() {
     const [formData, setFormData] = useState({
         amount: "",
         student_name: "",
+        phone_number: "",
         whatsapp_number: "",
         email: "",
         membership_plan: "silver",
@@ -166,7 +167,7 @@ export default function TransactionsManager() {
             setFormData({
                 amount: "",
                 student_name: "",
-                student_phone: "",
+                phone_number: "",
                 whatsapp_number: "",
                 student_email: "",
                 membership_plan: "silver",
@@ -264,6 +265,7 @@ export default function TransactionsManager() {
                         setFormData({
                             email: "",
                             student_name: "",
+                            phone_number: "",
                             whatsapp_number: "",
                             amount: "",
                             membership_plan: "silver",
@@ -468,7 +470,7 @@ export default function TransactionsManager() {
                                                                 )}
                                                             </TableCell>
                                                             <TableCell className="text-sm">
-                                                                {isMain ? (txn.whatsapp_number || txn.profiles?.phone || "-") : ""}
+                                                                {isMain ? (txn.phone_number || txn.profiles?.phone_number || "-") : ""}
                                                             </TableCell>
                                                             <TableCell className="text-sm text-green-600 font-medium">
                                                                 {isMain && (
@@ -526,6 +528,7 @@ export default function TransactionsManager() {
                                                                         setFormData({
                                                                             amount: txn.amount ? (Number(txn.amount) / 100).toString() : "",
                                                                             student_name: txn.student_name || "",
+                                                                            phone_number: txn.phone_number || "",
                                                                             whatsapp_number: txn.whatsapp_number || "",
                                                                             student_email: txn.student_email || txn.email || "", // Handle both just in case, but prefer student_email for edit
                                                                             membership_plan: txn.membership_plan || "silver",
@@ -575,6 +578,10 @@ export default function TransactionsManager() {
                             <Input className="col-span-3" value={formData.student_name} onChange={e => setFormData({ ...formData, student_name: e.target.value })} />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right">Phone</Label>
+                            <Input type="tel" className="col-span-3" value={formData.phone_number} onChange={e => setFormData({ ...formData, phone_number: e.target.value })} />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
                             <Label className="text-right">WhatsApp</Label>
                             <Input type="tel" className="col-span-3" value={formData.whatsapp_number} onChange={e => setFormData({ ...formData, whatsapp_number: e.target.value })} />
                         </div>
@@ -619,6 +626,10 @@ export default function TransactionsManager() {
                         <DialogTitle>Edit Transaction</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right">Phone</Label>
+                            <Input type="tel" className="col-span-3" value={formData.phone_number} onChange={e => setFormData({ ...formData, phone_number: e.target.value })} />
+                        </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label className="text-right">WhatsApp</Label>
                             <Input type="tel" className="col-span-3" value={formData.whatsapp_number} onChange={e => setFormData({ ...formData, whatsapp_number: e.target.value })} />

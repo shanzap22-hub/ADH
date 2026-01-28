@@ -39,7 +39,7 @@ export async function GET(req: Request) {
 
         // Filters
         if (searchQuery) {
-            query = query.or(`student_name.ilike.%${searchQuery}%,student_email.ilike.%${searchQuery}%,whatsapp_number.ilike.%${searchQuery}%`);
+            query = query.or(`student_name.ilike.%${searchQuery}%,student_email.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%,whatsapp_number.ilike.%${searchQuery}%`);
         }
         if (status && status !== 'all') {
             query = query.eq('status', status);
@@ -280,7 +280,7 @@ export async function POST(req: Request) {
     // We'll implement basic CREATE first.
     try {
         const body = await req.json();
-        const { amount, student_name, whatsapp_number, student_email, notes, status, source, membership_plan } = body;
+        const { amount, student_name, phone_number, whatsapp_number, student_email, notes, status, source, membership_plan } = body;
 
         const supabase = await createClient();
 
@@ -291,6 +291,7 @@ export async function POST(req: Request) {
         const { data, error } = await supabase.from('transactions').insert({
             amount,
             student_name,
+            phone_number,
             whatsapp_number,
             student_email,
             notes,
@@ -322,7 +323,7 @@ export async function POST(req: Request) {
                 payment_id: "MANUAL",
                 user_email: student_email || "",
                 user_name: student_name,
-                phone: whatsapp_number || "",
+                phone: phone_number || whatsapp_number || "",
                 whatsapp: whatsapp_number || "",
                 plan_id: membership_plan,
                 amount: amount / 100, // Stored in paise, send in rupees
@@ -351,7 +352,7 @@ export async function PUT(req: Request) {
     // Edit Transaction
     try {
         const body = await req.json();
-        const { id, amount, notes, membership_plan, whatsapp_number, status } = body;
+        const { id, amount, notes, membership_plan, phone_number, whatsapp_number, status } = body;
 
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -363,6 +364,7 @@ export async function PUT(req: Request) {
             amount,
             notes,
             membership_plan,
+            phone_number,
             whatsapp_number,
             status, // Allow status update
             updated_at: new Date().toISOString()
