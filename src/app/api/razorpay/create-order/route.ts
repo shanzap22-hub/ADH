@@ -104,8 +104,15 @@ export async function POST(req: Request) {
                 }
             }
 
+            // Initialize Admin Client for DB operations (Bypass RLS)
+            const { createClient: createSupClient } = await import('@supabase/supabase-js');
+            const sbAdmin = createSupClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.SUPABASE_SERVICE_ROLE_KEY!
+            );
+
             // Insert into payments_temp for Drop-offs
-            const { error: dbError } = await supabase.from('payments_temp').insert({
+            const { error: dbError } = await sbAdmin.from('payments_temp').insert({
                 order_id: order.id,
                 payment_id: "PENDING_" + order.id, // Make it UNIQUE using order ID
                 amount: order.amount,
