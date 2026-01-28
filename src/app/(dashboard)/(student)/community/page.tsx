@@ -44,10 +44,6 @@ export default async function CommunityPage() {
         return <UpgradeTierMessage feature="Community Feed" />;
     }
 
-    // Get full profile for admin check
-    const { data: fullProfile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-    const isAdmin = fullProfile?.role === "super_admin" || fullProfile?.role === "instructor";
-
     // Fetch Live Sessions (buffer -24h to allow client timezone filtering)
     const yesterday = new Date(Date.now() - 86400000).toISOString();
 
