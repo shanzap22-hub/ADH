@@ -25,14 +25,16 @@ export async function POST(req: Request) {
 
         const { features } = await req.json();
 
-        // Update each tier feature
+        // Update each tier feature (5 features total)
         for (const feature of features) {
             const { error } = await supabase
                 .from("tier_pricing")
                 .update({
-                    has_community_access: feature.has_community_access,
+                    has_community_feed_access: feature.has_community_feed_access,
+                    has_community_chat_access: feature.has_community_chat_access,
                     has_ai_access: feature.has_ai_access,
-                    has_weekly_live_access: feature.has_weekly_live_access
+                    has_weekly_live_access: feature.has_weekly_live_access,
+                    has_booking_access: feature.has_booking_access
                 })
                 .eq('tier', feature.tier);
 

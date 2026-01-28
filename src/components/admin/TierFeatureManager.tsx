@@ -11,9 +11,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 interface TierFeature {
     tier: string;
-    has_community_access: boolean;
+    has_community_feed_access: boolean;
+    has_community_chat_access: boolean;
     has_ai_access: boolean;
     has_weekly_live_access?: boolean;
+    has_booking_access?: boolean;
 }
 
 interface TierFeatureManagerProps {
@@ -35,10 +37,11 @@ export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps)
     // Initialize with default true if missing (for seamless UI before DB update propagates)
     const [features, setFeatures] = useState<TierFeature[]>(initialFeatures.map(f => ({
         ...f,
-        has_weekly_live_access: f.has_weekly_live_access ?? true
+        has_weekly_live_access: f.has_weekly_live_access ?? true,
+        has_booking_access: f.has_booking_access ?? true
     })));
 
-    const toggleFeature = (tierValue: string, featureKey: 'has_community_access' | 'has_ai_access' | 'has_weekly_live_access') => {
+    const toggleFeature = (tierValue: string, featureKey: keyof Omit<TierFeature, 'tier'>) => {
         setFeatures(prev => {
             return prev.map(f => {
                 if (f.tier === tierValue) {
@@ -52,9 +55,11 @@ export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps)
     const getFeature = (tierValue: string) => {
         return features.find(f => f.tier === tierValue) || {
             tier: tierValue,
-            has_community_access: false,
+            has_community_feed_access: false,
+            has_community_chat_access: false,
             has_ai_access: false,
-            has_weekly_live_access: false
+            has_weekly_live_access: false,
+            has_booking_access: false
         };
     };
 
@@ -87,7 +92,7 @@ export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps)
                     Tier Feature Control
                 </CardTitle>
                 <CardDescription>
-                    Control access to Community, AI Mentor, and Weekly Live sessions for each tier.
+                    Control access to Community Feed, Community Chat, AI Mentor, Weekly Live, and Booking for each tier.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -100,15 +105,27 @@ export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps)
                                     <span className={`font-semibold mb-3 text-center ${tier.color}`}>{tier.label}</span>
 
                                     <div className="space-y-3">
-                                        {/* Community Access */}
+                                        {/* Community Feed Access */}
                                         <div className="flex items-center gap-2">
                                             <Checkbox
-                                                id={`community-${tier.value}`}
-                                                checked={feature.has_community_access}
-                                                onCheckedChange={() => toggleFeature(tier.value, 'has_community_access')}
+                                                id={`feed-${tier.value}`}
+                                                checked={feature.has_community_feed_access}
+                                                onCheckedChange={() => toggleFeature(tier.value, 'has_community_feed_access')}
                                             />
-                                            <label htmlFor={`community-${tier.value}`} className="text-sm cursor-pointer select-none">
-                                                Community
+                                            <label htmlFor={`feed-${tier.value}`} className="text-sm cursor-pointer select-none">
+                                                Community Feed
+                                            </label>
+                                        </div>
+
+                                        {/* Community Chat Access */}
+                                        <div className="flex items-center gap-2">
+                                            <Checkbox
+                                                id={`chat-${tier.value}`}
+                                                checked={feature.has_community_chat_access}
+                                                onCheckedChange={() => toggleFeature(tier.value, 'has_community_chat_access')}
+                                            />
+                                            <label htmlFor={`chat-${tier.value}`} className="text-sm cursor-pointer select-none">
+                                                Community Chat
                                             </label>
                                         </div>
 
@@ -133,6 +150,18 @@ export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps)
                                             />
                                             <label htmlFor={`live-${tier.value}`} className="text-sm cursor-pointer select-none">
                                                 Weekly Live
+                                            </label>
+                                        </div>
+
+                                        {/* Booking Access */}
+                                        <div className="flex items-center gap-2">
+                                            <Checkbox
+                                                id={`booking-${tier.value}`}
+                                                checked={feature.has_booking_access}
+                                                onCheckedChange={() => toggleFeature(tier.value, 'has_booking_access')}
+                                            />
+                                            <label htmlFor={`booking-${tier.value}`} className="text-sm cursor-pointer select-none">
+                                                Booking Access
                                             </label>
                                         </div>
                                     </div>
