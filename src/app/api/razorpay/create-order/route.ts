@@ -106,6 +106,7 @@ export async function POST(req: Request) {
 
             const { error: dbError } = await supabase.from('transactions').insert({
                 razorpay_order_id: order.id,
+                razorpay_payment_id: "pending_" + order.id, // Placeholder to satisfy UNIQUE/NOT NULL
                 amount: order.amount,
                 currency: order.currency,
                 whatsapp_number: whatsappNumber,
