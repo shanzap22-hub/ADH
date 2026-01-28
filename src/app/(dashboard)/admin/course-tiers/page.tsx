@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Settings } from "lucide-react";
 import { CourseTierManager } from "@/components/admin/CourseTierManager";
-import { TierBookingToggle } from "@/components/admin/TierBookingToggle";
 import { TierFeatureManager } from "@/components/admin/TierFeatureManager";
 
 export const dynamic = "force-dynamic";
@@ -91,11 +90,8 @@ export default async function CourseTiersPage() {
                     />
                 </div>
                 <div>
-                    {/* Feature Toggles */}
-                    <div className="space-y-6">
-                        <TierBookingToggle tiers={tierPricing || []} />
-                        <TierFeatureManager initialFeatures={(tierPricing as any) || []} />
-                    </div>
+                    {/* Tier Feature Control - All 5 features in one place */}
+                    <TierFeatureManager initialFeatures={(tierPricing as any) || []} />
                 </div>
             </div>
         </div>
