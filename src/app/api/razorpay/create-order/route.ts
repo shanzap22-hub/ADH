@@ -125,32 +125,32 @@ export async function POST(req: Request) {
             if (dbError) console.error("DB Log Error", dbError);
 
             // --- SYNC DROP-OFF/INITIATED TO GOOGLE SHEET ---
+            // --- SYNC DROP-OFF/INITIATED TO GOOGLE SHEET ---
             try {
-                const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwsBDuj15M1f_nHng6kQjkZIhl6FZsXNCI71Vf55jrZKjJ55EB7joj4XjJstLgVghRT/exec";
+                const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL; // Use ENV variable
 
-                // User info already fetched above
+                if (GOOGLE_SCRIPT_URL) {
+                    const payload = {
+                        action: 'initiate',  // TELL SCRIPT this is a NEW drop-off
+                        order_id: order.id,  // Must match the key used in script (rawData.order_id)
+                        email: userEmail || "Guest",
+                        name: userName || "Guest",
+                        phone: userPhone || "",
+                        whatsapp: whatsappNumber || "",
+                        plan: body.tierId || body.planId || "silver", // Dynamic Plan
+                        amount: finalAmount,
+                        status: 'initiated',
+                        created_at: new Date().toISOString()
+                    };
 
-                const payload = {
-                    id: order.id,
-                    payment_id: "PENDING",
-                    user_email: userEmail || "",
-                    user_name: userName || "Guest",
-                    phone: userPhone || "",
-                    whatsapp: whatsappNumber || "",
-                    plan_id: 'silver',
-                    amount: finalAmount, // Amount in Rupees
-                    status: 'initiated', // This marks it as a potential drop-off
-                    created_at: new Date().toISOString()
-                };
-
-                // Wait for the sync to complete to ensure Vercel doesn't kill the process
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
-                console.log("[GOOGLE_SYNC] Synced Drop-off initiated");
-
+                    // Send to Sheet
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                    console.log("[GOOGLE_SYNC] Synced Drop-off initiated");
+                }
             } catch (sheetErr) {
                 console.error("Sheet Sync Logic Error", sheetErr);
             }

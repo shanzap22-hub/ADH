@@ -173,52 +173,57 @@ export async function POST(req: Request) {
             console.warn("[RAZORPAY_VERIFY] User is NOT authenticated. Payment recorded but membership NOT upgraded automatically.");
         }
 
-        // --- SYNC TO GOOGLE SHEETS ---
+        // --- SYNC TO GOOGLE SHEETS (Action: Verify & Cleanup) ---
         try {
-            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwsBDuj15M1f_nHng6kQjkZIhl6FZsXNCI71Vf55jrZKjJ55EB7joj4XjJstLgVghRT/exec";
+            const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL; // Use ENV variable
 
-            // Gather Data
-            let userName = "Guest/Unknown";
-            let userEmail = paymentEmail || "unknown@email.com";
-            let userPhone = "";
-            let userWhatsapp = whatsappNumber || paymentContact || "";
+            if (GOOGLE_SCRIPT_URL) {
+                // Fetch transaction details to send accurate data to sheet
+                // This is better than relying on local variables which might be incomplete
+                const { data: txnData } = await supabaseAdmin
+                    .from('transactions')
+                    .select('*')
+                    .eq('razorpay_order_id', razorpay_order_id)
+                    .single();
 
-            if (user) {
-                userEmail = user.email || userEmail;
-                userName = user.user_metadata?.full_name || user.user_metadata?.name || "Student";
-                userPhone = user.phone || "";
+                // Prepare Payload
+                const payload = {
+                    action: 'verify', // TELL SCRIPT to MOVE from Drop-offs to Orders
+                    order_id: razorpay_order_id,
+                    payment_id: razorpay_payment_id,
+                    email: txnData?.student_email || (user ? user.email : "Guest"),
+                    name: txnData?.student_name || (user ? user.user_metadata?.full_name : "Guest"),
+                    phone: txnData?.phone_number || "",
+                    whatsapp: txnData?.whatsapp_number || whatsappNumber || "",
+                    plan: 'silver',
+                    amount: txnData?.amount || (realAmount / 100),
+                    status: 'verified',
+                    created_at: new Date().toISOString()
+                };
+
+                // Send to Sheet (Fire and Forget)
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                }).catch(err => console.error("[SHEET_SYNC_ERROR]", err));
+
+                console.log("[GOOGLE_SYNC] Verifying Order & Cleaning up Drop-off");
             }
-
-            const payload = {
-                id: razorpay_order_id,
-                payment_id: razorpay_payment_id,
-                user_email: userEmail,
-                user_name: userName,
-                phone: userPhone,
-                whatsapp: userWhatsapp,
-                plan_id: 'silver', // Currently hardcoded to silver logic as seen above
-                amount: realAmount / 100, // Convert Paise to Rupees
-                status: 'verified',
-                created_at: new Date().toISOString()
-            };
-
-            await fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            console.log("[GOOGLE_SYNC] Synced transaction to Sheet");
-
-        } catch (syncError) {
-            console.error("[GOOGLE_SYNC] Failed to sync:", syncError);
+        } catch (sheetErr) {
+            console.error("Sheet Sync Logic Error", sheetErr);
         }
 
-        return NextResponse.json({ success: true });
-    } catch (error: any) {
-        console.error("[RAZORPAY_VERIFY] Error:", error.message);
-        return NextResponse.json(
-            { error: "Payment verification failed" },
-            { status: 500 }
-        );
+    } catch (syncError) {
+        console.error("[GOOGLE_SYNC] Failed to sync:", syncError);
     }
+
+    return NextResponse.json({ success: true });
+} catch (error: any) {
+    console.error("[RAZORPAY_VERIFY] Error:", error.message);
+    return NextResponse.json(
+        { error: "Payment verification failed" },
+        { status: 500 }
+    );
+}
 }
