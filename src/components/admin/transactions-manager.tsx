@@ -463,7 +463,7 @@ export default function TransactionsManager() {
                                                                 {isMain ? (
                                                                     <>
                                                                         <div className="font-medium text-sm">{txn.student_name || "Unknown"}</div>
-                                                                        <div className="text-xs text-muted-foreground">{txn.email}</div>
+                                                                        <div className="text-xs text-muted-foreground">{txn.student_email || txn.email || "-"}</div>
                                                                     </>
                                                                 ) : (
                                                                     <div className="text-xs text-muted-foreground opacity-50">Same as above</div>
