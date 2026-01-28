@@ -85,15 +85,38 @@ export async function POST(req: Request) {
             const { createClient } = await import('@/lib/supabase/server');
             const supabase = await createClient();
 
+            // Try to get user info if logged in
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+            let userId = currentUser?.id || null;
+            let userEmail = currentUser?.email || null;
+            let userName = currentUser?.user_metadata?.full_name || null;
+            let userPhone = currentUser?.phone || null;
+
+            // If user is logged in, fetch profile for more details (like stored phone number)
+            if (userId) {
+                const { data: profile } = await supabase.from('profiles').select('full_name, phone_number, whatsapp_number').eq('id', userId).single();
+                if (profile) {
+                    if (!userName) userName = profile.full_name;
+                    if (!userPhone) userPhone = profile.phone_number;
+                    // Prefer profile whatsapp if available, else use input
+                    // Actually input is freshest, so keep input whatsappNumber as primary for this txn
+                }
+            }
+
             const { error: dbError } = await supabase.from('transactions').insert({
                 razorpay_order_id: order.id,
                 amount: order.amount,
                 currency: order.currency,
                 whatsapp_number: whatsappNumber,
+                phone_number: userPhone, // Capture phone number
+                user_id: userId,        // Capture user ID
+                student_email: userEmail, // Capture email
+                student_name: userName,   // Capture name
                 status: 'pending',
                 source: 'razorpay',
                 coupon_code: appliedCoupon ? appliedCoupon.code : null,
-                original_amount: 499900, // Store original in paise
+                original_amount: 499900,
                 discount_amount: Math.round(discountAmount * 100)
             });
 
@@ -103,19 +126,14 @@ export async function POST(req: Request) {
             try {
                 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwsBDuj15M1f_nHng6kQjkZIhl6FZsXNCI71Vf55jrZKjJ55EB7joj4XjJstLgVghRT/exec";
 
-                // Try to get user info if logged in
-                const { data: { user: currentUser } } = await supabase.auth.getUser();
-
-                let userName = currentUser?.user_metadata?.full_name || "Guest";
-                let userEmail = currentUser?.email || "";
-                let userPhone = currentUser?.phone || "";
+                // User info already fetched above
 
                 const payload = {
                     id: order.id,
                     payment_id: "PENDING",
-                    user_email: userEmail,
-                    user_name: userName,
-                    phone: userPhone,
+                    user_email: userEmail || "",
+                    user_name: userName || "Guest",
+                    phone: userPhone || "",
                     whatsapp: whatsappNumber || "",
                     plan_id: 'silver',
                     amount: finalAmount, // Amount in Rupees
