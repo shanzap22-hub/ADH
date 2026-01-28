@@ -14,12 +14,7 @@ const routes = [
         href: "/dashboard",
         color: "text-slate-500",
     },
-    {
-        label: "Browse",
-        icon: Compass,
-        href: "/search",
-        color: "text-slate-500",
-    },
+
     {
         label: "My Learning",
         icon: BookOpen,
