@@ -38,8 +38,8 @@ export async function GET(req: Request) {
         let transactions: any[] = [];
 
         if (status === 'pending') {
-            // Fetch Drop-offs from payments_temp
-            let tempQuery = supabase.from('payments_temp').select('*');
+            // Fetch Drop-offs from payments_temp (ONLY actual pending drop-offs)
+            let tempQuery = supabase.from('payments_temp').select('*').eq('status', 'pending');
 
             if (searchQuery) {
                 tempQuery = tempQuery.or(`whatsapp_number.ilike.%${searchQuery}%`);
