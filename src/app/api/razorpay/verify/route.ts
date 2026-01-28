@@ -90,6 +90,13 @@ export async function POST(req: Request) {
             );
         } else {
             console.log("[RAZORPAY_VERIFY] Payment stored successfully in payments_temp");
+
+            // CLEANUP: Remove the "Pending" drop-off record for this order
+            // So it doesn't show up in Drop-offs tab anymore
+            await supabaseAdmin.from("payments_temp")
+                .delete()
+                .eq("order_id", razorpay_order_id)
+                .eq("status", "pending");
         }
 
 

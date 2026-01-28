@@ -35,31 +35,69 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
-        let query = supabase.from('transactions').select('*');
+        let transactions: any[] = [];
 
-        // Filters
-        if (searchQuery) {
-            query = query.or(`student_name.ilike.%${searchQuery}%,student_email.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%,whatsapp_number.ilike.%${searchQuery}%`);
-        }
-        if (status && status !== 'all') {
-            query = query.eq('status', status);
-        }
-        if (startDate) {
-            query = query.gte('created_at', startDate);
-        }
-        if (endDate) {
-            query = query.lte('created_at', endDate);
-        }
-        if (tier) {
-            query = query.eq('membership_plan', tier);
+        if (status === 'pending') {
+            // Fetch Drop-offs from payments_temp
+            let tempQuery = supabase.from('payments_temp').select('*');
+
+            if (searchQuery) {
+                tempQuery = tempQuery.or(`whatsapp_number.ilike.%${searchQuery}%`);
+            }
+            if (startDate) tempQuery = tempQuery.gte('created_at', startDate);
+            if (endDate) tempQuery = tempQuery.lte('created_at', endDate);
+
+            tempQuery = tempQuery.order('created_at', { ascending: false });
+
+            const { data: tempData, error: tempError } = await tempQuery;
+            if (tempError) throw tempError;
+
+            // Map to Transaction format
+            transactions = (tempData || []).map((t: any) => ({
+                id: t.id,
+                created_at: t.created_at,
+                student_name: "Guest User",
+                student_email: "",
+                whatsapp_number: t.whatsapp_number,
+                phone_number: "",
+                amount: t.amount,
+                status: t.status,
+                source: 'razorpay',
+                membership_plan: 'silver', // Default assumption
+                razorpay_order_id: t.order_id,
+                razorpay_payment_id: t.payment_id
+            }));
+
+        } else {
+            // Fetch Normal Transactions
+            let query = supabase.from('transactions').select('*');
+
+            // Filters
+            if (searchQuery) {
+                query = query.or(`student_name.ilike.%${searchQuery}%,student_email.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%,whatsapp_number.ilike.%${searchQuery}%`);
+            }
+            if (status && status !== 'all') {
+                query = query.eq('status', status);
+            }
+            if (startDate) {
+                query = query.gte('created_at', startDate);
+            }
+            if (endDate) {
+                query = query.lte('created_at', endDate);
+            }
+            if (tier) {
+                query = query.eq('membership_plan', tier);
+            }
+
+            // Order
+            query = query.order('created_at', { ascending: false });
+
+            let { data: realData, error: realError } = await query;
+            if (realError) throw realError;
+            transactions = realData || [];
         }
 
-        // Order
-        query = query.order('created_at', { ascending: false });
-
-        let { data: transactions, error } = await query;
-
-        if (error) throw error;
+        // if (error) throw error; // Removed as error is handled in blocks above
 
         // MANUAL PROFILE FETCH (Robust against missing FKs)
         if (transactions && transactions.length > 0) {

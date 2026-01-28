@@ -104,22 +104,15 @@ export async function POST(req: Request) {
                 }
             }
 
-            const { error: dbError } = await supabase.from('transactions').insert({
-                razorpay_order_id: order.id,
-                razorpay_payment_id: "pending_" + order.id, // Placeholder to satisfy UNIQUE/NOT NULL
+            // Insert into payments_temp for Drop-offs
+            const { error: dbError } = await supabase.from('payments_temp').insert({
+                order_id: order.id,
+                payment_id: "PENDING", // Placeholder as it is NOT NULL
                 amount: order.amount,
-                currency: order.currency,
                 whatsapp_number: whatsappNumber,
-                phone_number: userPhone, // Capture phone number
-                user_id: userId,        // Capture user ID
-                student_email: userEmail, // Capture email
-                student_name: userName || "Guest User",   // Ensure name is not null
-                status: 'pending',
-                source: 'razorpay',
-                membership_plan: 'silver', // Default plan for new joins
-                coupon_code: appliedCoupon ? appliedCoupon.code : null,
-                original_amount: 499900,
-                discount_amount: Math.round(discountAmount * 100)
+                status: 'pending'
+                // Note: payments_temp schema provided didn't show user_id/name/email columns
+                // If they exist, add them here. For now, sticking to what I know.
             });
 
             if (dbError) console.error("DB Log Error", dbError);
