@@ -214,16 +214,14 @@ export async function POST(req: Request) {
             console.error("Sheet Sync Logic Error", sheetErr);
         }
 
-    } catch (syncError) {
-        console.error("[GOOGLE_SYNC] Failed to sync:", syncError);
-    }
 
-    return NextResponse.json({ success: true });
-} catch (error: any) {
-    console.error("[RAZORPAY_VERIFY] Error:", error.message);
-    return NextResponse.json(
-        { error: "Payment verification failed" },
-        { status: 500 }
-    );
-}
+
+        return NextResponse.json({ success: true });
+    } catch (error: any) {
+        console.error("[RAZORPAY_VERIFY] Error:", error.message);
+        return NextResponse.json(
+            { error: "Payment verification failed" },
+            { status: 500 }
+        );
+    }
 }
