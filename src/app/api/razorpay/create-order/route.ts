@@ -112,9 +112,10 @@ export async function POST(req: Request) {
                 phone_number: userPhone, // Capture phone number
                 user_id: userId,        // Capture user ID
                 student_email: userEmail, // Capture email
-                student_name: userName,   // Capture name
+                student_name: userName || "Guest User",   // Ensure name is not null
                 status: 'pending',
                 source: 'razorpay',
+                membership_plan: 'silver', // Default plan for new joins
                 coupon_code: appliedCoupon ? appliedCoupon.code : null,
                 original_amount: 499900,
                 discount_amount: Math.round(discountAmount * 100)
