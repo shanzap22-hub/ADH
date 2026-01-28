@@ -66,6 +66,42 @@ export async function POST(request: Request) {
         }
     }
 
+    // --- CRITICAL AUTO-LINK: MERGE GUEST TRANSACTIONS ---
+    // Problem: Guest checkout creates a transaction with temp email and NULL user_id.
+    // Fix: Find those orphaned transactions using phone/whatsapp and LINK them to this user.
+    try {
+        // Find transactions with matching phone/whatsapp AND (user_id is NULL OR email contains 'adh.pending')
+        const { data: orphans, error: orphanError } = await supabaseAdmin
+            .from('transactions')
+            .select('id')
+            .or(`whatsapp_number.eq.${whatsappNumber},phone_number.eq.${contactNumber}`)
+            .is('user_id', null);
+
+        if (orphans && orphans.length > 0) {
+            console.log(`[AUTO-LINK] Found ${orphans.length} orphaned transactions for ${fullName}. Linking now...`);
+
+            const orphanIds = orphans.map((t: any) => t.id);
+
+            // Update them all
+            const { error: linkError } = await supabaseAdmin
+                .from('transactions')
+                .update({
+                    user_id: user.id,
+                    student_email: email,       // Updates the temp email to REAL email
+                    student_name: fullName,
+                    phone_number: contactNumber,
+                    whatsapp_number: whatsappNumber,
+                    updated_at: new Date().toISOString()
+                })
+                .in('id', orphanIds);
+
+            if (linkError) console.error("[AUTO-LINK] Failed to link transactions:", linkError);
+            else console.log("[AUTO-LINK] Successfully linked transactions.");
+        }
+    } catch (linkErr) {
+        console.error("[AUTO-LINK] Exception during linking:", linkErr);
+    }
+
     // --- SEND RECEIPT EMAIL (New) ---
     try {
         // Fetch the latest verified transaction for this user
