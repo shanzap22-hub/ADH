@@ -107,7 +107,7 @@ export async function POST(req: Request) {
             // Insert into payments_temp for Drop-offs
             const { error: dbError } = await supabase.from('payments_temp').insert({
                 order_id: order.id,
-                payment_id: "PENDING", // Placeholder as it is NOT NULL
+                payment_id: "PENDING_" + order.id, // Make it UNIQUE using order ID
                 amount: order.amount,
                 whatsapp_number: whatsappNumber,
                 status: 'pending'
