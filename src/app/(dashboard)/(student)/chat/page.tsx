@@ -21,10 +21,10 @@ export default async function ChatPage() {
         .eq("id", user.id)
         .single();
 
-    // Check tier capabilities for BOTH AI and Community
+    // Check tier capabilities for BOTH AI and Community Chat
     const { data: tierSettings } = await supabase
         .from("tier_pricing")
-        .select("has_ai_access, has_community_access")
+        .select("has_ai_access, has_community_chat_access")
         .eq("tier", profile?.membership_tier || "free")
         .single();
 
@@ -34,7 +34,7 @@ export default async function ChatPage() {
         profile?.role === "admin";
 
     const hasAiAccess = isAdmin || tierSettings?.has_ai_access === true;
-    const hasCommunityAccess = isAdmin || tierSettings?.has_community_access === true;
+    const hasCommunityAccess = isAdmin || tierSettings?.has_community_chat_access === true;
 
     // Allow page access if user has ANY chat access
     // Individual features will be locked in the UI

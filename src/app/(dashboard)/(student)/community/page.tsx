@@ -19,28 +19,29 @@ export default async function CommunityPage() {
 
     if (!user) return redirect("/login");
 
-    // CRITICAL: Check tier-based community access
+    // CRITICAL: Check tier-based community feed access
     const { data: profile } = await supabase
         .from("profiles")
-        .select("membership_tier")
+        .select("membership_tier, role")
         .eq("id", user.id)
         .single();
 
     const userTier = profile?.membership_tier || 'free';
+    const isAdmin = profile?.role === "super_admin" || profile?.role === "admin";
 
-    // Check if user's tier has community access
+    // Check if user's tier has community feed access
     const { data: tierData } = await supabase
         .from("tier_pricing")
-        .select("has_community_access")
+        .select("has_community_feed_access")
         .eq("tier", userTier)
         .single();
 
-    const hasCommunityAccess = tierData?.has_community_access || false;
+    const hasCommunityFeedAccess = isAdmin || tierData?.has_community_feed_access || false;
 
     // If no access, show upgrade message
-    if (!hasCommunityAccess) {
+    if (!hasCommunityFeedAccess) {
         const { UpgradeTierMessage } = await import("@/components/UpgradeTierMessage");
-        return <UpgradeTierMessage feature="Community" />;
+        return <UpgradeTierMessage feature="Community Feed" />;
     }
 
     // Get full profile for admin check
