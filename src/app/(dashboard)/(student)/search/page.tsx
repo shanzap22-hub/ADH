@@ -100,21 +100,9 @@ export default async function SearchPage() {
             // Admin decides the limit - system must respect it
             let allCourses = Array.from(courseMap.values());
 
-            if (maxCoursesAllowed > 0 && maxCoursesAllowed < 999) {
-                // Limit to max_courses (prioritize enrolled courses)
-                const enrolledIds = new Set(enrolledCoursesList.map(c => c?.id).filter(Boolean));
-                const enrolled = allCourses.filter(c => enrolledIds.has(c.id));
-                const notEnrolled = allCourses.filter(c => !enrolledIds.has(c.id));
-
-                // Take enrolled first, then fill remaining slots with tier courses
-                courses = [
-                    ...enrolled.slice(0, maxCoursesAllowed),
-                    ...notEnrolled.slice(0, Math.max(0, maxCoursesAllowed - enrolled.length))
-                ];
-            } else {
-                // Unlimited or very high limit (999)
-                courses = allCourses;
-            }
+            // Limit Check REMOVED per user request
+            // We now show ALL courses assigned to the tier.
+            courses = allCourses;
         }
     } catch (error: any) {
         console.error("[SEARCH_PAGE] Fetch exception:", error);
@@ -127,6 +115,7 @@ export default async function SearchPage() {
         category: null,
         chapters: course.chapters || [],
         progress: null,
+        isLocked: false // Ensure they appear unlocked for access check later
     }));
 
     return (
@@ -140,7 +129,7 @@ export default async function SearchPage() {
                     <div>
                         <h1 className="text-xl font-bold">Explore Courses</h1>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                            {courses.length} of {maxCoursesAllowed === 999 ? 'unlimited' : maxCoursesAllowed} courses ({userTier} tier)
+                            {courses.length} courses available ({userTier} tier)
                         </p>
                     </div>
                 </div>

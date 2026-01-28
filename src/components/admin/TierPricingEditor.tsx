@@ -134,7 +134,7 @@ export function TierPricingEditor() {
                                 />
                             </div>
 
-                            {/* Max Courses */}
+                            {/* Max Courses - HIDDEN / DEPRECATED per update
                             <div className="space-y-2">
                                 <Label htmlFor={`max-${tier.tier}`}>
                                     Max Courses
@@ -153,6 +153,7 @@ export function TierPricingEditor() {
                                     Use 999 for unlimited access
                                 </p>
                             </div>
+                            */}
 
                             {/* Booking Access */}
                             <div className="flex items-center space-x-2">

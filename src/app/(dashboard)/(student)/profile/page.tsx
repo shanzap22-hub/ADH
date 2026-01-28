@@ -69,13 +69,7 @@ export default async function ProfilePage() {
                         </Link>
                     </div>
                     <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
-                        {profile?.membership_tier === "diamond"
-                            ? "You have access to all courses"
-                            : profile?.membership_tier === "gold"
-                                ? "You have access to 11 courses"
-                                : profile?.membership_tier === "silver"
-                                    ? "You have access to 8 courses"
-                                    : "You have access to 1 course"}
+                        You have access to all courses included in your membership plan.
                     </p>
                 </div>
             </div>
