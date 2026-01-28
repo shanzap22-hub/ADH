@@ -81,19 +81,20 @@ export default async function SearchPage() {
             const tierCourses = data || [];
             const enrolledCoursesList = enrolledCourses?.map(e => e.courses).filter(Boolean) || [];
 
-            // Merge and deduplicate by course ID
+            // Combine tier-accessible courses
+            // User requested to show only tier-assigned courses, ignoring enrolled status for the list
             const courseMap = new Map();
 
             tierCourses.forEach(course => {
+                // Determine if user has access (is enrolled or tier allows) - mostly for UI badges if needed
+                // But specifically for the LIST, we only show tier courses.
+                // However, we might want to flag if they are enrolled.
+                // For now, per instruction: "Gold-ൽ 1 course tick → Student-ന് 1 course മാത്രം"
                 courseMap.set(course.id, course);
             });
 
-            // Add enrolled courses (even if not in tier)
-            enrolledCoursesList.forEach(course => {
-                if (course && !courseMap.has(course.id)) {
-                    courseMap.set(course.id, course);
-                }
-            });
+            // Do NOT merge enrolled courses that are not in the tier list
+
 
             // CRITICAL: Enforce max_courses limit
             // Admin decides the limit - system must respect it

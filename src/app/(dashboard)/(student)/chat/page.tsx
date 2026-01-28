@@ -21,10 +21,10 @@ export default async function ChatPage() {
         .eq("id", user.id)
         .single();
 
-    // Check tier capabilities
+    // Check tier capabilities for BOTH AI and Community
     const { data: tierSettings } = await supabase
         .from("tier_pricing")
-        .select("has_ai_access")
+        .select("has_ai_access, has_community_access")
         .eq("tier", profile?.membership_tier || "free")
         .single();
 
@@ -33,11 +33,16 @@ export default async function ChatPage() {
         profile?.role === "instructor" ||
         profile?.role === "admin";
 
-    const hasAccess = isAdmin || tierSettings?.has_ai_access === true;
+    const hasAiAccess = isAdmin || tierSettings?.has_ai_access === true;
+    const hasCommunityAccess = isAdmin || tierSettings?.has_community_access === true;
 
-    if (!hasAccess) {
+    // Allow page access if user has ANY chat access
+    // Individual features will be locked in the UI
+    const hasAnyChatAccess = hasAiAccess || hasCommunityAccess;
+
+    if (!hasAnyChatAccess) {
         const { UpgradeTierMessage } = await import("@/components/UpgradeTierMessage");
-        return <UpgradeTierMessage feature="AI Mentor" />;
+        return <UpgradeTierMessage feature="Chat" />;
     }
 
     return (
@@ -47,6 +52,8 @@ export default async function ChatPage() {
             currentUserRole={profile?.role || "student"}
             termsAcceptedAi={profile?.terms_ai_accepted || false}
             termsAcceptedCommunity={profile?.terms_community_accepted || false}
+            hasAiAccess={hasAiAccess}
+            hasCommunityAccess={hasCommunityAccess}
         />
     );
 }

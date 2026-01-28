@@ -14,6 +14,8 @@ interface ChatPageClientProps {
     currentUserRole?: string;
     termsAcceptedAi: boolean;
     termsAcceptedCommunity: boolean;
+    hasAiAccess: boolean;
+    hasCommunityAccess: boolean;
 }
 
 export default function ChatPageClient({
@@ -21,7 +23,9 @@ export default function ChatPageClient({
     currentUserTier,
     currentUserRole,
     termsAcceptedAi: initialAiTerms,
-    termsAcceptedCommunity: initialCommunityTerms
+    termsAcceptedCommunity: initialCommunityTerms,
+    hasAiAccess,
+    hasCommunityAccess
 }: ChatPageClientProps) {
     const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
     const [selectedChatInfo, setSelectedChatInfo] = useState<any>(null);
@@ -37,21 +41,31 @@ export default function ChatPageClient({
     const showUpgradeBanner = ["bronze", "silver"].includes(currentUserTier);
 
     const handleSelectChat = (id: string, info: any) => {
-        // AI Chat Terms Check
+        // Check ACCESS first (tier-based)
+        if (id === 'ai-coach' && !hasAiAccess) {
+            // No access to AI - show upgrade message or block
+            return;
+        }
+
+        if (id !== 'ai-coach' && !hasCommunityAccess) {
+            // No access to Community Chat - block
+            return;
+        }
+
+        // Check TERMS second (user agreement)
         if (id === 'ai-coach' && !termsAiAccepted) {
             setPendingChatSelection({ id, info });
             setShowTermsModal(true);
             return;
         }
 
-        // Community Chat Terms Check (Anything that isn't AI Coach)
         if (id !== 'ai-coach' && !termsCommunityAccepted) {
             setPendingChatSelection({ id, info });
             setShowTermsModal(true);
             return;
         }
 
-        // Proceed if terms agreed
+        // Proceed if both access and terms are satisfied
         setSelectedChatId(id);
         setSelectedChatInfo(info);
     };
@@ -106,6 +120,8 @@ export default function ChatPageClient({
                     currentUserId={currentUserId}
                     onSelectChat={handleSelectChat}
                     selectedConversationId={selectedChatId}
+                    hasCommunityAccess={hasCommunityAccess}
+                    hasAiAccess={hasAiAccess}
                 />
             </div>
 
