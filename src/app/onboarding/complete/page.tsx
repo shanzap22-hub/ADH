@@ -238,7 +238,7 @@ export default function CompleteProfilePage() {
                 </CardHeader>
 
                 <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="space-y-6">
 
                         {/* Full Name */}
                         <div className="space-y-2">
@@ -268,9 +268,7 @@ export default function CompleteProfilePage() {
                                     placeholder="Enter your email address"
                                     value={formData.email}
                                     onChange={handleEmailChange}
-                                    disabled={isSubmitting || isEmailVerified} // Lock if verified? Maybe user wants to change. Let's allowing change but it resets verify. See logic above.
-                                    // Actually, if verified, maybe lock it to prevent accidental edits. They can unlock by clearing?
-                                    // Logic above allows edit.
+                                    disabled={isSubmitting || isEmailVerified}
                                     required
                                     type="email"
                                     className={`bg-slate-800 border-slate-700 text-white transition-all ${isEmailVerified ? 'border-green-500/50 focus:border-green-500' : ''}`}
@@ -395,7 +393,8 @@ export default function CompleteProfilePage() {
                         </div>
 
                         <Button
-                            type="submit"
+                            type="button"
+                            onClick={(e) => handleSubmit(e as any)}
                             disabled={isSubmitting || !isEmailVerified}
                             className={`w-full font-bold hover:scale-[1.01] transition-all ${!isEmailVerified
                                 ? "bg-slate-700 cursor-not-allowed text-slate-400"
@@ -406,7 +405,7 @@ export default function CompleteProfilePage() {
                                 (!isEmailVerified ? "Verify Email to Continue" : "Save Changes & Start Learning")
                             }
                         </Button>
-                    </form>
+                    </div>
                 </CardContent>
             </Card>
         </div>
