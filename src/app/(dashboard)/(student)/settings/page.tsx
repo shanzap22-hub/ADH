@@ -136,7 +136,7 @@ export default function SettingsPage() {
                             <Mail className="h-5 w-5 text-slate-500" />
                             <span className="font-medium">Contact Support</span>
                         </div>
-                        <span className="text-xs text-slate-400">support@adh.today</span>
+                        <span className="text-xs text-slate-400">info@adh.today</span>
                     </Link>
 
                     <Link href="/privacy" className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">

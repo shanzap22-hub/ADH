@@ -70,8 +70,8 @@ export function Footer() {
                         <ul className="space-y-3">
                             <li className="flex items-center gap-2">
                                 <Mail className="h-4 w-4 text-orange-400 flex-shrink-0" />
-                                <a href="mailto:info@atcess.com" className="text-slate-400 hover:text-orange-400 transition text-sm">
-                                    info@atcess.com
+                                <a href="mailto:info@adh.today" className="text-slate-400 hover:text-orange-400 transition text-sm">
+                                    info@adh.today
                                 </a>
                             </li>
                             <li className="flex items-center gap-2">
@@ -88,7 +88,7 @@ export function Footer() {
                 <div className="mt-12 pt-8 border-t border-slate-800">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                         <p className="text-slate-400 text-sm text-center md:text-left">
-                            © {new Date().getFullYear()} Atcess. All rights reserved.
+                            © {new Date().getFullYear()} ADH Connect. All rights reserved.
                         </p>
                         <div className="flex flex-wrap justify-center gap-4 text-sm">
                             <Link href="/privacy" className="text-slate-400 hover:text-orange-400 transition">
