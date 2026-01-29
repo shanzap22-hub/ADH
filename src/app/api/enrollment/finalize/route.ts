@@ -119,7 +119,8 @@ export async function POST(req: Request) {
                     email_confirm: true,
                     user_metadata: {
                         full_name: fullName || "Student",
-                        whatsapp_number: whatsappNumber
+                        whatsapp_number: whatsappNumber,
+                        setup_required: true
                     }
                 });
 
