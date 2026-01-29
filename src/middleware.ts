@@ -50,14 +50,19 @@ export async function middleware(request: NextRequest) {
     if (user) {
         const passwordResetRequired = user.user_metadata?.password_reset_required;
         const setupRequired = user.user_metadata?.setup_required;
-        const allowedSetupPaths = ['/onboarding/complete', '/api/user/complete-profile'];
+        const allowedSetupPaths = [
+            '/onboarding/complete',
+            '/api/user/complete-profile',
+            '/api/auth/send-otp',
+            '/api/auth/verify-otp'
+        ];
 
         // Allow logout/auth paths
         const isAuthRelated = pathname.startsWith('/auth') || pathname === '/signout';
 
         // 0. Priority: Membership Cancelled Check
         // Fetch profile to check tier
-        if (!isAuthRelated && !pathname.startsWith('/api/user')) { // Allow critical APIs
+        if (!isAuthRelated && !pathname.startsWith('/api/user') && !pathname.startsWith('/api/auth')) { // Allow critical APIs
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('membership_tier, role')
