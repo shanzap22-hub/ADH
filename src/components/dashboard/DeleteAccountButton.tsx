@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "react-hot-toast";
 import { deleteAccount } from "@/actions/delete-account";
+import { createClient } from "@/lib/supabase/client";
 
 export const DeleteAccountButton = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -25,10 +26,18 @@ export const DeleteAccountButton = () => {
     const handleDelete = async () => {
         try {
             setIsLoading(true);
+
+            // 1. Delete on Server
             await deleteAccount();
+
+            // 2. Clear Local Session (Important!)
+            const supabase = createClient();
+            await supabase.auth.signOut();
+
             toast.success("Account deleted successfully");
-            router.push("/");
-            router.refresh();
+
+            // 3. Force Hard Redirect
+            window.location.href = "/login";
         } catch (error) {
             console.error("Delete error:", error);
             toast.error("Failed to delete account. Please try again.");
