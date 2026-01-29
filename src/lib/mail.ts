@@ -204,3 +204,31 @@ export const sendPaymentReceipt = async (
         return { success: false, error: e };
     }
 };
+
+export const sendVerificationOTP = async (email: string, code: string) => {
+    if (!resend) {
+        console.log(`DEBUG: Mock OTP for ${email}: ${code}`);
+        return { success: true };
+    }
+    try {
+        await resend.emails.send({
+            from: "ADH Connect <info@adh.today>",
+            to: email,
+            subject: "Verify your email address",
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
+                    <h2 style="color: #333;">Verify Your Email</h2>
+                    <p style="color: #666;">Please use the following code to verify your email address for ADH Connect.</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <span style="background: #f4f4f4; padding: 15px 25px; font-size: 24px; font-weight: bold; letter-spacing: 5px; border-radius: 6px; color: #000;">${code}</span>
+                    </div>
+                    <p style="color: #888; font-size: 14px;">This code will expire in 10 minutes.</p>
+                </div>
+            `
+        });
+        return { success: true };
+    } catch (e) {
+        console.error("DEBUG_MAIL: OTP send error:", e);
+        return { success: false, error: e };
+    }
+};
