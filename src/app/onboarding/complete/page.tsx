@@ -81,8 +81,8 @@ export default function CompleteProfilePage() {
                 ...prev,
                 email: finalEmail,
                 fullName: finalName,
-                whatsappNumber: profile?.whatsapp_number || "",
-                contactNumber: profile?.phone_number || "",
+                whatsappNumber: (profile?.whatsapp_number || "").replace(/^\+91/, ""),
+                contactNumber: (profile?.phone_number || "").replace(/^\+91/, ""),
                 password: initialPassword
             }));
 
@@ -398,8 +398,8 @@ export default function CompleteProfilePage() {
                             type="submit"
                             disabled={isSubmitting || !isEmailVerified}
                             className={`w-full font-bold hover:scale-[1.01] transition-all ${!isEmailVerified
-                                    ? "bg-slate-700 cursor-not-allowed text-slate-400"
-                                    : "bg-gradient-to-r from-orange-500 to-pink-600 text-white"
+                                ? "bg-slate-700 cursor-not-allowed text-slate-400"
+                                : "bg-gradient-to-r from-orange-500 to-pink-600 text-white"
                                 }`}
                         >
                             {isSubmitting ? <Loader2 className="animate-spin" /> :
