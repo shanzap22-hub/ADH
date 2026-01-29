@@ -82,7 +82,7 @@ export default function CompleteProfilePage() {
                 email: finalEmail,
                 fullName: finalName,
                 whatsappNumber: (profile?.whatsapp_number || "").replace(/^\+91/, ""),
-                contactNumber: (profile?.phone_number || "").replace(/^\+91/, ""),
+                contactNumber: "",
                 password: initialPassword
             }));
 
