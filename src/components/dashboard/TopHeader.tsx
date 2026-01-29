@@ -138,7 +138,7 @@ export const TopHeader = () => {
                             <DropdownMenuItem onClick={() => router.push("/profile")}>
                                 Profile
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
+                            <DropdownMenuItem onClick={() => router.push("/settings")}>
                                 Settings
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
