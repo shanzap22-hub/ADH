@@ -62,6 +62,11 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "https://adh.today",
+  },
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
   }
 };
 
