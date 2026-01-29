@@ -141,7 +141,7 @@ export async function POST(req: Request) {
                     id: userId,
                     email: finalEmail.toLowerCase().trim(),
                     whatsapp_number: whatsappNumber,
-                    contact_number: finalContact,
+                    phone_number: finalContact,
                     role: 'student',
                     membership_tier: 'silver',
                     setup_required: true,
