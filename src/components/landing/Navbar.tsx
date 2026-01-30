@@ -32,9 +32,11 @@ export function Navbar() {
                     <Link href="/login" className="hidden md:block text-sm font-medium hover:underline underline-offset-4">
                         Login
                     </Link>
-                    <Button size="sm" className="font-semibold">
-                        Get Started
-                    </Button>
+                    <Link href="/contact">
+                        <Button size="sm" className="font-semibold">
+                            Get Started
+                        </Button>
+                    </Link>
                 </div>
             </div>
         </header>
