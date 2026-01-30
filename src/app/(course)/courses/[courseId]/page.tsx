@@ -43,8 +43,10 @@ export default async function CourseIdPage({
     }
 
     // Check enrollment
+    // Check Enrollment (Purchase OR Tier Access)
     let isEnrolled = false;
     if (user) {
+        // 1. Check direct purchase
         const { data: enrollment } = await supabase
             .from("purchases")
             .select("*")
@@ -54,6 +56,32 @@ export default async function CourseIdPage({
 
         if (enrollment) {
             isEnrolled = true;
+        } else {
+            // 2. Check Tier / Role Access
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("membership_tier, role")
+                .eq("id", user.id)
+                .single();
+
+            const userTier = profile?.membership_tier || "bronze";
+            const userRole = profile?.role;
+
+            // Admins & Instructors get access
+            if (["super_admin", "admin", "instructor"].includes(userRole)) {
+                isEnrolled = true;
+            } else {
+                // Check if course allows this user's tier
+                const { data: allowedTiers } = await supabase
+                    .from("course_tier_access")
+                    .select("tier")
+                    .eq("course_id", courseId);
+
+                // Exact match logic (consistent with accessible-courses action)
+                if (allowedTiers?.some(t => t.tier === userTier)) {
+                    isEnrolled = true;
+                }
+            }
         }
     }
 

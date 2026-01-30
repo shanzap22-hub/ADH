@@ -56,10 +56,7 @@ export const CourseCard = ({
                         </div>
                     )}
 
-                    {/* Category Pill Over Image */}
-                    <div className="absolute top-2 right-2 px-2 py-1 rounded-md bg-white/90 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider text-slate-700 shadow-sm">
-                        {category}
-                    </div>
+
                 </div>
 
                 {/* Content Section */}
