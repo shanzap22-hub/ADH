@@ -185,4 +185,6 @@ export default function ContactPage() {
                 </svg>
                 <span className="font-semibold">Chat with us</span>
             </a>
+        </div>
+    );
 }
