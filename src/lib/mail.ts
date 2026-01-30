@@ -11,7 +11,7 @@ export const sendBookingConfirmation = async (
     meetingLink: string,
     bookingId: string,
     purpose?: string,
-    studentDetails?: { name: string; email: string; phone: string }
+    studentDetails?: { name: string; email: string; phone: string; whatsapp?: string }
 ) => {
     if (!resend) {
         console.log("DEBUG_MAIL: Resend API Key missing. Mocking email send.");
@@ -36,10 +36,11 @@ export const sendBookingConfirmation = async (
                 </div>
                 ${studentDetails ? `
                 <div style="background: #ffffff; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; margin-top: 20px;">
-                    <h3 style="margin-top: 0; color: #333; font-size: 16px;">Student Details</h3>
+                    <h3 style="margin-top: 0; color: #333; font-size: 16px;">Student Contact Details</h3>
                     <p style="margin: 5px 0;"><strong>Name:</strong> ${studentDetails.name}</p>
                     <p style="margin: 5px 0;"><strong>Email:</strong> ${studentDetails.email}</p>
                     <p style="margin: 5px 0;"><strong>Phone:</strong> ${studentDetails.phone || 'N/A'}</p>
+                    ${studentDetails.whatsapp ? `<p style="margin: 5px 0;"><strong>WhatsApp:</strong> ${studentDetails.whatsapp}</p>` : ''}
                 </div>
                 ` : ''}
                 <div style="text-align: center; margin-top: 30px;">
@@ -116,7 +117,7 @@ export const sendBookingReminder = async (
     time: string,
     meetLink: string,
     timeLeft: string, // "3 hours", "30 minutes", "5 minutes"
-    studentDetails?: { name: string; email: string; phone: string }
+    studentDetails?: { name: string; email: string; phone: string; whatsapp?: string }
 ) => {
     if (!resend) return { success: true };
     try {
@@ -135,10 +136,11 @@ export const sendBookingReminder = async (
                 </div>
                 ${studentDetails ? `
                 <div style="background: #ffffff; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; margin-top: 20px;">
-                    <h3 style="margin-top: 0; color: #333; font-size: 16px;">Student Details</h3>
+                    <h3 style="margin-top: 0; color: #333; font-size: 16px;">Student Contact Details</h3>
                     <p style="margin: 5px 0;"><strong>Name:</strong> ${studentDetails.name}</p>
                     <p style="margin: 5px 0;"><strong>Email:</strong> ${studentDetails.email}</p>
                     <p style="margin: 5px 0;"><strong>Phone:</strong> ${studentDetails.phone || 'N/A'}</p>
+                     ${studentDetails.whatsapp ? `<p style="margin: 5px 0;"><strong>WhatsApp:</strong> ${studentDetails.whatsapp}</p>` : ''}
                 </div>
                 ` : ''}
             `,

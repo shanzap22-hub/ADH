@@ -546,6 +546,7 @@ export function AvailabilityManager() {
                                         <p><span className="font-semibold">Student:</span> {bookingDetails.profiles?.full_name}</p>
                                         <p><span className="font-semibold">Email:</span> {bookingDetails.profiles?.email}</p>
                                         <p><span className="font-semibold">Phone:</span> {bookingDetails.profiles?.phone || "N/A"}</p>
+                                        <p><span className="font-semibold">WhatsApp:</span> {bookingDetails.profiles?.whatsapp || "N/A"}</p>
 
                                         {/* Purpose Field */}
                                         {bookingDetails.purpose && (

@@ -38,31 +38,43 @@ export async function GET(req: Request) {
 
             console.log("Fetched Profiles for Bookings:", profiles);
 
-            // Merge phone numbers
+            // Merge phone numbers & WhatsApp
             const phoneMap = new Map();
+            const whatsappMap = new Map();
+
             if (profiles) {
                 profiles.forEach(p => {
-                    // Try all possible phone fields
+                    // Phone Priority
                     const phone = p.contact_number || p.phone || p.mobile || p.phone_number || p.whatsapp_number;
                     if (phone) phoneMap.set(p.id, phone);
+
+                    // WhatsApp Priority
+                    const wa = p.whatsapp_number || p.mobile || p.phone;
+                    if (wa) whatsappMap.set(p.id, wa);
                 });
             }
 
-            // Update bookings with phone
+            // Update bookings with phone & wa
             const { createAdminClient } = await import("@/lib/supabase/admin");
             const supabaseAdmin = createAdminClient();
 
             for (const b of bookings) {
                 if (b.profiles) {
                     let phone = phoneMap.get(b.user_id);
+                    let whatsapp = whatsappMap.get(b.user_id);
 
-                    // Fallback to Auth User Metadata if profile phone is missing
-                    if (!phone && b.user_id) {
+                    // Fallback to Auth User Metadata if profile data is missing
+                    if ((!phone || !whatsapp) && b.user_id) {
                         try {
                             const { data: { user }, error } = await supabaseAdmin.auth.admin.getUserById(b.user_id);
                             if (user) {
-                                phone = user.phone || user.user_metadata?.phone || user.user_metadata?.mobile || user.user_metadata?.contact_number || user.user_metadata?.whatsapp_number;
-                                if (phone) console.log(`Found phone in Auth for user ${b.user_id}: ${phone}`);
+                                if (!phone) {
+                                    phone = user.phone || user.user_metadata?.phone || user.user_metadata?.mobile || user.user_metadata?.contact_number || user.user_metadata?.whatsapp_number;
+                                    if (phone) console.log(`Found phone in Auth for user ${b.user_id}: ${phone}`);
+                                }
+                                if (!whatsapp) {
+                                    whatsapp = user.user_metadata?.whatsapp_number || user.phone || user.user_metadata?.mobile;
+                                }
                             }
                         } catch (err) {
                             console.error(`Error fetching auth user ${b.user_id}:`, err);
@@ -70,6 +82,7 @@ export async function GET(req: Request) {
                     }
 
                     b.profiles.phone = phone || null;
+                    b.profiles.whatsapp = whatsapp || null;
                 }
             }
         }

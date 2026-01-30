@@ -21,7 +21,7 @@ export async function POST(req: Request) {
         // 1. Fetch User Profile (Student)
         const { data: student } = await supabase
             .from("profiles")
-            .select("full_name, email, phone, mobile, contact_number, whatsapp_number")
+            .select("*") // Fetch all for safety
             .eq("id", user.id)
             .single();
 
@@ -202,11 +202,14 @@ export async function POST(req: Request) {
         };
         const time12h = formatTime12h(time);
 
-        const studentPhone = student.phone || student.mobile || student.contact_number || student.whatsapp_number || "N/A";
+        const studentPhone = student.phone || student.mobile || student.contact_number || student.phone_number || "N/A";
+        const studentWhatsapp = student.whatsapp_number || student.mobile || student.phone || "N/A";
+
         const studentDetails = {
             name: student.full_name,
             email: student.email,
-            phone: studentPhone
+            phone: studentPhone,
+            whatsapp: studentWhatsapp
         };
 
         try {
