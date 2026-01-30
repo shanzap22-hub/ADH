@@ -72,7 +72,7 @@ export default function RefundPage() {
                                     Requesting a refund is simple and straightforward:
                                 </p>
                                 <ol className="list-decimal pl-6 mt-3 space-y-2">
-                                    <li>Send an email to our support team at <a href="mailto:info@atcess.com" className="text-orange-400 hover:text-orange-300 font-semibold">info@atcess.com</a></li>
+                                    <li>Send an email to our support team at <a href="mailto:info@adh.today" className="text-orange-400 hover:text-orange-300 font-semibold">info@adh.today</a></li>
                                     <li>Include your registered email address and transaction/payment ID</li>
                                     <li>Briefly mention your reason for requesting a refund (optional but appreciated for our improvement)</li>
                                     <li>Our team will review your request and respond within 24-48 hours</li>
@@ -153,7 +153,7 @@ export default function RefundPage() {
                                 </p>
                                 <div className="mt-3 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
                                     <p className="font-semibold text-white">Atcess - Customer Support</p>
-                                    <p>Email: <a href="mailto:info@atcess.com" className="text-orange-400 hover:text-orange-300">info@atcess.com</a></p>
+                                    <p>Email: <a href="mailto:info@adh.today" className="text-orange-400 hover:text-orange-300">info@adh.today</a></p>
                                     <p>Phone: <a href="tel:+917591977888" className="text-orange-400 hover:text-orange-300">+91 7591977888</a></p>
                                     <p className="mt-2 text-sm">
                                         CKM COMPLEX, Ground Floor, Manjambra Road,<br />

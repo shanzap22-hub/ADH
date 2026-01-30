@@ -20,11 +20,11 @@ export function Navbar() {
                     </Link>
                 </div>
                 <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
-                    <Link href="#features" className="hover:text-foreground transition-colors">
+                    <Link href="/#features" className="hover:text-foreground transition-colors">
                         Features
                     </Link>
 
-                    <Link href="#about" className="hover:text-foreground transition-colors">
+                    <Link href="/about" className="hover:text-foreground transition-colors">
                         About
                     </Link>
                 </nav>

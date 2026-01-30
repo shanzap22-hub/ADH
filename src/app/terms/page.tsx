@@ -102,7 +102,7 @@ export default function TermsPage() {
                                 </p>
                                 <div className="mt-3 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
                                     <p className="font-semibold text-white">Atcess</p>
-                                    <p>Email: <a href="mailto:info@atcess.com" className="text-orange-400 hover:text-orange-300">info@atcess.com</a></p>
+                                    <p>Email: <a href="mailto:info@adh.today" className="text-orange-400 hover:text-orange-300">info@adh.today</a></p>
                                     <p>Phone: <a href="tel:+917591977888" className="text-orange-400 hover:text-orange-300">+91 7591977888</a></p>
                                     <p className="mt-2 text-sm">
                                         CKM COMPLEX, Ground Floor, Manjambra Road,<br />
