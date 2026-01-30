@@ -46,13 +46,7 @@ export default async function CoursesPage() {
     // Render (NO MobileLayout - already in student layout!)
     return (
         <div className="p-6 md:p-8 space-y-8 bg-slate-50 min-h-screen">
-            {/* Header */}
-            <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Explore Courses</h1>
-                <p className="text-slate-500 max-w-2xl">
-                    Browse our comprehensive library of courses designed to specific learning outcomes.
-                </p>
-            </div>
+
 
 
             {/* Error State */}
