@@ -120,7 +120,7 @@ export default function AboutPage() {
                         Join ADH Connect today. Let's build something great together.
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <Link href="/courses">
+                        <Link href="/contact">
                             <Button size="lg" className="rounded-full px-8 h-12 text-base">
                                 Explore Courses <ArrowRight className="ml-2 w-4 h-4" />
                             </Button>

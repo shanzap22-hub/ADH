@@ -177,7 +177,7 @@ export default function ContactPage() {
                 href="https://wa.me/917591977777" // Number ending in 777
                 target="_blank"
                 rel="noopener noreferrer"
-                className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-full shadow-lg transition-transform hover:scale-105 animate-in fade-in slide-in-from-bottom-4"
+                className="fixed bottom-6 right-6 z-[9999] flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-full shadow-lg transition-transform hover:scale-105"
             >
                 {/* WhatsApp Icon (SVG) */}
                 <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current" xmlns="http://www.w3.org/2000/svg">
@@ -186,4 +186,3 @@ export default function ContactPage() {
                 <span className="font-semibold">Chat with us</span>
             </a>
 }
-
