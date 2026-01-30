@@ -546,6 +546,16 @@ export function AvailabilityManager() {
                                         <p><span className="font-semibold">Student:</span> {bookingDetails.profiles?.full_name}</p>
                                         <p><span className="font-semibold">Email:</span> {bookingDetails.profiles?.email}</p>
                                         <p><span className="font-semibold">Phone:</span> {bookingDetails.profiles?.phone || "N/A"}</p>
+
+                                        {/* Purpose Field */}
+                                        {bookingDetails.purpose && (
+                                            <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                                                <p className="font-semibold mb-1 text-slate-800 dark:text-slate-200">Session Purpose:</p>
+                                                <p className="text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 p-2 rounded text-sm italic">
+                                                    "{bookingDetails.purpose}"
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="border-t pt-4">
                                         <h4 className="font-medium mb-3">Reschedule Session</h4>
