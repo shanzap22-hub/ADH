@@ -75,11 +75,13 @@ export default async function CommunityPage() {
         .order('created_at', { ascending: false });
 
     return (
-        <div className="min-h-screen bg-slate-50/50 dark:bg-black/20 p-4 lg:p-8">
-            <div className="max-w-3xl mx-auto">
-                {/* Minimized Header */}
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Community Feed</h1>
+    return (
+        <div className="min-h-screen bg-slate-50 p-6 md:p-8">
+            <div className="max-w-4xl mx-auto space-y-6">
+                {/* Header */}
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Community Feed</h1>
+                    <p className="text-slate-500">Join the discussion and stay updated</p>
                 </div>
 
                 {/* Live Sessions Banner */}

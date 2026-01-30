@@ -43,19 +43,26 @@ export default async function CoursesPage() {
     }));
 
     // Render (NO MobileLayout - already in student layout!)
+    // Render (NO MobileLayout - already in student layout!)
     return (
-        <div className="p-4 md:p-6 space-y-6">
+        <div className="p-6 md:p-8 space-y-8 bg-slate-50 min-h-screen">
             {/* Header */}
+            <div className="flex flex-col gap-2">
+                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Explore Courses</h1>
+                <p className="text-slate-500 max-w-2xl">
+                    Browse our comprehensive library of courses designed to specific learning outcomes.
+                </p>
+            </div>
 
 
             {/* Error State */}
             {fetchError && (
-                <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-6">
+                <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 shadow-sm">
                     <div className="flex items-start gap-3">
-                        <AlertCircle className="h-8 w-8 text-red-600 flex-shrink-0" />
+                        <AlertCircle className="h-6 w-6 text-red-600 flex-shrink-0" />
                         <div>
-                            <p className="font-bold text-red-900 dark:text-red-100">Error</p>
-                            <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                            <p className="font-bold text-red-900">Unable to load courses</p>
+                            <p className="text-sm text-red-700 mt-1">
                                 {fetchError}
                             </p>
                         </div>
@@ -70,13 +77,13 @@ export default async function CoursesPage() {
 
             {/* Empty State */}
             {!fetchError && courses.length === 0 && (
-                <div className="text-center py-16">
-                    <div className="w-20 h-20 mx-auto rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-                        <BookOpen className="h-10 w-10 text-slate-400" />
+                <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
+                    <div className="w-20 h-20 mx-auto rounded-2xl bg-slate-50 flex items-center justify-center mb-6">
+                        <BookOpen className="h-10 w-10 text-slate-300" />
                     </div>
-                    <h3 className="text-xl font-bold mb-2">No Courses Available</h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                        No published courses yet
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">No Courses Available</h3>
+                    <p className="text-slate-500 max-w-sm mx-auto">
+                        We are currently updating our course catalog. Please check back later for new content.
                     </p>
                 </div>
             )}

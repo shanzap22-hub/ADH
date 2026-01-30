@@ -115,14 +115,15 @@ export default function LivePage() {
     };
 
     return (
-        <div className="p-4 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 relative">
+    return (
+        <div className="p-6 md:p-8 space-y-8 bg-slate-50 min-h-screen">
 
             {/* Reschedule Modal Overlay */}
             {rescheduleBooking && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[90vh] overflow-y-auto">
-                        <div className="p-4 border-b flex justify-between items-center">
-                            <h3 className="font-bold text-lg">Reschedule Session</h3>
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-h-[90vh] overflow-y-auto">
+                        <div className="p-4 border-b flex justify-between items-center bg-slate-50/50">
+                            <h3 className="font-bold text-lg text-slate-900">Reschedule Session</h3>
                             <Button variant="ghost" size="sm" onClick={() => setRescheduleBooking(null)}>Close</Button>
                         </div>
                         <div className="p-4">
@@ -135,12 +136,10 @@ export default function LivePage() {
                 </div>
             )}
 
-            <div>
-                <h1 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400">
-                    Live Sessions
-                </h1>
-                <p className="text-slate-500 text-base">
-                    Your upcoming sessions and masterminds.
+            <div className="flex flex-col gap-2">
+                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Live Sessions</h1>
+                <p className="text-slate-500 text-base max-w-2xl">
+                    Join expert-led sessions and manage your 1-on-1 mentorship bookings.
                 </p>
             </div>
 

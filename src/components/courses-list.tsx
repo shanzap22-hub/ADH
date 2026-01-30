@@ -73,7 +73,7 @@ export const CoursesList = ({
                         className={cn(
                             "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all border",
                             activeFilter === filter.value
-                                ? "bg-black text-white dark:bg-white dark:text-black border-transparent shadow-md"
+                                ? "bg-slate-900 text-white dark:bg-white dark:text-black border-transparent shadow-md ring-2 ring-slate-900/10 ring-offset-1"
                                 : "bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900"
                         )}
                     >

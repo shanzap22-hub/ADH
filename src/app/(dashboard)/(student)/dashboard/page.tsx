@@ -50,44 +50,57 @@ export default async function Dashboard() {
     }, 0);
 
     return (
-        <div className="p-4 md:p-6 space-y-6">
+        <div className="p-6 md:p-8 space-y-8 bg-slate-50 min-h-screen">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Main Feed Column (Left) */}
-                <div className="lg:col-span-8 space-y-6">
+                <div className="lg:col-span-8 space-y-8">
                     <div className="flex items-center justify-between">
-                        <h1 className="text-2xl font-bold">Community Feed</h1>
+                        <div className="space-y-1">
+                            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Community Feed</h1>
+                            <p className="text-slate-500">See what's happening in ADH Connect</p>
+                        </div>
                     </div>
 
                     <FeedView posts={posts || []} isAdmin={false} currentUserId={user.id} />
                 </div>
 
                 {/* Sidebar Column (Right) - Stats & Learning */}
-                <div className="lg:col-span-4 space-y-6">
+                <div className="lg:col-span-4 space-y-8">
                     {/* Welcome / Stats Card */}
-                    <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border-indigo-100 dark:border-indigo-800">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center gap-2">
-                                <Sparkles className="w-5 h-5 text-indigo-500" />
-                                <CardTitle className="text-lg">Welcome, {profile?.full_name?.split(' ')[0] || "Student"}!</CardTitle>
+                    <Card className="overflow-hidden border-none shadow-lg bg-gradient-to-br from-indigo-600 to-violet-600 text-white relative">
+                        {/* Decorative Background Circles */}
+                        <div className="absolute top-[-50%] right-[-50%] w-full h-full rounded-full bg-white/10 blur-3xl pointer-events-none" />
+
+                        <CardHeader className="pb-2 relative z-10">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                    <Sparkles className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                    <CardTitle className="text-xl">Welcome back,</CardTitle>
+                                    <p className="text-indigo-100 font-medium">{profile?.full_name?.split(' ')[0] || "Student"}!</p>
+                                </div>
                             </div>
                         </CardHeader>
-                        <CardContent>
-                            <div className="flex justify-between text-sm mb-2 text-slate-600 dark:text-slate-400">
-                                <span>Total Progress</span>
-                                <span>{Math.round((completedChapters / (totalChapters || 1)) * 100)}%</span>
-                            </div>
-                            <Progress value={(completedChapters / (totalChapters || 1)) * 100} className="h-2 mb-4" />
-
-                            <div className="grid grid-cols-2 gap-4 mt-4">
-                                <div className="bg-white/50 dark:bg-slate-900/50 p-3 rounded-lg text-center">
-                                    <BookOpen className="w-4 h-4 mx-auto text-blue-500 mb-1" />
-                                    <div className="text-lg font-bold">{coursesInProgress.length}</div>
-                                    <div className="text-[10px] uppercase text-slate-500 font-bold">In Progress</div>
+                        <CardContent className="relative z-10">
+                            <div className="mt-4 p-4 bg-black/20 rounded-xl backdrop-blur-sm">
+                                <div className="flex justify-between text-sm mb-2 text-indigo-100 font-medium">
+                                    <span>Overall Progress</span>
+                                    <span>{Math.round((completedChapters / (totalChapters || 1)) * 100)}%</span>
                                 </div>
-                                <div className="bg-white/50 dark:bg-slate-900/50 p-3 rounded-lg text-center">
-                                    <TrendingUp className="w-4 h-4 mx-auto text-green-500 mb-1" />
-                                    <div className="text-lg font-bold">{completedChapters}</div>
-                                    <div className="text-[10px] uppercase text-slate-500 font-bold">Chapters Done</div>
+                                <Progress value={(completedChapters / (totalChapters || 1)) * 100} className="h-2 bg-black/20 [&>div]:bg-white" />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 mt-4">
+                                <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm text-center border border-white/10">
+                                    <BookOpen className="w-5 h-5 mx-auto text-indigo-200 mb-1" />
+                                    <div className="text-xl font-bold">{coursesInProgress.length}</div>
+                                    <div className="text-[10px] uppercase text-indigo-200 font-bold tracking-wider">In Progress</div>
+                                </div>
+                                <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm text-center border border-white/10">
+                                    <TrendingUp className="w-5 h-5 mx-auto text-emerald-300 mb-1" />
+                                    <div className="text-xl font-bold">{completedChapters}</div>
+                                    <div className="text-[10px] uppercase text-indigo-200 font-bold tracking-wider">Chapters Done</div>
                                 </div>
                             </div>
                         </CardContent>
@@ -96,21 +109,21 @@ export default async function Dashboard() {
                     {/* Continue Learning */}
                     <div>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold flex items-center gap-2">
-                                <Clock className="w-4 h-4 text-orange-500" />
+                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                <Clock className="w-5 h-5 text-orange-500" />
                                 Continue Learning
                             </h3>
                             <Link href="/courses">
-                                <Button variant="ghost" size="sm" className="text-xs">View All</Button>
+                                <Button variant="ghost" size="sm" className="text-slate-500 hover:text-indigo-600">View All</Button>
                             </Link>
                         </div>
 
                         {coursesInProgress.length > 0 ? (
                             <CoursesList items={coursesInProgress.slice(0, 3)} />
                         ) : (
-                            <div className="text-center p-6 border rounded-lg bg-slate-50 dark:bg-slate-900/50">
-                                <p className="text-sm text-slate-500">No courses in progress</p>
-                                <Link href="/courses" className="text-sm text-blue-600 hover:underline mt-2 inline-block">Browse Courses</Link>
+                            <div className="text-center p-8 border border-dashed border-slate-200 rounded-2xl bg-white">
+                                <p className="text-sm text-slate-500 font-medium">No courses in progress</p>
+                                <Link href="/courses" className="text-sm font-bold text-indigo-600 hover:underline mt-2 inline-block">Browse Courses</Link>
                             </div>
                         )}
                     </div>
