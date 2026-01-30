@@ -99,8 +99,18 @@ export function StudentBookingSystem() {
         fetchSlots();
     }, [selectedInstructor, date]);
 
+    const [purpose, setPurpose] = useState("");
+
+    // ... (rest of simple states if any, keeping purpose near others)
+
+    // ...
+
     const handleBooking = async () => {
         if (!selectedInstructor || !date || !selectedSlot) return;
+        if (!purpose.trim()) {
+            toast.error("Please explain the purpose of your booking");
+            return;
+        }
 
         setBooking(true);
         try {
@@ -113,7 +123,8 @@ export function StudentBookingSystem() {
                 body: JSON.stringify({
                     instructorId: selectedInstructor,
                     date: dateStr,
-                    time: selectedSlot
+                    time: selectedSlot,
+                    purpose: purpose.trim()
                 })
             });
 
@@ -292,11 +303,24 @@ export function StudentBookingSystem() {
                                 </div>
                             )}
 
+                            {/* Purpose Input */}
+                            <div className="mt-8 mb-4 space-y-2">
+                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    Purpose of Booking <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    value={purpose}
+                                    onChange={(e) => setPurpose(e.target.value)}
+                                    placeholder="Briefly explain what you want to discuss (required)..."
+                                    className="w-full min-h-[80px] p-3 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none resize-none"
+                                />
+                            </div>
+
                             {/* Confirm Button Area */}
-                            <div className="mt-8 border-t pt-4">
+                            <div className="border-t pt-4">
                                 <Button
                                     className="w-full h-12 text-lg bg-black text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-slate-200 transaction-all"
-                                    disabled={!selectedSlot || booking}
+                                    disabled={!selectedSlot || !purpose.trim() || booking}
                                     onClick={handleBooking}
                                 >
                                     {booking ? (

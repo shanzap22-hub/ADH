@@ -9,7 +9,8 @@ export const sendBookingConfirmation = async (
     date: string,
     time: string,
     meetingLink: string,
-    bookingId: string
+    bookingId: string,
+    purpose?: string
 ) => {
     if (!resend) {
         console.log("DEBUG_MAIL: Resend API Key missing. Mocking email send.");
@@ -29,6 +30,7 @@ export const sendBookingConfirmation = async (
                 <div style="background: #f4f4f4; padding: 20px; border-radius: 8px; margin: 20px 0;">
                     <p><strong>Date:</strong> ${date}</p>
                     <p><strong>Time:</strong> ${time}</p>
+                    ${purpose ? `<p><strong>Purpose:</strong> ${purpose}</p>` : ''}
                     <p><strong>Link:</strong> <a href="${meetingLink}">${meetingLink}</a></p>
                 </div>
                 <div style="text-align: center; margin-top: 30px;">

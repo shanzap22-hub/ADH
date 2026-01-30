@@ -12,7 +12,7 @@ export async function POST(req: Request) {
 
         if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-        const { date, time, instructorId } = await req.json();
+        const { date, time, instructorId, purpose } = await req.json();
 
         if (!date || !time || !instructorId) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -110,7 +110,7 @@ export async function POST(req: Request) {
             const requestId = crypto.randomBytes(8).toString('hex');
             const event = {
                 summary: `1-1 Session: ${student.full_name} with ${instructor.full_name}`,
-                description: `ADH Connect Booking.\nStudent: ${student.full_name} (${student.email})\nInstructor: ${instructor.full_name}`,
+                description: `ADH Connect Booking.\nStudent: ${student.full_name} (${student.email})\nInstructor: ${instructor.full_name}\n\nPurpose: ${purpose || "Not specified"}`,
                 start: { dateTime: startDateTime.toISOString() },
                 end: { dateTime: endDateTime.toISOString() },
                 guestsCanModify: false,
@@ -156,7 +156,8 @@ export async function POST(req: Request) {
                 end_time: endDateTime.toISOString(),
                 status: 'confirmed',
                 meet_link: meetLink,
-                google_event_id: googleEventId // Use Captured ID
+                google_event_id: googleEventId, // Use Captured ID
+                purpose: purpose || null
             })
             .select()
             .single();
@@ -180,7 +181,8 @@ export async function POST(req: Request) {
                 date,
                 time12h,
                 meetLink,
-                booking.id
+                booking.id,
+                purpose
             );
 
             await sendBookingConfirmation(
@@ -189,7 +191,8 @@ export async function POST(req: Request) {
                 date,
                 time12h,
                 meetLink,
-                booking.id
+                booking.id,
+                purpose
             );
         } catch (mailError) {
             console.error("Mail Error:", mailError);

@@ -194,6 +194,14 @@ export default function LivePage() {
                                         <div className="scale-95 origin-left">
                                             <LiveCountDown targetDate={booking.start_time} endDate={booking.end_time} />
                                         </div>
+
+                                        {booking.purpose && (
+                                            <div className="pt-2 border-t border-slate-100 dark:border-slate-800/50">
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 italic">
+                                                    "Goal: {booking.purpose}"
+                                                </p>
+                                            </div>
+                                        )}
                                     </CardContent>
 
                                     <CardFooter className="px-5 pb-5 pt-0 gap-2 flex-col">
