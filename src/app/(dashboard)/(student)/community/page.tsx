@@ -13,6 +13,8 @@ import { LiveSessionsBanner } from "@/components/community/LiveSessionsBanner";
 
 // ... (imports)
 
+export const dynamic = "force-dynamic";
+
 export default async function CommunityPage() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -26,7 +28,7 @@ export default async function CommunityPage() {
         .eq("id", user.id)
         .single();
 
-    const userTier = profile?.membership_tier || 'free';
+    const userTier = (profile?.membership_tier || 'free').toLowerCase();
     const isAdmin = profile?.role === "super_admin" || profile?.role === "admin";
 
     // Check if user's tier has community feed access

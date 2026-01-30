@@ -41,7 +41,7 @@ export default function LivePage() {
                     const { data: tierData } = await supabase
                         .from('tier_pricing')
                         .select('has_booking_access, has_weekly_live_access')
-                        .eq('tier', profile?.membership_tier || 'bronze')
+                        .eq('tier', (profile?.membership_tier || 'bronze').toLowerCase())
                         .single();
 
                     setHasBookingAccess(isInstructorOrAdmin || tierData?.has_booking_access || false);
