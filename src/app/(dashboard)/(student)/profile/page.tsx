@@ -62,11 +62,7 @@ export default async function ProfilePage() {
                     </label>
                     <div className="flex items-center justify-between">
                         <MembershipBadge tier={profile?.membership_tier || "bronze"} size="lg" />
-                        <Link href="/pricing">
-                            <Button variant="outline" size="sm">
-                                Upgrade Membership
-                            </Button>
-                        </Link>
+
                     </div>
                     <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
                         You have access to all courses included in your membership plan.

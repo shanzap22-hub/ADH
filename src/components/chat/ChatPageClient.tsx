@@ -110,12 +110,7 @@ export default function ChatPageClient({
                 "w-full md:w-[320px] lg:w-[380px] border-r border-slate-200 dark:border-slate-800 flex flex-col h-full bg-white dark:bg-slate-900 transition-all duration-300",
                 selectedChatId ? "hidden md:flex" : "flex"
             )}>
-                {showUpgradeBanner && (
-                    <div className="bg-amber-100 dark:bg-amber-900/30 px-4 py-2 text-xs text-amber-800 dark:text-amber-200 text-center font-medium flex items-center justify-center gap-2">
-                        <ShieldAlert className="w-3 h-3" />
-                        Limited Period Offer for {currentUserTier.charAt(0).toUpperCase() + currentUserTier.slice(1)} Members!
-                    </div>
-                )}
+
                 <ChatSidebar
                     currentUserId={currentUserId}
                     onSelectChat={handleSelectChat}

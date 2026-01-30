@@ -63,8 +63,8 @@ export function ChatSidebar({
 
             {/* Chat List */}
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                {/* Community Chat - Always show, lock if no access */}
-                {groupChat && (
+                {/* Community Chat - Only show if access granted */}
+                {groupChat && hasCommunityAccess && (
                     <div
                         onClick={() => {
                             if (hasCommunityAccess) {
@@ -115,55 +115,57 @@ export function ChatSidebar({
                     </div>
                 )}
 
-                {/* AI Coach - Always show, lock if no access */}
-                <div
-                    onClick={() => {
-                        if (hasAiAccess) {
-                            onSelectChat('ai-coach', {
-                                full_name: "ADH AI Coach",
-                                is_ai: true
-                            });
-                        }
-                    }}
-                    className={cn(
-                        "flex items-center gap-3 p-3 rounded-lg transition-colors relative group",
-                        hasAiAccess ? "cursor-pointer" : "cursor-not-allowed opacity-60",
-                        hasAiAccess && selectedConversationId === 'ai-coach'
-                            ? "bg-indigo-50 dark:bg-indigo-900/20"
-                            : hasAiAccess && "hover:bg-slate-100 dark:hover:bg-slate-800/50"
-                    )}
-                >
-                    <Avatar className="h-10 w-10 bg-indigo-100 dark:bg-indigo-900">
-                        <AvatarFallback className="bg-indigo-100 text-indigo-600">
-                            {hasAiAccess ? (
-                                <Bot className="w-5 h-5" />
-                            ) : (
-                                <Lock className="w-5 h-5" />
-                            )}
-                        </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-baseline mb-0.5">
-                            <p className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate pr-2 flex items-center gap-2">
-                                ADH AI Coach
-                                {!hasAiAccess && (
-                                    <Lock className="w-3 h-3 text-slate-400" />
-                                )}
-                            </p>
-                            {hasAiAccess && (
-                                <span className="text-[10px] bg-indigo-100 text-indigo-700 font-medium px-1.5 py-0.5 rounded-full shrink-0">
-                                    AI
-                                </span>
-                            )}
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                            {hasAiAccess
-                                ? "Your personal course facilitator"
-                                : "Upgrade to access AI mentor"
+                {/* AI Coach - Only show if access granted */}
+                {hasAiAccess && (
+                    <div
+                        onClick={() => {
+                            if (hasAiAccess) {
+                                onSelectChat('ai-coach', {
+                                    full_name: "ADH AI Coach",
+                                    is_ai: true
+                                });
                             }
-                        </p>
+                        }}
+                        className={cn(
+                            "flex items-center gap-3 p-3 rounded-lg transition-colors relative group",
+                            hasAiAccess ? "cursor-pointer" : "cursor-not-allowed opacity-60",
+                            hasAiAccess && selectedConversationId === 'ai-coach'
+                                ? "bg-indigo-50 dark:bg-indigo-900/20"
+                                : hasAiAccess && "hover:bg-slate-100 dark:hover:bg-slate-800/50"
+                        )}
+                    >
+                        <Avatar className="h-10 w-10 bg-indigo-100 dark:bg-indigo-900">
+                            <AvatarFallback className="bg-indigo-100 text-indigo-600">
+                                {hasAiAccess ? (
+                                    <Bot className="w-5 h-5" />
+                                ) : (
+                                    <Lock className="w-5 h-5" />
+                                )}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-baseline mb-0.5">
+                                <p className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate pr-2 flex items-center gap-2">
+                                    ADH AI Coach
+                                    {!hasAiAccess && (
+                                        <Lock className="w-3 h-3 text-slate-400" />
+                                    )}
+                                </p>
+                                {hasAiAccess && (
+                                    <span className="text-[10px] bg-indigo-100 text-indigo-700 font-medium px-1.5 py-0.5 rounded-full shrink-0">
+                                        AI
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                {hasAiAccess
+                                    ? "Your personal course facilitator"
+                                    : "Upgrade to access AI mentor"
+                                }
+                            </p>
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );
