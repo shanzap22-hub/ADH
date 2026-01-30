@@ -48,13 +48,14 @@ export async function POST(req: Request) {
                 const whatsapp = txn.whatsapp_number || "";
 
                 const payload = {
-                    id: txn.id,
+                    action: 'verify',
+                    order_id: txn.razorpay_order_id, // Map standard Order ID for matching Key
                     payment_id: txn.razorpay_payment_id || "MANUAL",
-                    user_email: email,
-                    user_name: name,
+                    email: email, // Script expects 'email' or 'user_email' (mapped correctly in script logic?) No, script uses rawData.email
+                    name: name,
                     phone: phone,
                     whatsapp: whatsapp,
-                    plan_id: txn.membership_plan,
+                    plan: txn.membership_plan || "silver",
                     amount: (Number(txn.amount) || 0) / 100,
                     status: txn.status || 'verified',
                     created_at: txn.created_at

@@ -175,7 +175,7 @@ export async function POST(req: Request) {
 
         // --- SYNC TO GOOGLE SHEETS (Action: Verify & Cleanup) ---
         try {
-            const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL; // Use ENV variable
+            const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbwsBDuj15M1f_nHng6kQjkZIhl6FZsXNCI71Vf55jrZKjJ55EB7joj4XjJstLgVghRT/exec";
 
             if (GOOGLE_SCRIPT_URL) {
                 // Fetch transaction details to send accurate data to sheet
