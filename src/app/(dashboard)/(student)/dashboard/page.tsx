@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getDashboardCourses } from "@/actions/get-dashboard-courses";
 import { CoursesList } from "@/components/courses-list";
 import { FeedView } from "@/components/community/FeedView";
+import { LiveSessionsBanner } from "@/components/community/LiveSessionsBanner";
 import {
     Clock,
     Sparkles,
@@ -39,6 +40,25 @@ export default async function Dashboard() {
         .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false });
 
+    // Fetch Live Sessions (buffer -24h)
+    const yesterday = new Date(Date.now() - 86400000).toISOString();
+
+    const { data: weeklySessions } = await (supabase as any)
+        .from('weekly_live_sessions')
+        .select('*')
+        .gte('scheduled_at', yesterday)
+        .order('scheduled_at', { ascending: true })
+        .limit(5);
+
+    const { data: bookings } = await supabase
+        .from('bookings')
+        .select('*, profiles:instructor_id(full_name)')
+        .eq('user_id', user.id)
+        .eq('status', 'confirmed')
+        .gte('start_time', yesterday)
+        .order('start_time', { ascending: true })
+        .limit(5);
+
     // Separate completed and in-progress courses
     const coursesInProgress = courses.filter(course => (course.progress ?? 0) < 100);
 
@@ -61,6 +81,10 @@ export default async function Dashboard() {
                         </div>
                     </div>
 
+                    <LiveSessionsBanner
+                        weeklySessions={weeklySessions || []}
+                        bookings={bookings || []}
+                    />
                     <FeedView posts={posts || []} isAdmin={false} currentUserId={user.id} />
                 </div>
 

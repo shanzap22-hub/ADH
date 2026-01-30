@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     description: "Stay updated with the latest news",
 };
 
-import { LiveSessionsBanner } from "@/components/community/LiveSessionsBanner";
+
 
 // ... (imports)
 
@@ -46,24 +46,7 @@ export default async function CommunityPage() {
         return <UpgradeTierMessage feature="Community Feed" />;
     }
 
-    // Fetch Live Sessions (buffer -24h to allow client timezone filtering)
-    const yesterday = new Date(Date.now() - 86400000).toISOString();
 
-    const { data: weeklySessions } = await (supabase as any)
-        .from('weekly_live_sessions')
-        .select('*')
-        .gte('scheduled_at', yesterday)
-        .order('scheduled_at', { ascending: true })
-        .limit(5);
-
-    const { data: bookings } = await supabase
-        .from('bookings')
-        .select('*, profiles:instructor_id(full_name)')
-        .eq('user_id', user.id)
-        .eq('status', 'confirmed')
-        .gte('start_time', yesterday)
-        .order('start_time', { ascending: true })
-        .limit(5);
 
     // Fetch Posts
     const { data: posts } = await supabase
@@ -85,11 +68,7 @@ export default async function CommunityPage() {
                     <p className="text-slate-500">Join the discussion and stay updated</p>
                 </div>
 
-                {/* Live Sessions Banner */}
-                <LiveSessionsBanner
-                    weeklySessions={weeklySessions || []}
-                    bookings={bookings || []}
-                />
+
 
                 {isAdmin && <CreatePost />}
                 <FeedView posts={posts || []} isAdmin={isAdmin} currentUserId={user.id} />
