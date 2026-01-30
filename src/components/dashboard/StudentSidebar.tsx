@@ -50,9 +50,18 @@ const routes = [
 interface StudentSidebarProps {
     is_instructor?: boolean;
     is_super_admin?: boolean;
+    permissions: {
+        canViewCommunity: boolean;
+        canViewLive: boolean;
+        canViewChat: boolean;
+    };
 }
 
-export const StudentSidebar = ({ is_instructor, is_super_admin }: StudentSidebarProps) => {
+export const StudentSidebar = ({
+    is_instructor,
+    is_super_admin,
+    permissions
+}: StudentSidebarProps) => {
     const router = useRouter();
     const supabase = createClient();
 
@@ -62,13 +71,20 @@ export const StudentSidebar = ({ is_instructor, is_super_admin }: StudentSidebar
         router.refresh();
     };
 
+    const visibleRoutes = routes.filter(route => {
+        if (route.href === '/community') return permissions.canViewCommunity;
+        if (route.href === '/live') return permissions.canViewLive;
+        if (route.href === '/chat') return permissions.canViewChat;
+        return true;
+    });
+
     return (
         <div className="h-full border-r flex flex-col overflow-y-auto bg-white shadow-sm">
             <div className="p-6">
                 <h2 className="text-xl font-semibold">Student Dashboard</h2>
             </div>
             <div className="flex flex-col w-full flex-1">
-                {routes.map((route) => (
+                {visibleRoutes.map((route) => (
                     <Link
                         key={route.href}
                         href={route.href}

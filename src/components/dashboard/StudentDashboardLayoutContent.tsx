@@ -11,12 +11,18 @@ interface StudentDashboardLayoutContentProps {
     children: React.ReactNode;
     is_instructor: boolean;
     is_super_admin: boolean;
+    permissions: {
+        canViewCommunity: boolean;
+        canViewLive: boolean;
+        canViewChat: boolean;
+    };
 }
 
 export const StudentDashboardLayoutContent = ({
     children,
     is_instructor,
-    is_super_admin
+    is_super_admin,
+    permissions
 }: StudentDashboardLayoutContentProps) => {
     const pathname = usePathname();
     const isChat = pathname === '/chat' || pathname.startsWith('/chat/');
@@ -30,7 +36,11 @@ export const StudentDashboardLayoutContent = ({
 
             {/* Desktop Sidebar */}
             <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-40 mt-16">
-                <StudentSidebar is_instructor={is_instructor} is_super_admin={is_super_admin} />
+                <StudentSidebar
+                    is_instructor={is_instructor}
+                    is_super_admin={is_super_admin}
+                    permissions={permissions}
+                />
             </div>
 
             {/* Main Content Area */}
@@ -44,7 +54,7 @@ export const StudentDashboardLayoutContent = ({
             </main>
 
             {/* Bottom Navigation - Always Visible */}
-            <BottomNav />
+            <BottomNav permissions={permissions} />
         </div>
     );
 };

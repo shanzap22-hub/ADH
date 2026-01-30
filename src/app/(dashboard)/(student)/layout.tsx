@@ -13,11 +13,16 @@ export default async function StudentDashboardLayout({
 
     let is_instructor = false;
     let is_super_admin = false;
+    let permissions = {
+        canViewCommunity: false,
+        canViewLive: false,
+        canViewChat: false
+    };
 
     if (user) {
         const { data: profile } = await supabase
             .from("profiles")
-            .select("role, phone_number")
+            .select("role, phone_number, membership_tier")
             .eq("id", user.id)
             .single();
 
@@ -29,11 +34,34 @@ export default async function StudentDashboardLayout({
             if (!profile.phone_number) {
                 redirect("/onboarding/complete");
             }
+
+            // Fetch Tier Permissions
+            const { data: tierData } = await supabase
+                .from("tier_pricing")
+                .select("*")
+                .eq("tier", (profile.membership_tier || "free").toLowerCase())
+                .single();
+
+            const isAdmin = is_instructor || is_super_admin || profile.role === "admin";
+
+            if (isAdmin) {
+                permissions = { canViewCommunity: true, canViewLive: true, canViewChat: true };
+            } else if (tierData) {
+                permissions = {
+                    canViewCommunity: tierData.has_community_feed_access,
+                    canViewLive: tierData.has_weekly_live_access || tierData.has_booking_access,
+                    canViewChat: tierData.has_ai_access || tierData.has_community_chat_access
+                };
+            }
         }
     }
 
     return (
-        <StudentDashboardLayoutContent is_instructor={is_instructor} is_super_admin={is_super_admin}>
+        <StudentDashboardLayoutContent
+            is_instructor={is_instructor}
+            is_super_admin={is_super_admin}
+            permissions={permissions}
+        >
             {children}
         </StudentDashboardLayoutContent>
     );

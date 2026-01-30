@@ -85,30 +85,29 @@ export default async function CourseIdPage({
         }
     }
 
-    // Get user progress
+    // Strict Access Control: Redirect if not enrolled/authorized
+    if (!isEnrolled) {
+        return redirect("/courses");
+    }
+
+    const { data: progressData } = await supabase
+        .from("user_progress")
+        .select("*")
+        .eq("user_id", user.id)
+        .in("chapter_id", course.chapters?.map((ch: any) => ch.id) || []);
+
     let completedLessons = 0;
     let lastViewedChapterId: string | undefined;
-    let progressData: any[] | null = null;
 
-    if (user && isEnrolled) {
-        const { data } = await supabase
-            .from("user_progress")
-            .select("*")
-            .eq("user_id", user.id)
-            .in("chapter_id", course.chapters?.map((ch: any) => ch.id) || []);
+    if (progressData) {
+        completedLessons = progressData.filter(p => p.is_completed).length;
 
-        progressData = data;
-
-        if (progressData) {
-            completedLessons = progressData.filter(p => p.is_completed).length;
-
-            // Get last viewed chapter (most recently updated)
-            const sortedProgress = [...progressData].sort((a, b) =>
-                new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-            );
-            if (sortedProgress.length > 0) {
-                lastViewedChapterId = sortedProgress[0].chapter_id;
-            }
+        // Get last viewed chapter (most recently updated)
+        const sortedProgress = [...progressData].sort((a, b) =>
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        );
+        if (sortedProgress.length > 0) {
+            lastViewedChapterId = sortedProgress[0].chapter_id;
         }
     }
 

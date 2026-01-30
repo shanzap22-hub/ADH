@@ -31,16 +31,34 @@ const navItems = [
 ];
 
 
-export const BottomNav = () => {
+interface BottomNavProps {
+    permissions?: {
+        canViewCommunity: boolean;
+        canViewLive: boolean;
+        canViewChat: boolean;
+    };
+}
+
+export const BottomNav = ({ permissions }: BottomNavProps) => {
     const pathname = usePathname();
+
+    const visibleNavItems = navItems.filter((item) => {
+        if (item.href === "/live" && permissions && !permissions.canViewLive) return false;
+        if (item.href === "/chat" && permissions && !permissions.canViewChat) return false;
+        return true;
+    });
+
+    if (visibleNavItems.length === 0) return null;
+
+    const activeIndex = visibleNavItems.findIndex(item => pathname === item.href || pathname.startsWith(item.href + "/"));
 
     return (
         <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 md:hidden z-50">
             <div
                 className="grid h-16"
-                style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}
+                style={{ gridTemplateColumns: `repeat(${visibleNavItems.length}, minmax(0, 1fr))` }}
             >
-                {navItems.map((item) => {
+                {visibleNavItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
 
@@ -78,8 +96,9 @@ export const BottomNav = () => {
             <div
                 className="absolute top-0 left-0 h-0.5 bg-gradient-to-r from-orange-500 to-pink-500 transition-all duration-300"
                 style={{
-                    width: `${100 / navItems.length}%`,
-                    transform: `translateX(${navItems.findIndex(item => pathname === item.href || pathname.startsWith(item.href + "/")) * 100}%)`,
+                    width: `${100 / visibleNavItems.length}%`,
+                    transform: `translateX(${Math.max(0, activeIndex) * 100}%)`,
+                    opacity: activeIndex === -1 ? 0 : 1
                 }}
             />
         </nav>

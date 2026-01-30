@@ -114,6 +114,16 @@ export default function LivePage() {
         }
     };
 
+    if (!isLoading && !hasLiveAccess && !hasBookingAccess && bookings.length === 0) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh] bg-slate-50 p-6">
+                <p className="text-slate-500 font-medium text-center">
+                    This section is not available for your account.
+                </p>
+            </div>
+        );
+    }
+
     return (
         <div className="p-6 md:p-8 space-y-8 bg-slate-50 min-h-screen">
 
@@ -206,92 +216,83 @@ export default function LivePage() {
                         ))}
 
                         {/* 1. Weekly Live Class Card */}
-                        <div className="group relative">
-                            {/* Cool Blue/Indigo Glow */}
-                            <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-400 to-blue-600 rounded-2xl opacity-15 group-hover:opacity-30 blur transition duration-500" />
+                        {hasLiveAccess && (
+                            <div className="group relative">
+                                {/* Cool Blue/Indigo Glow */}
+                                <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-400 to-blue-600 rounded-2xl opacity-15 group-hover:opacity-30 blur transition duration-500" />
 
-                            <Card className="relative h-full border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all overflow-hidden flex flex-col">
-                                {!hasLiveAccess && (
-                                    <div className="absolute inset-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-20 p-6 text-center">
-                                        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl shadow-2xl border border-slate-100 dark:border-slate-800">
-                                            <Lock className="w-6 h-6 text-indigo-500 mx-auto mb-2" />
-                                            <h3 className="font-bold text-slate-900 dark:text-white">Premium Only</h3>
-                                            <Link href="/contact" className="block mt-3 w-full">
-                                                <Button size="sm" variant="outline" className="w-full border-indigo-200 text-indigo-700">Contact Support</Button>
-                                            </Link>
-                                        </div>
-                                    </div>
-                                )}
+                                <Card className="relative h-full border-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-lg hover:shadow-xl transition-all overflow-hidden flex flex-col">
 
-                                {/* Reduced Height Banner */}
-                                {latestSession?.banner_url ? (
-                                    <div className="h-36 w-full overflow-hidden relative">
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
-                                        <img
-                                            src={latestSession.banner_url}
-                                            alt="Live Banner"
-                                            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
-                                        />
-                                        <div className="absolute bottom-2 left-3 z-20">
-                                            <span className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide shadow-sm">
-                                                Weekly Mastermind
-                                            </span>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="h-32 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/40 dark:to-blue-950/30 flex items-center justify-center">
-                                        <Video className="w-10 h-10 text-indigo-200 dark:text-indigo-800" />
-                                    </div>
-                                )}
-
-                                <CardHeader className="pb-0 pt-4 px-5">
-                                    <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-slate-100">
-                                        {latestSession?.title || "Business Scaling Workshop"}
-                                        {latestSession && <Sparkles className="w-4 h-4 text-indigo-500" />}
-                                    </CardTitle>
-                                </CardHeader>
-
-                                <CardContent className="px-5 pt-3 pb-2 flex-grow">
-                                    {latestSession ? (
-                                        <div className="space-y-3">
-                                            <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800/50">
-                                                <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/30 rounded-md">
-                                                    <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] text-slate-400 font-bold uppercase">Scheduled for</p>
-                                                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                                                        {format(new Date(latestSession.scheduled_at), "MMM do, h:mm a")}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <div className="scale-95 origin-left">
-                                                <LiveCountDown targetDate={latestSession.scheduled_at} endDate={latestSession.end_time} />
+                                    {/* Reduced Height Banner */}
+                                    {latestSession?.banner_url ? (
+                                        <div className="h-36 w-full overflow-hidden relative">
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
+                                            <img
+                                                src={latestSession.banner_url}
+                                                alt="Live Banner"
+                                                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                            />
+                                            <div className="absolute bottom-2 left-3 z-20">
+                                                <span className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide shadow-sm">
+                                                    Weekly Mastermind
+                                                </span>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="py-4 text-center text-slate-400 text-sm italic">
-                                            Join us to discuss Marketing & Automation strategies.
+                                        <div className="h-32 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/40 dark:to-blue-950/30 flex items-center justify-center">
+                                            <Video className="w-10 h-10 text-indigo-200 dark:text-indigo-800" />
                                         </div>
                                     )}
-                                </CardContent>
 
-                                <CardFooter className="px-5 pb-5 pt-0">
-                                    {latestSession ? (
-                                        <a href={latestSession.join_url} target="_blank" rel="noreferrer" className="w-full">
-                                            <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-indigo-500/20 py-5 text-base font-bold tracking-wide transition-all hover:translate-y-[-1px]">
-                                                JOIN WORKSHOP
+                                    <CardHeader className="pb-0 pt-4 px-5">
+                                        <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-800 dark:text-slate-100">
+                                            {latestSession?.title || "Business Scaling Workshop"}
+                                            {latestSession && <Sparkles className="w-4 h-4 text-indigo-500" />}
+                                        </CardTitle>
+                                    </CardHeader>
+
+                                    <CardContent className="px-5 pt-3 pb-2 flex-grow">
+                                        {latestSession ? (
+                                            <div className="space-y-3">
+                                                <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800/50">
+                                                    <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/30 rounded-md">
+                                                        <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase">Scheduled for</p>
+                                                        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                                            {format(new Date(latestSession.scheduled_at), "MMM do, h:mm a")}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="scale-95 origin-left">
+                                                    <LiveCountDown targetDate={latestSession.scheduled_at} endDate={latestSession.end_time} />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="py-4 text-center text-slate-400 text-sm italic">
+                                                Join us to discuss Marketing & Automation strategies.
+                                            </div>
+                                        )}
+                                    </CardContent>
+
+                                    <CardFooter className="px-5 pb-5 pt-0">
+                                        {latestSession ? (
+                                            <a href={latestSession.join_url} target="_blank" rel="noreferrer" className="w-full">
+                                                <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-indigo-500/20 py-5 text-base font-bold tracking-wide transition-all hover:translate-y-[-1px]">
+                                                    JOIN WORKSHOP
+                                                </Button>
+                                            </a>
+                                        ) : (
+                                            <Button disabled variant="secondary" className="w-full h-10 text-sm">
+                                                Coming Soon
                                             </Button>
-                                        </a>
-                                    ) : (
-                                        <Button disabled variant="secondary" className="w-full h-10 text-sm">
-                                            Coming Soon
-                                        </Button>
-                                    )}
-                                </CardFooter>
-                            </Card>
-                        </div>
+                                        )}
+                                    </CardFooter>
+                                </Card>
+                            </div>
+                        )}
 
                         {/* 2. 1-on-1 Mentorship Card (Updated for Business) */}
                         {hasBookingAccess && (
