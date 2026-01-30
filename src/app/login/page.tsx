@@ -114,17 +114,26 @@ function LoginForm() {
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center px-4 py-12">
-            <Card className="w-full max-w-md">
-                <CardHeader className="space-y-1">
-                    <CardTitle className="text-2xl font-bold">Login</CardTitle>
-                    <CardDescription>
-                        Enter your email and password to access your account
+        <div className="flex min-h-screen items-center justify-center px-4 py-12 bg-slate-950 relative overflow-hidden">
+            {/* Background Effects */}
+            <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10 pointer-events-none" />
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-orange-500/20 blur-[100px]" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-pink-500/20 blur-[100px]" />
+            </div>
+
+            <Card className="w-full max-w-md relative z-10 border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl">
+                <CardHeader className="space-y-1 text-center">
+                    <CardTitle className="text-3xl font-bold bg-gradient-to-r from-orange-400 to-pink-500 bg-clip-text text-transparent">
+                        Welcome Back
+                    </CardTitle>
+                    <CardDescription className="text-slate-400">
+                        Sign in to continue to ADH Connect
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     {error && (
-                        <div className="mb-4 p-4 rounded-lg bg-destructive/15 text-destructive flex items-center gap-2 border border-destructive/20">
+                        <div className="mb-6 p-4 rounded-lg bg-red-500/10 text-red-400 flex items-center gap-3 border border-red-500/20 animate-in fade-in slide-in-from-top-2">
                             <AlertCircle className="h-5 w-5 shrink-0" />
                             <div className="text-sm font-medium">{error}</div>
                         </div>
@@ -134,14 +143,14 @@ function LoginForm() {
                     <Button
                         type="button"
                         variant="outline"
-                        className="w-full mb-4"
+                        className="w-full mb-6 h-12 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white text-slate-200 transition-all active:scale-[0.98]"
                         onClick={handleGoogleLogin}
                         disabled={googleLoading || loading}
                     >
                         {googleLoading ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                         ) : (
-                            <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+                            <svg className="mr-3 h-5 w-5" viewBox="0 0 24 24">
                                 <path
                                     fill="currentColor"
                                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -164,36 +173,37 @@ function LoginForm() {
                     </Button>
 
                     {/* Divider */}
-                    <div className="relative mb-4">
+                    <div className="relative mb-6">
                         <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t" />
+                            <span className="w-full border-t border-white/10" />
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-background px-2 text-muted-foreground">
-                                Or continue with
+                            <span className="bg-transparent px-2 text-slate-500 font-medium">
+                                Or continue with email
                             </span>
                         </div>
                     </div>
 
                     {/* Email/Password Form */}
-                    <form onSubmit={handleLogin} className="space-y-4">
+                    <form onSubmit={handleLogin} className="space-y-5">
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="email" className="text-slate-300">Email Address</Label>
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="m@example.com"
+                                placeholder="name@example.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
+                                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus-visible:ring-orange-500 h-11 transition-all focus:bg-white/10"
                                 required
                             />
                         </div>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <Label htmlFor="password">Password</Label>
+                                <Label htmlFor="password" className="text-slate-300">Password</Label>
                                 <Link
                                     href="/forgot-password"
-                                    className="text-sm font-medium text-primary hover:underline"
+                                    className="text-sm font-medium text-orange-400 hover:text-orange-300 transition-colors"
                                 >
                                     Forgot password?
                                 </Link>
@@ -203,12 +213,17 @@ function LoginForm() {
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
+                                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus-visible:ring-orange-500 h-11 transition-all focus:bg-white/10"
                                 required
                             />
                         </div>
 
-                        <Button type="submit" className="w-full" disabled={loading || googleLoading}>
-                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        <Button
+                            type="submit"
+                            className="w-full h-12 bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-bold text-lg shadow-lg shadow-orange-500/20 transition-all active:scale-[0.98]"
+                            disabled={loading || googleLoading}
+                        >
+                            {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
                             Sign In
                         </Button>
                     </form>
