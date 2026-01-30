@@ -164,7 +164,7 @@ export async function POST(request: Request) {
                     phone: contactNumber,
                     whatsapp: whatsappNumber,
                     plan: latestTxn.membership_plan || "silver",
-                    amount: (Number(latestTxn.amount) || 0) / 100, // Convert paise to rupees
+                    amount: Number(latestTxn.amount) || 0, // Already in Rupees
                     status: 'verified',
                     created_at: latestTxn.created_at
                 };

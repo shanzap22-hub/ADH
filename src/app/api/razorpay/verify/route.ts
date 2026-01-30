@@ -57,17 +57,15 @@ export async function POST(req: Request) {
 
         try {
             const payment = await instance.payments.fetch(razorpay_payment_id);
-            realAmount = Number(payment.amount);
+            realAmount = Number(payment.amount) / 100; // Convert Paise to Rupees
             paymentMethod = payment.method as string;
             paymentEmail = payment.email as string;
             paymentContact = payment.contact as string;
-            console.log(`[RAZORPAY_FETCH] Amount: ${realAmount}, Method: ${paymentMethod}`);
+            console.log(`[RAZORPAY_FETCH] Amount (INR): ${realAmount}, Method: ${paymentMethod}`);
         } catch (e) {
             console.error("Failed to fetch Razorpay payment details", e);
-            // Fallback: If fetch fails, we can't reliably get the amount. 
-            // However, we shouldn't hardcode 499900 blindly if we can avoid it.
-            // For now, keeping legacy fallback but logging critical error.
-            realAmount = 499900;
+            // Fallback: If fetch fails, use standard price in Rupees
+            realAmount = 4999;
         }
 
         // Payment verified - store in temporary table
@@ -77,7 +75,7 @@ export async function POST(req: Request) {
             payment_id: razorpay_payment_id,
             order_id: razorpay_order_id,
             whatsapp_number: whatsappNumber,
-            amount: realAmount, // Use REAL amount fetched from Razorpay
+            amount: realAmount, // Store in Rupees
             status: "verified",
         });
 
@@ -106,7 +104,7 @@ export async function POST(req: Request) {
             .update({
                 status: 'verified',
                 razorpay_payment_id: razorpay_payment_id,
-                amount: realAmount, // Update with REAL amount
+                amount: realAmount, // Store in Rupees
                 updated_at: new Date().toISOString()
             })
             .eq('razorpay_order_id', razorpay_order_id)
@@ -120,7 +118,7 @@ export async function POST(req: Request) {
                 razorpay_order_id: razorpay_order_id,
                 whatsapp_number: whatsappNumber || paymentContact,
                 student_email: paymentEmail,
-                amount: realAmount,
+                amount: realAmount, // Store in Rupees
                 source: 'razorpay'
             });
         }
@@ -196,7 +194,7 @@ export async function POST(req: Request) {
                     phone: txnData?.phone_number || "",
                     whatsapp: txnData?.whatsapp_number || whatsappNumber || "",
                     plan: 'silver',
-                    amount: txnData?.amount || (realAmount / 100),
+                    amount: txnData?.amount || realAmount, // Already in Rupees
                     status: 'verified',
                     created_at: new Date().toISOString()
                 };
