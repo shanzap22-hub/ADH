@@ -146,23 +146,51 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: `Google Calendar Error: ${errorMsg}` }, { status: 500 });
         }
 
-        // 6. Insert into DB
-        const { data: booking, error: dbError } = await supabase
-            .from("bookings")
-            .insert({
-                user_id: user.id,
-                instructor_id: instructorId,
-                start_time: startDateTime.toISOString(),
-                end_time: endDateTime.toISOString(),
-                status: 'confirmed',
-                meet_link: meetLink,
-                google_event_id: googleEventId, // Use Captured ID
-                purpose: purpose || null
-            })
-            .select()
-            .single();
+        // 6. Insert into DB (Try with purpose, fallback if column missing)
+        let booking;
+        try {
+            const { data, error: dbError } = await supabase
+                .from("bookings")
+                .insert({
+                    user_id: user.id,
+                    instructor_id: instructorId,
+                    start_time: startDateTime.toISOString(),
+                    end_time: endDateTime.toISOString(),
+                    status: 'confirmed',
+                    meet_link: meetLink,
+                    google_event_id: googleEventId, // Use Captured ID
+                    purpose: purpose || null
+                })
+                .select()
+                .single();
 
-        if (dbError) throw dbError;
+            if (dbError) throw dbError;
+            booking = data;
+
+        } catch (dbError: any) {
+            // Fallback: If 'purpose' column doesn't exist, insert without it
+            if (dbError.message?.includes('purpose') || dbError.code === 'PGRST204') {
+                console.warn("Booking Warn: 'purpose' column missing. Inserting without it.");
+                const { data, error: retryError } = await supabase
+                    .from("bookings")
+                    .insert({
+                        user_id: user.id,
+                        instructor_id: instructorId,
+                        start_time: startDateTime.toISOString(),
+                        end_time: endDateTime.toISOString(),
+                        status: 'confirmed',
+                        meet_link: meetLink,
+                        google_event_id: googleEventId
+                    })
+                    .select()
+                    .single();
+
+                if (retryError) throw retryError;
+                booking = data;
+            } else {
+                throw dbError;
+            }
+        }
 
         // 7. Send Email (Format Time to 12h AM/PM)
         const formatTime12h = (time24: string) => {
