@@ -21,7 +21,7 @@ export async function POST(req: Request) {
         // 1. Fetch User Profile (Student)
         const { data: student } = await supabase
             .from("profiles")
-            .select("full_name, email")
+            .select("full_name, email, phone, mobile, contact_number, whatsapp_number")
             .eq("id", user.id)
             .single();
 
@@ -202,6 +202,13 @@ export async function POST(req: Request) {
         };
         const time12h = formatTime12h(time);
 
+        const studentPhone = student.phone || student.mobile || student.contact_number || student.whatsapp_number || "N/A";
+        const studentDetails = {
+            name: student.full_name,
+            email: student.email,
+            phone: studentPhone
+        };
+
         try {
             await sendBookingConfirmation(
                 student.email,
@@ -210,7 +217,8 @@ export async function POST(req: Request) {
                 time12h,
                 meetLink,
                 booking.id,
-                purpose
+                purpose,
+                studentDetails
             );
 
             await sendBookingConfirmation(
@@ -220,7 +228,8 @@ export async function POST(req: Request) {
                 time12h,
                 meetLink,
                 booking.id,
-                purpose
+                purpose,
+                studentDetails
             );
         } catch (mailError) {
             console.error("Mail Error:", mailError);

@@ -10,7 +10,8 @@ export const sendBookingConfirmation = async (
     time: string,
     meetingLink: string,
     bookingId: string,
-    purpose?: string
+    purpose?: string,
+    studentDetails?: { name: string; email: string; phone: string }
 ) => {
     if (!resend) {
         console.log("DEBUG_MAIL: Resend API Key missing. Mocking email send.");
@@ -33,6 +34,14 @@ export const sendBookingConfirmation = async (
                     ${purpose ? `<p><strong>Purpose:</strong> ${purpose}</p>` : ''}
                     <p><strong>Link:</strong> <a href="${meetingLink}">${meetingLink}</a></p>
                 </div>
+                ${studentDetails ? `
+                <div style="background: #ffffff; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; margin-top: 20px;">
+                    <h3 style="margin-top: 0; color: #333; font-size: 16px;">Student Details</h3>
+                    <p style="margin: 5px 0;"><strong>Name:</strong> ${studentDetails.name}</p>
+                    <p style="margin: 5px 0;"><strong>Email:</strong> ${studentDetails.email}</p>
+                    <p style="margin: 5px 0;"><strong>Phone:</strong> ${studentDetails.phone || 'N/A'}</p>
+                </div>
+                ` : ''}
                 <div style="text-align: center; margin-top: 30px;">
                     <a href="https://adh.today/live" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Reschedule Session</a>
                 </div>
@@ -106,7 +115,8 @@ export const sendBookingReminder = async (
     date: string,
     time: string,
     meetLink: string,
-    timeLeft: string // "3 hours", "30 minutes", "5 minutes"
+    timeLeft: string, // "3 hours", "30 minutes", "5 minutes"
+    studentDetails?: { name: string; email: string; phone: string }
 ) => {
     if (!resend) return { success: true };
     try {
@@ -123,6 +133,14 @@ export const sendBookingReminder = async (
                     <p><strong>Time:</strong> ${time}</p>
                     <p style="text-align:center;"><a href="${meetLink}" style="background-color: #4f46e5; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Join Meeting</a></p>
                 </div>
+                ${studentDetails ? `
+                <div style="background: #ffffff; padding: 15px; border: 1px solid #e0e0e0; border-radius: 8px; margin-top: 20px;">
+                    <h3 style="margin-top: 0; color: #333; font-size: 16px;">Student Details</h3>
+                    <p style="margin: 5px 0;"><strong>Name:</strong> ${studentDetails.name}</p>
+                    <p style="margin: 5px 0;"><strong>Email:</strong> ${studentDetails.email}</p>
+                    <p style="margin: 5px 0;"><strong>Phone:</strong> ${studentDetails.phone || 'N/A'}</p>
+                </div>
+                ` : ''}
             `,
         });
         return { success: true };

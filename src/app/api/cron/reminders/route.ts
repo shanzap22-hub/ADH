@@ -43,7 +43,7 @@ export async function GET(req: Request) {
                     start_time, 
                     meet_link,
                     user_id, instructor_id,
-                    student:profiles!bookings_user_id_fkey(email, full_name),
+                    student:profiles!bookings_user_id_fkey(email, full_name, phone, mobile, contact_number, whatsapp_number),
                     instructor:profiles!bookings_instructor_id_fkey(email, full_name)
                 `)
                 .eq('status', 'confirmed')
@@ -66,12 +66,18 @@ export async function GET(req: Request) {
                 const timeStr = startDt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' });
                 const link = booking.meet_link || "https://meet.google.com";
 
+                // Resolve Student Details
+                const s = booking.student;
+                const sPhone = s ? (s.phone || s.mobile || s.contact_number || s.whatsapp_number || "N/A") : "N/A";
+                const studentDetails = s ? { name: s.full_name, email: s.email, phone: sPhone } : undefined;
+
                 // Send to Student
                 if (booking.student) {
                     await sendBookingReminder(
                         booking.student.email,
                         booking.student.full_name,
-                        dateStr, timeStr, link, timeLeftText
+                        dateStr, timeStr, link, timeLeftText,
+                        studentDetails
                     );
                 }
                 // Send to Instructor
@@ -79,7 +85,8 @@ export async function GET(req: Request) {
                     await sendBookingReminder(
                         booking.instructor.email,
                         booking.instructor.full_name,
-                        dateStr, timeStr, link, timeLeftText
+                        dateStr, timeStr, link, timeLeftText,
+                        studentDetails
                     );
                 }
 
