@@ -216,7 +216,9 @@ export default function LivePage() {
                                         <div className="bg-white dark:bg-slate-900 p-5 rounded-xl shadow-2xl border border-slate-100 dark:border-slate-800">
                                             <Lock className="w-6 h-6 text-indigo-500 mx-auto mb-2" />
                                             <h3 className="font-bold text-slate-900 dark:text-white">Premium Only</h3>
-                                            <Button size="sm" variant="outline" className="mt-3 w-full border-indigo-200 text-indigo-700">View Plans</Button>
+                                            <Link href="/contact" className="block mt-3 w-full">
+                                                <Button size="sm" variant="outline" className="w-full border-indigo-200 text-indigo-700">Contact Support</Button>
+                                            </Link>
                                         </div>
                                     </div>
                                 )}

@@ -25,32 +25,18 @@ export function UpgradeTierMessage({ feature }: UpgradeTierMessageProps) {
                     <div className="mx-auto w-12 h-12 bg-amber-100 dark:bg-amber-900/20 rounded-full flex items-center justify-center mb-4">
                         <Lock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
                     </div>
-                    <CardTitle>{feature} is not available in your current membership tier.</CardTitle>
+                    <CardTitle>Access Restricted</CardTitle>
                     <CardDescription>
-                        {isMobileApp
-                            ? "To access this feature, please visit our website to upgrade your membership plan."
-                            : "Upgrade your membership to unlock this feature and more!"
-                        }
+                        This feature ({feature}) is available on higher tiers. Please contact support to upgrade your plan.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="text-center space-y-3">
-                    {isMobileApp ? (
-                        <div className="space-y-2">
-                            <p className="text-sm text-muted-foreground">
-                                Visit <strong className="text-foreground">adh.today</strong> on your web browser
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                Log in with your account to view and upgrade your membership plan
-                            </p>
-                        </div>
-                    ) : (
-                        <Link href="/pricing">
-                            <Button className="w-full">
-                                View Membership Plans
-                                <ExternalLink className="ml-2 h-4 w-4" />
-                            </Button>
-                        </Link>
-                    )}
+                <CardContent className="text-center">
+                    <Link href="/contact">
+                        <Button className="w-full">
+                            Contact Support
+                            <ExternalLink className="ml-2 h-4 w-4" />
+                        </Button>
+                    </Link>
                 </CardContent>
             </Card>
         </div>
