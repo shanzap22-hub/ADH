@@ -75,7 +75,6 @@ export default async function CommunityPage() {
         .order('created_at', { ascending: false });
 
     return (
-    return (
         <div className="min-h-screen bg-slate-50 p-6 md:p-8">
             <div className="max-w-4xl mx-auto space-y-6">
                 {/* Header */}

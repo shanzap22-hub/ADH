@@ -115,7 +115,6 @@ export default function LivePage() {
     };
 
     return (
-    return (
         <div className="p-6 md:p-8 space-y-8 bg-slate-50 min-h-screen">
 
             {/* Reschedule Modal Overlay */}
