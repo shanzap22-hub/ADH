@@ -72,6 +72,9 @@ export const metadata: Metadata = {
 
 import { Toaster } from "@/components/ui/sonner";
 import { Footer } from "@/components/Footer";
+import { NetworkStatusProvider } from "@/components/providers/NetworkStatusProvider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { OneSignalProvider } from "@/components/providers/OneSignalProvider";
 
 export default function RootLayout({
   children,
@@ -82,7 +85,17 @@ export default function RootLayout({
     <html lang="en">
       <body className={cn("min-h-screen bg-background font-sans antialiased flex flex-col overflow-x-hidden", outfit.variable)} suppressHydrationWarning>
         <div className="flex-1">
-          {children}
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <NetworkStatusProvider>
+              <OneSignalProvider />
+              {children}
+            </NetworkStatusProvider>
+          </ThemeProvider>
         </div>
         <Toaster />
         {/* Razorpay Script for Payment Integration */}

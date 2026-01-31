@@ -15,6 +15,7 @@ import {
     Brain,
     PenTool,
     Link as LinkIcon,
+    Bell,
 } from "lucide-react";
 
 const routes = [
@@ -83,6 +84,12 @@ const routes = [
         icon: LinkIcon,
         href: "/admin/redirects",
         color: "text-orange-500",
+    },
+    {
+        label: "Push Notifications",
+        icon: Bell,
+        href: "/admin/notifications",
+        color: "text-red-500",
     },
     {
         label: "Settings",

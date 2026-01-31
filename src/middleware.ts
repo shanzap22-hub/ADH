@@ -3,6 +3,14 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
 
+    // APP CHECK: Redirect App users from Landing Page to Login to avoid Google Play Policy issues
+    const userAgent = request.headers.get('user-agent') || '';
+    const isApp = userAgent.includes('ADH_APP');
+
+    if (isApp && pathname === '/') {
+        return NextResponse.redirect(new URL('/login', request.url));
+    }
+
     // Public pages - accessible without authentication
     const publicPages = [
         '/',              // Landing page
