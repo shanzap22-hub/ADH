@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -21,6 +22,7 @@ import { createClient } from "@/lib/supabase/client";
 
 export const DeleteAccountButton = () => {
     const [isLoading, setIsLoading] = useState(false);
+    const [confirmText, setConfirmText] = useState("");
     const router = useRouter();
 
     const handleDelete = async () => {
@@ -52,7 +54,7 @@ export const DeleteAccountButton = () => {
                 Permanently delete your account and all of your content. This action cannot be undone.
             </p>
 
-            <AlertDialog>
+            <AlertDialog onOpenChange={(open) => !open && setConfirmText("")}>
                 <AlertDialogTrigger asChild>
                     <Button variant="destructive" className="w-full sm:w-auto flex items-center gap-2">
                         <Trash2 className="h-4 w-4" />
@@ -69,6 +71,17 @@ export const DeleteAccountButton = () => {
                             Are you absolutely sure? This will explicitly delete your account and all your data from our servers.
                             This action cannot be undone.
                         </AlertDialogDescription>
+                        <div className="pt-4">
+                            <label className="text-sm text-slate-700 dark:text-slate-300 block mb-2">
+                                To confirm, please type <span className="font-bold">delete</span> below:
+                            </label>
+                            <Input
+                                value={confirmText}
+                                onChange={(e) => setConfirmText(e.target.value)}
+                                placeholder="Type delete"
+                                className="w-full border-red-200 focus-visible:ring-red-500"
+                            />
+                        </div>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -78,9 +91,9 @@ export const DeleteAccountButton = () => {
                                 handleDelete();
                             }}
                             className="bg-red-600 hover:bg-red-700 text-white"
-                            disabled={isLoading}
+                            disabled={isLoading || confirmText !== "delete"}
                         >
-                            {isLoading ? "Deleting..." : "Yes, Delete My Account"}
+                            {isLoading ? "Deleting..." : "Delete Account"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Loader2, Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Loader2, Calendar as CalendarIcon, Clock } from 'lucide-react'
 import { format, addDays } from 'date-fns'
 import { toast } from 'sonner'
 import { Calendar } from '@/components/ui/calendar'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { MetaballLoader } from '@/components/ui/metaball-loader'
 
 export default function ReschedulePage({ params }: { params: { id: string } }) {
     const [booking, setBooking] = useState<any>(null)
@@ -118,11 +119,15 @@ export default function ReschedulePage({ params }: { params: { id: string } }) {
         }
     }
 
-    if (loading) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin" /></div>
+    // Use MetaballLoader instead of Loader2
+    if (loading) return <MetaballLoader fullscreen />
     if (!booking) return <div>Booking not found</div>
 
     return (
         <div className="container mx-auto py-10 max-w-4xl px-4">
+            {/* Show Overlay Loader when rescheduling */}
+            {rescheduling && <MetaballLoader fullscreen />}
+
             <h1 className="text-3xl font-bold mb-8">Reschedule Session</h1>
 
             <div className="grid md:grid-cols-3 gap-8">
@@ -224,6 +229,7 @@ export default function ReschedulePage({ params }: { params: { id: string } }) {
                                         disabled={!selectedSlot || rescheduling}
                                         onClick={handleReschedule}
                                     >
+                                        {/* Keep Button Spinner intact if preferred, but Overlay covers it */}
                                         {rescheduling ? <Loader2 className="animate-spin mr-2" /> : "Confirm Reschedule"}
                                     </Button>
                                 </div>

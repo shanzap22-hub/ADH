@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Home, BookOpen, Video, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { MetaballLoader } from "@/components/ui/metaball-loader";
 
 const navItems = [
     {
@@ -41,6 +42,20 @@ interface BottomNavProps {
 
 export const BottomNav = ({ permissions }: BottomNavProps) => {
     const pathname = usePathname();
+    const [optimisticPath, setOptimisticPath] = useState(pathname);
+    const [isNavigating, setIsNavigating] = useState(false);
+
+    useEffect(() => {
+        setOptimisticPath(pathname);
+        setIsNavigating(false);
+    }, [pathname]);
+
+    const handleNavClick = (href: string) => {
+        if (href !== pathname) {
+            setOptimisticPath(href);
+            setIsNavigating(true);
+        }
+    };
 
     const visibleNavItems = navItems.filter((item) => {
         if (item.href === "/live" && permissions && !permissions.canViewLive) return false;
@@ -50,28 +65,40 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
 
     if (visibleNavItems.length === 0) return null;
 
-    const activeIndex = visibleNavItems.findIndex(item => pathname === item.href || pathname.startsWith(item.href + "/"));
+    // Use optimistic path for active state to give instant feedback
+    const activeIndex = visibleNavItems.findIndex(item => optimisticPath === item.href || (item.href !== '/dashboard' && optimisticPath.startsWith(item.href + "/")));
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 md:hidden z-50">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 md:hidden z-50 select-none pb-[env(safe-area-inset-bottom)]">
+            {/* Premium Minimal Metaball Loading Animation */}
+            <MetaballLoader
+                fullscreen
+                className={cn(
+                    "transition-opacity duration-500",
+                    isNavigating ? "opacity-100" : "opacity-0"
+                )}
+            />
+
             <div
                 className="grid h-16"
                 style={{ gridTemplateColumns: `repeat(${visibleNavItems.length}, minmax(0, 1fr))` }}
             >
                 {visibleNavItems.map((item) => {
                     const Icon = item.icon;
-                    const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                    const isActive = optimisticPath === item.href || (item.href !== '/dashboard' && optimisticPath.startsWith(item.href + "/"));
 
                     return (
                         <Link
                             key={item.href}
                             href={item.href}
+                            onClick={() => handleNavClick(item.href)}
                             className={cn(
-                                "flex flex-col items-center justify-center gap-1 transition-all duration-200",
+                                "flex flex-col items-center justify-center gap-1 transition-all duration-200 active:scale-95 touch-manipulation",
                                 isActive
                                     ? "text-orange-500"
                                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                             )}
+                            style={{ WebkitTapHighlightColor: 'transparent' }}
                         >
                             <Icon
                                 className={cn(
@@ -92,9 +119,9 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
                 })}
             </div>
 
-            {/* Active indicator line */}
+            {/* Active indicator line (Bottom) */}
             <div
-                className="absolute top-0 left-0 h-0.5 bg-gradient-to-r from-orange-500 to-pink-500 transition-all duration-300"
+                className="absolute top-0 left-0 h-0.5 bg-gradient-to-r from-orange-500 to-pink-500 transition-all duration-300 ease-out"
                 style={{
                     width: `${100 / visibleNavItems.length}%`,
                     transform: `translateX(${Math.max(0, activeIndex) * 100}%)`,

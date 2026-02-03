@@ -1,11 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LayoutDashboard, Compass, BookOpen, Video, MessageSquare, Users, User, LogOut, Shield, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 const routes = [
     {
@@ -63,7 +64,17 @@ export const StudentSidebar = ({
     permissions
 }: StudentSidebarProps) => {
     const router = useRouter();
+    const pathname = usePathname();
+    const [optimisticPath, setOptimisticPath] = useState(pathname);
     const supabase = createClient();
+
+    useEffect(() => {
+        setOptimisticPath(pathname);
+    }, [pathname]);
+
+    const handleNavClick = (href: string) => {
+        setOptimisticPath(href);
+    };
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -84,21 +95,27 @@ export const StudentSidebar = ({
                 <h2 className="text-xl font-semibold">Student Dashboard</h2>
             </div>
             <div className="flex flex-col w-full flex-1">
-                {visibleRoutes.map((route) => (
-                    <Link
-                        key={route.href}
-                        href={route.href}
-                        className={cn(
-                            "flex items-center gap-x-2 text-slate-500 text-sm font-[500] pl-6 transition-all hover:text-slate-600 hover:bg-slate-300/20",
-                            route.color
-                        )}
-                    >
-                        <div className="flex items-center gap-x-2 py-4">
-                            <route.icon size={22} />
-                            {route.label}
-                        </div>
-                    </Link>
-                ))}
+                {visibleRoutes.map((route) => {
+                    const isActive = optimisticPath === route.href || optimisticPath?.startsWith(route.href + "/");
+
+                    return (
+                        <Link
+                            key={route.href}
+                            href={route.href}
+                            onClick={() => handleNavClick(route.href)}
+                            className={cn(
+                                "flex items-center gap-x-2 text-slate-500 text-sm font-[500] pl-6 transition-all hover:text-slate-600 hover:bg-slate-300/20",
+                                isActive && "text-slate-700 bg-slate-200/20 border-r-4 border-slate-700",
+                                route.color
+                            )}
+                        >
+                            <div className="flex items-center gap-x-2 py-4">
+                                <route.icon size={22} className={cn(isActive && "text-slate-700")} />
+                                {route.label}
+                            </div>
+                        </Link>
+                    );
+                })}
 
                 {/* Spacer */}
                 <div className="flex-1" />

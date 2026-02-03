@@ -238,6 +238,27 @@ export async function POST(req: Request) {
             console.error("Mail Error:", mailError);
         }
 
+        // 8. Push Notification (OneSignal)
+        try {
+            const { getNotificationSettings, sendOneSignalNotification } = await import("@/lib/notifications");
+            const settings = await getNotificationSettings();
+
+            if (settings.one_on_one) {
+                // Notify Student (Make sure to verify if frontend sets External ID as user.id)
+                // We send to both Student and Instructor (if Instructor is in the system as user)
+
+                await sendOneSignalNotification(
+                    "Booking Confirmed ✅",
+                    `Your 1-on-1 session with ${instructor.full_name} is confirmed for ${date} at ${time12h}.`,
+                    undefined, // segments default to All if undefined, but we pass targetUserIds
+                    { url: '/dashboard' },
+                    [user.id] // Target Student
+                );
+            }
+        } catch (pushError) {
+            console.error("Push Notification Error:", pushError);
+        }
+
         return NextResponse.json({ success: true, bookingId: booking.id, meetLink, googleError });
 
     } catch (error: any) {

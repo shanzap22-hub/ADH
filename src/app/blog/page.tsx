@@ -6,6 +6,8 @@ import { Calendar, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
     title: "Blog | ADH Connect - Insights on SMM & Business Growth",
     description: "Read the latest articles on Social Media Marketing, AI Automation, and Digital Leadership for entrepreneurs in Kerala.",

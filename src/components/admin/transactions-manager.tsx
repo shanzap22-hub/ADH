@@ -462,20 +462,20 @@ export default function TransactionsManager() {
                                                             <TableCell>
                                                                 {isMain ? (
                                                                     <>
-                                                                        <div className="font-medium text-sm">{txn.student_name || "Unknown"}</div>
-                                                                        <div className="text-xs text-muted-foreground">{txn.student_email || txn.email || "-"}</div>
+                                                                        <div className="font-medium text-sm">{txn.profiles?.full_name || txn.student_name || "Unknown"}</div>
+                                                                        <div className="text-xs text-muted-foreground">{txn.profiles?.email || txn.student_email || "-"}</div>
                                                                     </>
                                                                 ) : (
                                                                     <div className="text-xs text-muted-foreground opacity-50">Same as above</div>
                                                                 )}
                                                             </TableCell>
                                                             <TableCell className="text-sm">
-                                                                {isMain ? (txn.phone_number || txn.profiles?.phone_number || "-") : ""}
+                                                                {isMain ? (txn.profiles?.phone_number || txn.phone_number || "-") : ""}
                                                             </TableCell>
                                                             <TableCell className="text-sm text-green-600 font-medium">
                                                                 {isMain && (
                                                                     <div className="flex items-center gap-1">
-                                                                        <span>{txn.whatsapp_number || "-"}</span>
+                                                                        <span>{txn.whatsapp_number || txn.profiles?.whatsapp_number || "-"}</span>
                                                                     </div>
                                                                 )}
                                                             </TableCell>

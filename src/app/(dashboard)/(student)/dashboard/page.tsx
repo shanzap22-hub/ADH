@@ -17,6 +17,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+export const dynamic = 'force-dynamic';
+
 export default async function Dashboard() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -76,7 +78,7 @@ export default async function Dashboard() {
                 <div className="lg:col-span-8 space-y-8">
                     <div className="flex items-center justify-between">
                         <div className="space-y-1">
-                            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Community Feed</h1>
+                            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 bg-clip-text text-transparent tracking-tight">Community Feed</h1>
                             <p className="text-slate-500">See what's happening in ADH Connect</p>
                         </div>
                     </div>

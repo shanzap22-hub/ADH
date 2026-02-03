@@ -4,6 +4,8 @@ import { KnowledgeManager } from "./_components/knowledge-manager";
 import { redirect } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 export default async function KnowledgePage() {
     const supabase = await createClient();
 

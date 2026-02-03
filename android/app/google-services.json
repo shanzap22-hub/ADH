@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "839424291192",
+    "project_id": "adh-connect-1",
+    "storage_bucket": "adh-connect-1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:839424291192:android:05363ba58da049245fd88d",
+        "android_client_info": {
+          "package_name": "today.adh.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqiSHlJQ4Aa5C-MMgHI2YYxaAFbkBUwWE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

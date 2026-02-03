@@ -71,10 +71,14 @@ export async function POST(request: Request) {
     // Fix: Find those orphaned transactions using phone/whatsapp and LINK them to this user.
     try {
         // Find transactions with matching phone/whatsapp AND (user_id is NULL OR email contains 'adh.pending')
+        // Improvement: Use loose matching (last 10 digits) for Phone/WA to handle +91 vs 91 vs 0
+        const cleanPhone = contactNumber.replace(/\D/g, '').slice(-10);
+        const cleanWA = whatsappNumber.replace(/\D/g, '').slice(-10);
+
         const { data: orphans, error: orphanError } = await supabaseAdmin
             .from('transactions')
             .select('id')
-            .or(`whatsapp_number.eq.${whatsappNumber},phone_number.eq.${contactNumber}`)
+            .or(`whatsapp_number.ilike.%${cleanWA},phone_number.ilike.%${cleanPhone}`)
             .is('user_id', null);
 
         if (orphans && orphans.length > 0) {
@@ -119,7 +123,7 @@ export async function POST(request: Request) {
             await sendPaymentReceipt(
                 email,
                 fullName,
-                transaction.amount,
+                transaction.amount / 100, // Convert Paise to Rupees for Receipt
                 transaction.created_at,
                 transaction.razorpay_payment_id || transaction.id, // Fallback to internal ID if razorpay ID missing
                 transaction.coupon_code
@@ -164,7 +168,7 @@ export async function POST(request: Request) {
                     phone: contactNumber,
                     whatsapp: whatsappNumber,
                     plan: latestTxn.membership_plan || "silver",
-                    amount: Number(latestTxn.amount) || 0, // Already in Rupees
+                    amount: (Number(latestTxn.amount) || 0) / 100, // Convert Paise to Rupees
                     status: 'verified',
                     created_at: latestTxn.created_at
                 };

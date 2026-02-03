@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { uploadChatMedia } from "@/actions/chat-actions";
+import { uploadChatMedia, deleteChatMessage } from "@/actions/chat-actions";
 import { toast } from "sonner";
 
 interface ChatWindowProps {
@@ -308,9 +308,14 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                 <Button variant="ghost" size="icon" className="md:hidden" onClick={onBack}>
                     <ArrowLeft className="w-5 h-5" />
                 </Button>
-                <Avatar className="h-10 w-10">
-                    <AvatarImage src={chatInfo.avatar_url} />
-                    <AvatarFallback>
+                <Avatar className={cn(
+                    "h-10 w-10 border border-slate-100 dark:border-slate-800",
+                    chatInfo.is_group
+                        ? "bg-gradient-to-br from-indigo-500 to-purple-600"
+                        : "bg-gradient-to-br from-pink-500 to-orange-500"
+                )}>
+                    <AvatarImage src={chatInfo.avatar_url} className="object-cover" />
+                    <AvatarFallback className="bg-transparent text-white font-bold">
                         {chatInfo.is_group ? <Users className="w-5 h-5" /> : chatInfo.full_name?.[0]}
                     </AvatarFallback>
                 </Avatar>
@@ -433,9 +438,13 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                                                     <DropdownMenuItem
                                                         onClick={async () => {
                                                             if (confirm("Delete this message?")) {
-                                                                const { error } = await supabase.from("chat_messages").delete().eq("id", msg.id);
-                                                                if (error) toast.error("Failed to delete");
-                                                                else toast.success("Message deleted");
+                                                                const result = await deleteChatMessage(msg.id);
+                                                                if (result.error) toast.error("Failed to delete: " + result.error);
+                                                                else {
+                                                                    toast.success("Message deleted");
+                                                                    // Optimistic update of UI: Remove message immediately
+                                                                    setMessages(prev => prev.filter(m => m.id !== msg.id));
+                                                                }
                                                             }
                                                         }}
                                                         className="text-red-600 focus:text-red-600"

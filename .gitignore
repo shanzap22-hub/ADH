@@ -41,3 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 dist
+
+!node_modules/@capacitor/app/android/build.gradle
+!node_modules/@capacitor/splash-screen/android/build.gradle
+!node_modules/@capacitor/network/android/build.gradle

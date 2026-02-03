@@ -21,7 +21,7 @@ export const FeedCard = ({
     return (
         <div
             className={cn(
-                "bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm hover:shadow-md transition-shadow",
+                "bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-xl border border-white/20 dark:border-slate-700 p-4 shadow-lg ring-1 ring-black/5 hover:shadow-xl transition-all",
                 className
             )}
         >

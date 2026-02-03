@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { ProfileSignOutButton } from "@/components/dashboard/ProfileSignOutButton";
 import { DeleteAccountButton } from "@/components/dashboard/DeleteAccountButton";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProfilePage() {
     const supabase = await createClient();
     const { data: { user }, error } = await supabase.auth.getUser();

@@ -66,6 +66,26 @@ export async function POST(req: Request) {
             }
         }
 
+        // Notification Logic
+        try {
+            const { getNotificationSettings, sendOneSignalNotification } = await import("@/lib/notifications");
+            const settings = await getNotificationSettings();
+
+            if (settings.community_posts) {
+                const shortContent = content.length > 60 ? content.substring(0, 60) + "..." : content;
+                // Send in background (no await) or await if critical? 
+                // Better not to block response too long, but serverless lambda might kill it. 
+                // Vercel usually waits for promises if using 'waitUntil' context or just await.
+                await sendOneSignalNotification(
+                    "New Announcement 📢",
+                    shortContent
+                );
+            }
+        } catch (notifError) {
+            console.error("Notification trigger failed:", notifError);
+            // Don't fail the request if notification fails
+        }
+
         return NextResponse.json({ success: true, post });
 
     } catch (error: any) {

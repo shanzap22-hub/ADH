@@ -38,10 +38,9 @@ export async function POST(
 
         const options = {
             amount: amount,
-            currency: "USD", // Changing to INR if testing with Indian keys, but keeping USD per user context? 
-            // Razorpay primarily supports INR but can support international. 
-            // Let's stick to user's likely context. If USD, ensure Razorpay account supports it.
-            // For safety/default, I will use "USD" as the code had USD before.
+            currency: "INR", // Safety: Use INR as courses are priced in Rupees
+            // Razorpay primarily supports INR. Using USD would cause overcharging (e.g. 5000 INR -> 5000 USD).
+            // We force INR to be safe.
             receipt: courseId,
             notes: {
                 courseId: courseId,

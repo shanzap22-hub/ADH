@@ -1,13 +1,13 @@
 "use client";
 
 import Image from "next/image";
-
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LayoutDashboard, Compass, Radio, Users, Settings, Eye, UserPlus, LogOut, Shield, Calendar as CalendarIcon, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 const routes = [
     {
@@ -44,6 +44,7 @@ const routes = [
         label: "Settings",
         icon: Settings,
         href: "/instructor/settings",
+        color: "text-slate-500", // Changed color to standard
     },
 ];
 
@@ -53,7 +54,17 @@ interface SidebarProps {
 
 export const Sidebar = ({ is_super_admin }: SidebarProps) => {
     const router = useRouter();
+    const pathname = usePathname();
+    const [optimisticPath, setOptimisticPath] = useState(pathname);
     const supabase = createClient();
+
+    useEffect(() => {
+        setOptimisticPath(pathname);
+    }, [pathname]);
+
+    const handleNavClick = (href: string) => {
+        setOptimisticPath(href);
+    };
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -76,21 +87,27 @@ export const Sidebar = ({ is_super_admin }: SidebarProps) => {
                 </div>
             </div>
             <div className="flex flex-col w-full flex-1">
-                {routes.map((route) => (
-                    <Link
-                        key={route.href}
-                        href={route.href}
-                        className={cn(
-                            "flex items-center gap-x-2 text-slate-500 text-sm font-[500] pl-6 transition-all hover:text-slate-600 hover:bg-slate-300/20",
-                            route.color
-                        )}
-                    >
-                        <div className="flex items-center gap-x-2 py-4">
-                            <route.icon size={22} />
-                            {route.label}
-                        </div>
-                    </Link>
-                ))}
+                {routes.map((route) => {
+                    const isActive = optimisticPath === route.href || optimisticPath?.startsWith(route.href + "/");
+
+                    return (
+                        <Link
+                            key={route.href}
+                            href={route.href}
+                            onClick={() => handleNavClick(route.href)}
+                            className={cn(
+                                "flex items-center gap-x-2 text-slate-500 text-sm font-[500] pl-6 transition-all hover:text-slate-600 hover:bg-slate-300/20",
+                                isActive && "text-slate-700 bg-slate-200/20 border-r-4 border-slate-700",
+                                route.color
+                            )}
+                        >
+                            <div className="flex items-center gap-x-2 py-4">
+                                <route.icon size={22} className={cn(isActive && "text-slate-700")} />
+                                {route.label}
+                            </div>
+                        </Link>
+                    );
+                })}
 
                 {/* Spacer to push logout to bottom */}
                 <div className="flex-1" />

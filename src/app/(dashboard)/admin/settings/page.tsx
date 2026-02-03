@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings as SettingsIcon, Globe, Mail, CreditCard } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 export default function AdminSettingsPage() {
     return (
         <div className="p-6 space-y-6">

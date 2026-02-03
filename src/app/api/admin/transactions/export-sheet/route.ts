@@ -37,14 +37,17 @@ export async function POST(req: Request) {
         for (const txn of transactions) {
             try {
                 // Determine Name/Email
-                let name = txn.student_name || txn.profiles?.full_name || "Unknown";
-                let email = txn.student_email || txn.profiles?.email || "";
+                // Determine Name/Email - Prioritize Profile (Real Data) over Transaction (Snapshot/Stale)
+                let name = txn.profiles?.full_name || txn.student_name || "Unknown";
+                let email = txn.profiles?.email || txn.student_email || "";
 
                 // Fallback for legacy data
                 if (!email && txn.student_email) email = txn.student_email;
 
                 // Get Phone & WhatsApp
-                const phone = txn.whatsapp_number || txn.profiles?.phone_number || "";
+                // Phone: From Profile (User Preference/Correct)
+                // WhatsApp: From Transaction (Payment Input)
+                const phone = txn.profiles?.phone_number || txn.phone_number || "";
                 const whatsapp = txn.whatsapp_number || "";
 
                 const payload = {

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 
 // ... (Keep existing uploadChatMedia) ...
 const BUNNY_STORAGE_ZONE = process.env.BUNNY_STORAGE_ZONE_NAME || process.env.NEXT_PUBLIC_BUNNY_STORAGE_ZONE_NAME;
@@ -97,6 +98,55 @@ export async function getGlobalGroupChat() {
 
     // If somehow missing (should be created by SQL), try to create
     // Note: Usually INSERT policies might block users from creating public groups.
-    // So we rely on the migration. If here, return error or mock.
+    // ... (Existing code)
+
     throw new Error("Global chat not initialized");
+}
+
+export async function deleteChatMessage(messageId: string): Promise<{ success?: boolean; error?: string }> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { error: "Unauthorized" };
+
+    // Check Role from Profile
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    const isRoleAdmin = ['admin', 'super_admin', 'instructor'].includes(profile?.role || '');
+
+    // Explicit Super Admin Email
+    const isSuperEmail = user.email === 'shanzap22@gmail.com';
+
+    // If Admin/Instructor, use Service Role to Bypass RLS
+    if (isRoleAdmin || isSuperEmail) {
+        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            console.error("Missing SUPABASE_SERVICE_ROLE_KEY");
+            return { error: "Server Configuration Error: Missing Secret Key" };
+        }
+
+        const adminClient = createSupabaseAdmin(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!,
+            {
+                auth: {
+                    autoRefreshToken: false,
+                    persistSession: false
+                }
+            }
+        );
+
+        const { error } = await adminClient.from('chat_messages').delete().eq('id', messageId);
+
+        if (error) {
+            console.error("Admin Delete Failed:", error);
+            return { error: "Admin Delete Failed: " + error.message };
+        }
+        return { success: true };
+    }
+
+    // Normal User: Attempt Standard Delete (RLS will enforce 'ownership' check)
+    const { error } = await supabase.from('chat_messages').delete().eq('id', messageId);
+
+    if (error) return { error: error.message };
+
+    return { success: true };
 }

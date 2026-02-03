@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
+import { MetaballLoader } from "@/components/ui/metaball-loader";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Video, Calendar, ArrowRight, Loader2, Lock, Sparkles, Clock, Users } from "lucide-react";
@@ -146,7 +147,7 @@ export default function LivePage() {
             )}
 
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Live Sessions</h1>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 bg-clip-text text-transparent tracking-tight">Live Sessions</h1>
                 <p className="text-slate-500 text-base max-w-2xl">
                     Join expert-led sessions and manage your 1-on-1 mentorship bookings.
                 </p>
@@ -155,9 +156,7 @@ export default function LivePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
                 {isLoading ? (
-                    <div className="col-span-1 md:col-span-2 lg:col-span-3 flex h-64 items-center justify-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
-                    </div>
+                    <MetaballLoader fullscreen />
                 ) : (
                     <>
                         {/* 0. Upcomming Bookings */}

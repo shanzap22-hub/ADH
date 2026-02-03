@@ -64,17 +64,17 @@ export const CoursesList = ({
 
     return (
         <div className="space-y-6">
-            {/* Horizontal Filter Bar */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
+            {/* Horizontal Filter Bar - Compact & Moved Up */}
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 md:mx-0 md:px-0 -mt-2">
                 {FILTERS.map((filter) => (
                     <button
                         key={filter.value}
                         onClick={() => setActiveFilter(filter.value)}
                         className={cn(
-                            "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all border",
+                            "px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all border",
                             activeFilter === filter.value
-                                ? "bg-slate-900 text-white dark:bg-white dark:text-black border-transparent shadow-md ring-2 ring-slate-900/10 ring-offset-1"
-                                : "bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900"
+                                ? "bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 text-white shadow-lg shadow-pink-500/20"
+                                : "bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900"
                         )}
                     >
                         {filter.label === "All Cases" ? "All" : filter.label}
@@ -84,7 +84,7 @@ export const CoursesList = ({
 
             {/* Courses Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredItems.map((item) => {
+                {filteredItems.map((item, index) => {
                     // Defensive check for each item
                     if (!item || !item.id) {
                         return null;
@@ -96,6 +96,16 @@ export const CoursesList = ({
                             ? item.category
                             : "General";
 
+                    // Cycle through premium brand light colors & matching titles
+                    const themeVariants = [
+                        { card: "bg-indigo-50/80 border-indigo-100 dark:bg-indigo-950/30 dark:border-indigo-900", title: "text-indigo-900 dark:text-indigo-100" },
+                        { card: "bg-pink-50/80 border-pink-100 dark:bg-pink-950/30 dark:border-pink-900", title: "text-pink-900 dark:text-pink-100" },
+                        { card: "bg-orange-50/80 border-orange-100 dark:bg-orange-950/30 dark:border-orange-900", title: "text-orange-900 dark:text-orange-100" },
+                        { card: "bg-purple-50/80 border-purple-100 dark:bg-purple-950/30 dark:border-purple-900", title: "text-purple-900 dark:text-purple-100" }
+                    ];
+
+                    const variant = themeVariants[index % themeVariants.length];
+
                     return (
                         <CourseCard
                             key={item.id}
@@ -106,6 +116,8 @@ export const CoursesList = ({
                             price={item.price || 0}
                             progress={item.progress}
                             category={categoryName}
+                            backgroundClass={variant.card}
+                            titleClass={variant.title}
                         />
                     );
                 })}

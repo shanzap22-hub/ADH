@@ -35,7 +35,7 @@ export const StudentDashboardLayoutContent = ({
             </div>
 
             {/* Desktop Sidebar */}
-            <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-40 mt-16">
+            <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-40 mt-[calc(4rem_+_env(safe-area-inset-top))]">
                 <StudentSidebar
                     is_instructor={is_instructor}
                     is_super_admin={is_super_admin}
@@ -48,7 +48,9 @@ export const StudentDashboardLayoutContent = ({
                 But add padding back on Desktop (md:pt-16) because Header is visible there */}
             <main className={cn(
                 "md:pl-56 h-full",
-                isChat ? "pb-16 md:pb-0 md:pt-16" : "pt-16 pb-16 md:pb-0"
+                isChat
+                    ? "pb-16 md:pb-0 md:pt-[calc(4rem_+_env(safe-area-inset-top))]"
+                    : "pt-[calc(4rem_+_env(safe-area-inset-top))] pb-16 md:pb-0"
             )}>
                 {children}
             </main>

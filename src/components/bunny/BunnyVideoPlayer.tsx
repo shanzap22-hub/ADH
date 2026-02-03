@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MetaballLoader } from "@/components/ui/metaball-loader";
 
 // Add global declaration for playerjs
 declare global {
@@ -174,42 +174,11 @@ export const BunnyVideoPlayer = ({
             }
         };
     }, [videoId, handleCompletion]);
-    // We need to re-run init logic if videoId changes (since iframe ref might change or source changed)
-    // Actually, embedUrl change triggers iframe re-render.
-    // So we should depend on [embedUrl] or [videoId].
-    // If we depend on [videoId], it's safer.
-    // handleCompletion is stable via useCallback? Yes.
-
-    // Wait, if we use [videoId], when videoId changes, Effect runs.
-    // Cleanup runs -> playerRef = null.
-    // Setup runs -> initPlayer.
-    // playerRef is null -> new Player created.
-    // ready fires -> isInitialTimeSetRef was reset in the OTHER effect.
-    // Logic holds.
-
-    // WARNING: 'handleCompletion' must be in deps.
-    // But 'initialTime' is NOT in deps (we use ref).
-    // This is valid.
-
-    // Wait, dependencies:
-    // [handleCompletion] - yes
-    // [videoId] - yes, implicit via re-render?
-    // Actually, if we pass videoId to iframe src, React handles Iframe update.
-    // We need to re-init playerjs on the NEW iframe node (or same node with new content).
-    // Safest is to depend on [embedUrl, handleCompletion].
-
-    // But Step 9302 used [videoId, initialTime, handleCompletion].
-    // I am removing initialTime.
-
-    // Let's use [videoId, handleCompletion].
-    // Since embedUrl is derived from videoId via effect/state, it aligns.
 
     return (
         <div className={cn("relative aspect-video bg-slate-900 rounded-lg overflow-hidden", className)}>
             {!isReady && (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-900 z-10">
-                    <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
-                </div>
+                <MetaballLoader className="absolute inset-0 z-10" />
             )}
 
             <iframe

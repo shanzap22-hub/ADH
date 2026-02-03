@@ -64,7 +64,7 @@ export default async function CommunityPage() {
             <div className="max-w-4xl mx-auto space-y-6">
                 {/* Header */}
                 <div className="flex flex-col gap-2">
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Community Feed</h1>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 bg-clip-text text-transparent tracking-tight">Community Feed</h1>
                     <p className="text-slate-500">Join the discussion and stay updated</p>
                 </div>
 

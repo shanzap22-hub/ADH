@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { RedirectsClient } from "@/components/admin/RedirectsClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function RedirectsPage() {
     const supabase = await createClient();
 

@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { CoursesList } from "@/components/courses-list";
 import { BookOpen, AlertCircle } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 export default async function CoursesPage() {
     // Auth check - MUST be outside try-catch to allow redirects
     const supabase = await createClient();

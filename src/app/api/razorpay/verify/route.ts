@@ -10,10 +10,10 @@ export async function POST(req: Request) {
         console.log("[RAZORPAY_VERIFY] Payment ID:", razorpay_payment_id);
         console.log("[RAZORPAY_VERIFY] Order ID:", razorpay_order_id);
 
-        // Use environment variable or hardcoded fallback
-        const razorpaySecret = process.env.RAZORPAY_KEY_SECRET || "IT6mwpTe3Hxzu8Kml0xwd9rg";
+        const razorpaySecret = process.env.RAZORPAY_KEY_SECRET;
+        if (!razorpaySecret) throw new Error("Razorpay Secret Missing");
 
-        console.log("[RAZORPAY_VERIFY] Using secret:", razorpaySecret ? "Found" : "Missing");
+        console.log("[RAZORPAY_VERIFY] Using secret from ENV");
 
         // Verify signature
         const text = `${razorpay_order_id}|${razorpay_payment_id}`;
@@ -22,30 +22,19 @@ export async function POST(req: Request) {
             .update(text)
             .digest("hex");
 
-        console.log("[RAZORPAY_VERIFY] Generated signature:", generatedSignature);
         console.log("[RAZORPAY_VERIFY] Received signature:", razorpay_signature);
-        console.log("[RAZORPAY_VERIFY] Signatures match:", generatedSignature === razorpay_signature);
 
-        // For test mode, allow if payment ID exists even if signature doesn't match
         const isValidSignature = generatedSignature === razorpay_signature;
-        const hasPaymentId = !!razorpay_payment_id;
-
-        if (!isValidSignature && !hasPaymentId) {
-            console.error("[RAZORPAY_VERIFY] Verification failed - no valid signature or payment ID");
-            return NextResponse.json(
-                { error: "Invalid payment signature" },
-                { status: 400 }
-            );
-        }
 
         if (!isValidSignature) {
-            console.warn("[RAZORPAY_VERIFY] Signature mismatch but payment ID present - proceeding in test mode");
+            console.error("[RAZORPAY_VERIFY] Signature Verification FAILED");
+            return NextResponse.json({ error: "Invalid payment signature" }, { status: 400 });
         }
 
         // Initialize Razorpay to fetch exact details
-        const Razorpay = (await import("razorpay")).default; // Dynamic import to be safe
+        const Razorpay = (await import("razorpay")).default;
         const instance = new Razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_StqvqJ8w5pW5kK",
+            key_id: process.env.RAZORPAY_KEY_ID || "",
             key_secret: razorpaySecret
         });
 
@@ -57,15 +46,21 @@ export async function POST(req: Request) {
 
         try {
             const payment = await instance.payments.fetch(razorpay_payment_id);
-            realAmount = Number(payment.amount) / 100; // Convert Paise to Rupees
+
+            // SECURITY CHECK: Ensure payment is actually SUCCESSFUL
+            if (payment.status !== 'captured' && payment.status !== 'authorized') {
+                console.error(`[RAZORPAY_SECURITY] Payment ${razorpay_payment_id} status is '${payment.status}'. REJECTING.`);
+                throw new Error(`Payment not successful (Status: ${payment.status})`);
+            }
+
+            realAmount = Number(payment.amount); // Store in Paise
             paymentMethod = payment.method as string;
             paymentEmail = payment.email as string;
             paymentContact = payment.contact as string;
-            console.log(`[RAZORPAY_FETCH] Amount (INR): ${realAmount}, Method: ${paymentMethod}`);
-        } catch (e) {
-            console.error("Failed to fetch Razorpay payment details", e);
-            // Fallback: If fetch fails, use standard price in Rupees
-            realAmount = 4999;
+            console.log(`[RAZORPAY_FETCH] Amount (INR): ${realAmount}, Method: ${paymentMethod}, Status: ${payment.status}`);
+        } catch (e: any) {
+            console.error("Failed to verify Razorpay payment status:", e.message);
+            return NextResponse.json({ error: "Payment validation failed: " + e.message }, { status: 400 });
         }
 
         // Payment verified - store in temporary table
@@ -75,7 +70,7 @@ export async function POST(req: Request) {
             payment_id: razorpay_payment_id,
             order_id: razorpay_order_id,
             whatsapp_number: whatsappNumber,
-            amount: realAmount, // Store in Rupees
+            amount: realAmount, // Store in Paise
             status: "verified",
         });
 
@@ -104,7 +99,7 @@ export async function POST(req: Request) {
             .update({
                 status: 'verified',
                 razorpay_payment_id: razorpay_payment_id,
-                amount: realAmount, // Store in Rupees
+                amount: realAmount, // Store in Paise
                 updated_at: new Date().toISOString()
             })
             .eq('razorpay_order_id', razorpay_order_id)
@@ -118,7 +113,7 @@ export async function POST(req: Request) {
                 razorpay_order_id: razorpay_order_id,
                 whatsapp_number: whatsappNumber || paymentContact,
                 student_email: paymentEmail,
-                amount: realAmount, // Store in Rupees
+                amount: realAmount, // Store in Paise
                 source: 'razorpay'
             });
         }
@@ -149,7 +144,7 @@ export async function POST(req: Request) {
                     membership_tier: 'silver',
                     role: 'student',
                     whatsapp_number: whatsappNumber, // Auto-update WhatsApp Number
-                    phone_number: whatsappNumber // Also set as primary phone
+                    // phone_number: whatsappNumber // STOPPED: Keep old phone number as per user request
                 })
                 .eq('id', user.id)
                 .select('email') // Select email to use for transaction record
@@ -184,6 +179,13 @@ export async function POST(req: Request) {
                     .eq('razorpay_order_id', razorpay_order_id)
                     .single();
 
+                // Ensure we have phone number (Fetch from profile if missing in txn)
+                let sheetPhone = txnData?.phone_number || "";
+                if (!sheetPhone && user) {
+                    const { data: p } = await supabaseAdmin.from('profiles').select('phone_number').eq('id', user.id).single();
+                    if (p?.phone_number) sheetPhone = p.phone_number;
+                }
+
                 // Prepare Payload
                 const payload = {
                     action: 'verify', // TELL SCRIPT to MOVE from Drop-offs to Orders
@@ -191,10 +193,10 @@ export async function POST(req: Request) {
                     payment_id: razorpay_payment_id,
                     email: txnData?.student_email || (user ? user.email : "Guest"),
                     name: txnData?.student_name || (user ? user.user_metadata?.full_name : "Guest"),
-                    phone: txnData?.phone_number || "",
+                    phone: sheetPhone,
                     whatsapp: txnData?.whatsapp_number || whatsappNumber || "",
                     plan: 'silver',
-                    amount: txnData?.amount || realAmount, // Already in Rupees
+                    amount: (txnData?.amount || realAmount) / 100, // Convert to Rupees for Sheet
                     status: 'verified',
                     created_at: new Date().toISOString()
                 };

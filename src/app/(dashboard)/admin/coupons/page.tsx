@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import CouponsManager from "@/components/admin/CouponsManager";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminCouponsPage() {
     const supabase = await createClient();
 

@@ -91,8 +91,8 @@ export function PostCard({ post, isAdmin, currentUserId }: PostCardProps) {
             <div className={`
                 group relative p-6 rounded-2xl border transition-all duration-300
                 ${post.is_pinned
-                    ? "bg-purple-50/50 border-purple-200 dark:bg-purple-900/10 dark:border-purple-800"
-                    : "bg-white border-slate-100 shadow-sm hover:shadow-md dark:bg-slate-900 dark:border-slate-800"
+                    ? "bg-purple-50/70 border-purple-200 backdrop-blur-md dark:bg-purple-900/20 dark:border-purple-800 shadow-lg ring-1 ring-black/5"
+                    : "bg-white/80 border-white/20 backdrop-blur-md shadow-lg ring-1 ring-black/5 hover:shadow-xl dark:bg-slate-900/70 dark:border-slate-700"
                 }
             `}>
                 {post.is_pinned && (

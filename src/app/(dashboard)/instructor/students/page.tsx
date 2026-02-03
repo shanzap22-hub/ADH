@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Users, Mail, Calendar, Trash2 } from "lucide-react";
 import { DeleteUserButton } from "./_components/delete-user-button";
 
+export const dynamic = 'force-dynamic';
+
 export default async function StudentsPage() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

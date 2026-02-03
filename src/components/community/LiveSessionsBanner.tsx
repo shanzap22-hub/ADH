@@ -88,7 +88,7 @@ function SessionCard({ session, now }: { session: any, now: Date }) {
     const dayLabel = isToday(session.start) ? "TODAY" : "TOMORROW";
 
     return (
-        <div className="flex bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-[0_2px_10px_-3px_rgba(0,0,0,0.1)] hover:shadow-md transition-all">
+        <div className="flex bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/20 dark:border-slate-800 rounded-lg overflow-hidden shadow-lg ring-1 ring-black/5 hover:shadow-xl transition-all">
             {/* Vertical Label */}
             <div className={cn(
                 "w-8 flex items-center justify-center py-2 shrink-0",

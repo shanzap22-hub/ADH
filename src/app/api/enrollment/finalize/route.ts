@@ -65,7 +65,7 @@ export async function POST(req: Request) {
             console.log("[FINALIZE_ENROLLMENT] Fetching details from Razorpay...");
             try {
                 const payment = await instance.payments.fetch(paymentId);
-                finalEmail = payment.email;
+                // finalEmail = payment.email; // IGNORE Razorpay email (avoid void@razorpay.com issues)
                 finalContact = payment.contact;
                 console.log("[FINALIZE_ENROLLMENT] Fetched:", { finalEmail, finalContact });
             } catch (e) {

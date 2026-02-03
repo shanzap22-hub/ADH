@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { WeeklyLiveManager } from "@/components/instructor/WeeklyLiveManager";
 import { OneOnOneManager } from "@/components/instructor/OneOnOneManager";
 
+export const dynamic = 'force-dynamic';
+
 export default async function LiveManagerPage() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

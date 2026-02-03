@@ -55,16 +55,19 @@ export function ChatSidebar({
     }, [supabase, hasCommunityAccess]);
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800">
+        <div className="flex flex-col h-full bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-sm border-r border-white/20 dark:border-slate-800">
             {/* Header */}
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-                <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Chats</h2>
+            <div className="p-6 border-b border-white/10 dark:border-slate-800">
+                <h2 className="text-xl font-bold bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 bg-clip-text text-transparent">
+                    Chats
+                </h2>
+                <p className="text-xs text-slate-500 font-medium mt-1">Connect instantly</p>
             </div>
 
             {/* Chat List */}
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                {/* Community Chat - Only show if access granted */}
-                {groupChat && hasCommunityAccess && (
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {/* Community Chat */}
+                {groupChat && (
                     <div
                         onClick={() => {
                             if (hasCommunityAccess) {
@@ -75,97 +78,105 @@ export function ChatSidebar({
                             }
                         }}
                         className={cn(
-                            "flex items-center gap-3 p-3 rounded-lg transition-colors relative group",
-                            hasCommunityAccess ? "cursor-pointer" : "cursor-not-allowed opacity-60",
+                            "group flex items-center gap-4 p-4 rounded-xl transition-all duration-300 border relative overflow-hidden",
+                            hasCommunityAccess ? "cursor-pointer hover:-translate-y-0.5" : "cursor-not-allowed opacity-70 grayscale",
                             hasCommunityAccess && selectedConversationId === groupChat.id
-                                ? "bg-purple-50 dark:bg-purple-900/20"
-                                : hasCommunityAccess && "hover:bg-slate-100 dark:hover:bg-slate-800/50"
+                                ? "bg-white dark:bg-slate-800 border-indigo-200 dark:border-indigo-900 shadow-lg shadow-indigo-500/10 ring-1 ring-indigo-500/20"
+                                : "bg-white/60 dark:bg-slate-900/40 border-white/20 dark:border-slate-800 hover:bg-white hover:shadow-md"
                         )}
                     >
-                        <Avatar className="h-10 w-10 bg-purple-100 dark:bg-purple-900">
-                            <AvatarFallback className="bg-purple-100 text-purple-600">
-                                {hasCommunityAccess ? (
-                                    <Users className="w-5 h-5" />
-                                ) : (
-                                    <Lock className="w-5 h-5" />
-                                )}
-                            </AvatarFallback>
-                        </Avatar>
+                        {/* Active Indicator Strip */}
+                        {hasCommunityAccess && selectedConversationId === groupChat.id && (
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-600 to-purple-600" />
+                        )}
+
+                        <div className={cn(
+                            "h-12 w-12 rounded-full flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105",
+                            hasCommunityAccess ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white" : "bg-slate-200 text-slate-400"
+                        )}>
+                            {hasCommunityAccess ? <Users className="w-6 h-6" /> : <Lock className="w-5 h-5" />}
+                        </div>
+
                         <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-baseline mb-0.5">
-                                <p className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate pr-2 flex items-center gap-2">
+                            <div className="flex justify-between items-center mb-1">
+                                <p className={cn(
+                                    "font-bold text-sm truncate",
+                                    selectedConversationId === groupChat.id ? "text-indigo-900 dark:text-indigo-100" : "text-slate-700 dark:text-slate-200"
+                                )}>
                                     {groupChat.group_name}
-                                    {!hasCommunityAccess && (
-                                        <Lock className="w-3 h-3 text-slate-400" />
-                                    )}
                                 </p>
                                 {hasCommunityAccess && groupChat.last_message_at && (
-                                    <span className="text-[10px] text-slate-400 shrink-0">
+                                    <span className="text-[10px] text-slate-400 font-medium">
                                         {formatDistanceToNow(new Date(groupChat.last_message_at), { addSuffix: false })}
                                     </span>
                                 )}
                             </div>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate leading-relaxed">
                                 {hasCommunityAccess
-                                    ? (groupChat.last_message_preview || "Welcome to the community chat!")
-                                    : "Upgrade to access community chat"
+                                    ? (groupChat.last_message_preview || "Join the community interaction...")
+                                    : "Unlock to access community chat"
                                 }
                             </p>
                         </div>
                     </div>
                 )}
 
-                {/* AI Coach - Only show if access granted */}
-                {hasAiAccess && (
-                    <div
-                        onClick={() => {
-                            if (hasAiAccess) {
-                                onSelectChat('ai-coach', {
-                                    full_name: "ADH AI Coach",
-                                    is_ai: true
-                                });
-                            }
-                        }}
-                        className={cn(
-                            "flex items-center gap-3 p-3 rounded-lg transition-colors relative group",
-                            hasAiAccess ? "cursor-pointer" : "cursor-not-allowed opacity-60",
-                            hasAiAccess && selectedConversationId === 'ai-coach'
-                                ? "bg-indigo-50 dark:bg-indigo-900/20"
-                                : hasAiAccess && "hover:bg-slate-100 dark:hover:bg-slate-800/50"
-                        )}
-                    >
-                        <Avatar className="h-10 w-10 bg-indigo-100 dark:bg-indigo-900">
-                            <AvatarFallback className="bg-indigo-100 text-indigo-600">
-                                {hasAiAccess ? (
-                                    <Bot className="w-5 h-5" />
-                                ) : (
-                                    <Lock className="w-5 h-5" />
-                                )}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-baseline mb-0.5">
-                                <p className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate pr-2 flex items-center gap-2">
-                                    ADH AI Coach
-                                    {!hasAiAccess && (
-                                        <Lock className="w-3 h-3 text-slate-400" />
-                                    )}
-                                </p>
+                {/* AI Coach */}
+                <div
+                    onClick={() => {
+                        if (hasAiAccess) {
+                            onSelectChat('ai-coach', {
+                                full_name: "ADH AI Coach",
+                                is_ai: true
+                            });
+                        }
+                    }}
+                    className={cn(
+                        "group flex items-center gap-4 p-4 rounded-xl transition-all duration-300 border relative overflow-hidden",
+                        hasAiAccess ? "cursor-pointer hover:-translate-y-0.5" : "cursor-not-allowed opacity-70 grayscale",
+                        hasAiAccess && selectedConversationId === 'ai-coach'
+                            ? "bg-white dark:bg-slate-800 border-pink-200 dark:border-pink-900 shadow-lg shadow-pink-500/10 ring-1 ring-pink-500/20"
+                            : "bg-white/60 dark:bg-slate-900/40 border-white/20 dark:border-slate-800 hover:bg-white hover:shadow-md"
+                    )}
+                >
+                    {/* Active Indicator Strip */}
+                    {hasAiAccess && selectedConversationId === 'ai-coach' && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-pink-500 to-orange-500" />
+                    )}
+
+                    <div className={cn(
+                        "h-12 w-12 rounded-full flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105",
+                        hasAiAccess ? "bg-gradient-to-br from-pink-500 to-orange-500 text-white" : "bg-slate-200 text-slate-400"
+                    )}>
+                        {hasAiAccess ? <Bot className="w-6 h-6" /> : <Lock className="w-5 h-5" />}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center mb-1">
+                            <p className={cn(
+                                "font-bold text-sm truncate flex items-center gap-2",
+                                selectedConversationId === 'ai-coach' ? "text-pink-900 dark:text-pink-100" : "text-slate-700 dark:text-slate-200"
+                            )}>
+                                ADH AI Coach
                                 {hasAiAccess && (
-                                    <span className="text-[10px] bg-indigo-100 text-indigo-700 font-medium px-1.5 py-0.5 rounded-full shrink-0">
-                                        AI
+                                    <span className="text-[9px] bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-orange-600 uppercase tracking-wider font-extrabold border border-pink-200 px-1.5 py-0.5 rounded-full">
+                                        Pro
                                     </span>
                                 )}
-                            </div>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                                {hasAiAccess
-                                    ? "Your personal course facilitator"
-                                    : "Upgrade to access AI mentor"
-                                }
                             </p>
                         </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate leading-relaxed">
+                            {hasAiAccess
+                                ? "Ask me anything about your course..."
+                                : "Unlock to access AI mentor"
+                            }
+                        </p>
                     </div>
-                )}
+                </div>
+            </div>
+
+            <div className="p-4 text-center">
+                <p className="text-[10px] text-slate-400">Atcess Digital Hub Secured Chat</p>
             </div>
         </div>
     );

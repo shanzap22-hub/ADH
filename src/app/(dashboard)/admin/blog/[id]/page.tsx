@@ -8,6 +8,8 @@ interface EditBlogPageProps {
     }>;
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function EditBlogPage(props: EditBlogPageProps) {
     const params = await props.params;
     const supabase = await createClient();

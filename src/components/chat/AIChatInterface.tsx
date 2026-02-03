@@ -238,8 +238,8 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
                             <ArrowLeft className="w-5 h-5" />
                         </Button>
                     )}
-                    <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center border border-indigo-200">
-                        <Bot className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                    <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-orange-500 rounded-full flex items-center justify-center shadow-md shadow-pink-500/20">
+                        <Bot className="w-6 h-6 text-white" />
                     </div>
                     <div>
                         <h1 className="font-semibold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">

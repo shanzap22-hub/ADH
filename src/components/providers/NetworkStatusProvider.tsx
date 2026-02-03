@@ -1,84 +1,98 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Network } from "@capacitor/network";
-import { WifiOff } from "lucide-react";
-import { usePlatform } from "@/hooks/use-platform";
-import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { WifiOff, Wifi } from "lucide-react";
 
-export const NetworkStatusProvider = ({ children }: { children: React.ReactNode }) => {
-    const { isNative } = usePlatform();
-    const [status, setStatus] = useState<{ connected: boolean; connectionType: string }>({
-        connected: true,
-        connectionType: 'unknown'
-    });
-    const [retryLoading, setRetryLoading] = useState(false);
+export function NetworkStatusProvider({ children }: { children: React.ReactNode }) {
+    const [isOnline, setIsOnline] = useState(true);
 
     useEffect(() => {
-        // Only run logic effectively if on Native, or just always for safety?
-        // Let's run always, as it helps Web users too, but primarily for App Approval
-
-        async function checkStatus() {
-            try {
-                const currentStatus = await Network.getStatus();
-                setStatus(currentStatus);
-            } catch (e) {
-                // Fallback for non-capacitor env if it throws (unlikely with plugin)
-                if (typeof navigator !== 'undefined') {
-                    setStatus({ connected: navigator.onLine, connectionType: 'wifi' });
-                }
-            }
+        // Initial check
+        if (typeof window !== "undefined") {
+            setIsOnline(navigator.onLine);
         }
 
-        checkStatus();
+        const handleOnline = () => {
+            setIsOnline(true);
+            toast.success("Back Online", {
+                description: "Your internet connection is restored.",
+                icon: <Wifi className="w-4 h-4 text-green-500" />,
+                duration: 3000,
+            });
+        };
 
-        const handler = Network.addListener("networkStatusChange", (status) => {
-            console.log("Network status changed", status);
-            setStatus(status);
-        });
+        const handleOffline = () => {
+            setIsOnline(false);
+            // Persistent toast until back online? Or just a long duration warning.
+            // A persistent sticky warnings is better, but toast is less intrusive as requested.
+            // Let's us a long duration toast that user can dismiss.
+            toast.warning("No Internet Connection", {
+                description: "You are currently offline. Some features may be unavailable.",
+                icon: <WifiOff className="w-4 h-4 text-orange-500" />,
+                duration: 10000, // Show for 10 seconds
+            });
+        };
 
-        // Also standard window listeners as backup
-        const onOnline = () => setStatus(prev => ({ ...prev, connected: true }));
-        const onOffline = () => setStatus(prev => ({ ...prev, connected: false }));
+        window.addEventListener("online", handleOnline);
+        window.addEventListener("offline", handleOffline);
 
-        window.addEventListener('online', onOnline);
-        window.addEventListener('offline', onOffline);
+        // Crash Guard for WebView/Offline state
+        // Prevents white screen "Application error: a client-side exception has occurred"
+        const handleGlobalError = (event: ErrorEvent) => {
+            // Check if error is network/chunk related
+            if (
+                event.message?.toLowerCase().includes("loading chunk") ||
+                event.message?.toLowerCase().includes("client-side exception") ||
+                event.message?.toLowerCase().includes("network")
+            ) {
+                console.warn("Suppressed offline error:", event.message);
+                // Prevent default browser/webview error handling (which might be the white screen)
+                event.preventDefault();
+            }
+        };
+
+        const handlePromiseRejection = (event: PromiseRejectionEvent) => {
+            if (
+                event.reason?.message?.toLowerCase().includes("loading chunk") ||
+                event.reason?.message?.toLowerCase().includes("client-side exception") ||
+                event.reason?.message?.toLowerCase().includes("network")
+            ) {
+                console.warn("Suppressed offline promise rejection:", event.reason);
+                event.preventDefault();
+            }
+        };
+
+        window.addEventListener("error", handleGlobalError);
+        window.addEventListener("unhandledrejection", handlePromiseRejection);
 
         return () => {
-            handler.then(h => h.remove());
-            window.removeEventListener('online', onOnline);
-            window.removeEventListener('offline', onOffline);
+            window.removeEventListener("online", handleOnline);
+            window.removeEventListener("offline", handleOffline);
+            window.removeEventListener("error", handleGlobalError);
+            window.removeEventListener("unhandledrejection", handlePromiseRejection);
         };
     }, []);
 
-    const handleRetry = () => {
-        setRetryLoading(true);
-        setTimeout(async () => {
-            const currentStatus = await Network.getStatus();
-            setStatus(currentStatus);
-            setRetryLoading(false);
-            if (currentStatus.connected) {
-                window.location.reload();
-            }
-        }, 1000);
-    };
-
-    if (!status.connected) {
-        return (
-            <div className="fixed inset-0 z-[100] bg-white dark:bg-slate-950 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
-                <div className="w-20 h-20 bg-slate-100 dark:bg-slate-900 rounded-full flex items-center justify-center mb-6">
-                    <WifiOff className="h-10 w-10 text-slate-500" />
-                </div>
-                <h2 className="text-2xl font-bold mb-2">No Internet Connection</h2>
-                <p className="text-slate-500 mb-8 max-w-sm">
-                    Please check your internet settings and try again. The app requires an active connection.
-                </p>
-                <Button onClick={handleRetry} disabled={retryLoading} size="lg">
-                    {retryLoading ? "Checking..." : "Try Again"}
-                </Button>
-            </div>
-        );
-    }
-
-    return <>{children}</>;
-};
+    return (
+        <>
+            {/* Optional: Sticky Bar for Offline State if you want it more visible than a toast */}
+            {!isOnline && (
+                <>
+                    <div className="fixed bottom-0 left-0 right-0 bg-red-600 text-white text-center text-xs py-1 z-[9999] animate-in slide-in-from-bottom">
+                        No Internet Connection
+                    </div>
+                    {/* Disable interactions to prevent navigation errors */}
+                    <style>{`
+                        a, button, [role="button"], input, textarea, select {
+                            pointer-events: none !important;
+                            opacity: 0.6 !important;
+                            filter: grayscale(0.5);
+                        }
+                    `}</style>
+                </>
+            )}
+            {children}
+        </>
+    );
+}

@@ -116,7 +116,7 @@ export async function GET(req: Request) {
                 if (manualEmails.length > 0) {
                     const { data: emailProfiles } = await supabase
                         .from('profiles')
-                        .select('id, email, membership_tier')
+                        .select('id, email, membership_tier, phone_number, whatsapp_number, full_name')
                         .in('email', manualEmails);
 
                     if (emailProfiles) {
@@ -150,7 +150,7 @@ export async function GET(req: Request) {
                         try {
                             const { data: fetchedProfiles } = await supabase
                                 .from('profiles')
-                                .select('id, email, membership_tier')
+                                .select('id, email, membership_tier, phone_number, whatsapp_number, full_name')
                                 .in('id', uniqueIds as string[]);
                             profiles = fetchedProfiles || [];
                         } catch (e) {

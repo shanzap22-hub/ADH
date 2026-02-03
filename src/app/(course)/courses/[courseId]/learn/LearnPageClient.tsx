@@ -6,6 +6,7 @@ import { LessonNavigation } from "@/components/course/LessonNavigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { CourseContentBackButton } from "../_components/course-content-back-button";
 
 interface Chapter {
     id: string;
@@ -68,15 +69,10 @@ export default function LearnPageClient({
             {/* Sidebar is handled by layout.tsx */}
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-hidden pt-[env(safe-area-inset-top)]">
                 {/* Back Button Header */}
                 <div className="flex-none p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center md:hidden">
-                    <Link href={`/courses/${courseId}`}>
-                        <Button variant="ghost" size="sm" className="pl-0 gap-2 hover:bg-transparent">
-                            <ArrowLeft className="h-4 w-4" />
-                            Back to Course
-                        </Button>
-                    </Link>
+                    <CourseContentBackButton href={`/courses/${courseId}`} label="Back to Course" />
                 </div>
 
                 <div className="flex-1 overflow-y-auto">

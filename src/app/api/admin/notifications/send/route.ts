@@ -13,9 +13,12 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        //Ideally check for admin role here
-        // const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-        // if (profile?.role !== 'admin') { ... }
+        // Check for Admin Role
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+
+        if (!['admin', 'super_admin'].includes(profile?.role || '') && user.email !== 'shanzap22@gmail.com') {
+            return NextResponse.json({ error: "Forbidden: Admin access only" }, { status: 403 });
+        }
 
         const body = await req.json();
         const { title, message } = body;

@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { UserPlus } from "lucide-react";
 import { ManualEnrollmentForm } from "./_components/manual-enrollment-form";
 
+export const dynamic = 'force-dynamic';
+
 export default async function EnrollPage() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

@@ -1,6 +1,8 @@
 import { getAllUsers } from "@/actions/admin/get-all-users";
 import UserManagementClient from "@/components/admin/UserManagementClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminUsersPage() {
     const users = await getAllUsers();
 

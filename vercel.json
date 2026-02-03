@@ -1,5 +1,4 @@
 {
-    "name": "adh-connect",
     "buildCommand": "next build",
     "devCommand": "next dev",
     "installCommand": "npm install",

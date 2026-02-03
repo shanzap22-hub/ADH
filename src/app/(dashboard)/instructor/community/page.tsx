@@ -4,6 +4,8 @@ import { CreatePost } from "@/components/community/CreatePost";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
     title: "Instructor Community | ADH Connect",
     description: "Post updates to the community",

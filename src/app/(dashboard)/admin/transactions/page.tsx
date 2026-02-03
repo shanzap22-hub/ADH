@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import TransactionsManager from "@/components/admin/transactions-manager";
 
+export const dynamic = 'force-dynamic';
+
 export default async function TransactionsPage() {
     const supabase = await createClient();
 

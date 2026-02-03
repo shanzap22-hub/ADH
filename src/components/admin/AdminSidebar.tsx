@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -101,6 +102,15 @@ const routes = [
 
 export function AdminSidebar() {
     const pathname = usePathname();
+    const [optimisticPath, setOptimisticPath] = useState(pathname);
+
+    useEffect(() => {
+        setOptimisticPath(pathname);
+    }, [pathname]);
+
+    const handleNavClick = (href: string) => {
+        setOptimisticPath(href);
+    };
 
     return (
         <div className="space-y-4 py-4 flex flex-col h-full">
@@ -110,9 +120,10 @@ export function AdminSidebar() {
                         <Link
                             key={route.href}
                             href={route.href}
+                            onClick={() => handleNavClick(route.href)}
                             className={cn(
                                 "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:bg-white/50 rounded-lg transition",
-                                pathname === route.href
+                                optimisticPath === route.href || (route.href !== '/admin' && optimisticPath?.startsWith(route.href + "/"))
                                     ? "bg-white shadow-sm"
                                     : "transparent"
                             )}
