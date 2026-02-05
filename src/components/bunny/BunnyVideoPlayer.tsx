@@ -30,6 +30,18 @@ export const BunnyVideoPlayer = ({
 }: BunnyVideoPlayerProps) => {
     const libraryId = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID;
 
+    if (!libraryId) {
+        console.error("[BunnyPlayer] Missing NEXT_PUBLIC_BUNNY_LIBRARY_ID");
+        return (
+            <div className={cn("relative aspect-video bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center text-red-500 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900", className)}>
+                <div className="text-center p-4">
+                    <p className="font-bold">Configuration Error</p>
+                    <p className="text-sm">Video Library ID is missing.</p>
+                </div>
+            </div>
+        );
+    }
+
     // Memoize the embed URL to prevent iframe reloading on prop changes (like initialTime updates)
     // We only update this when videoId changes.
     const [embedUrl, setEmbedUrl] = useState(`https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&context=adh-player`);

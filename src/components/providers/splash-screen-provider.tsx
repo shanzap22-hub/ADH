@@ -28,7 +28,9 @@ export const SplashScreenProvider = () => {
                 try {
                     const { SplashScreen } = await import('@capacitor/splash-screen');
                     await SplashScreen.hide();
-                } catch (e) { }
+                } catch (e) {
+                    console.warn("Splash Screen Hide Failed (Non-Native?)", e);
+                }
             }
 
             // Fade out HTML Splash

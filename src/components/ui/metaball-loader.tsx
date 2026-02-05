@@ -18,7 +18,8 @@ export const MetaballLoader = ({ className, fullscreen = false }: MetaballLoader
     // We'll use a deterministic ID strategy or scope it.
     // For safety with hydration, we stick to a simple ID but rely on the fact that
     // identical filters don't visually break if duplicated.
-    const filterId = "goo-metaball-" + useId().replace(/:/g, "");
+    // Use a static ID to prevent hydration mismatch.
+    const filterId = "goo-metaball-filter";
     const filterUrl = `url(#${filterId})`;
 
     return (

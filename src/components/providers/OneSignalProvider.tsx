@@ -44,20 +44,8 @@ export const OneSignalProvider = () => {
                     console.log("OneSignal: Permission Granted:", granted);
                 });
 
-                // Request Microphone Permission (for Voice features)
-                // We use a short timeout to prevent fighting for the UI thread or overlap
-                setTimeout(async () => {
-                    try {
-                        console.log("Requesting Microphone Permission...");
-                        // This triggers the native permission dialog in Capacitor/WebViews
-                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                        // Close immediately as we just needed the permission
-                        stream.getTracks().forEach(track => track.stop());
-                        console.log("Microphone Permission Granted");
-                    } catch (err) {
-                        console.error("Microphone Permission Denied or Error:", err);
-                    }
-                }, 1000);
+                // Feature: Mic Perms are now requested lazily in ChatWindow.tsx
+                // This prevents the "Green Dot" (Recording Indicator) from appearing at app launch.
 
                 // Identify User
                 // We likely need to import the supabase client to get the user ID

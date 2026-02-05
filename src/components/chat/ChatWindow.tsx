@@ -5,13 +5,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Send, Mic, Image as ImageIcon, X, Loader2, ArrowLeft, Users, Trash2, Reply, MoreHorizontal } from "lucide-react";
+import { Send, Mic, Image as ImageIcon, X, Loader2, ArrowLeft, Users, Trash2, Reply, MoreHorizontal, Bell, BellOff } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { uploadChatMedia, deleteChatMessage } from "@/actions/chat-actions";
+import { uploadChatMedia, deleteChatMessage, sendChatMessage, toggleChatMute, getChatMuteStatus } from "@/actions/chat-actions";
 import { toast } from "sonner";
+import { Capacitor } from '@capacitor/core';
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface ChatWindowProps {
     conversationId: string;
@@ -35,6 +38,73 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
     const fileInputRef = useRef<HTMLInputElement>(null);
     const supabase = createClient();
     const isFirstLoad = useRef(true);
+    const [isMuted, setIsMuted] = useState(false);
+
+    useEffect(() => {
+        getChatMuteStatus(conversationId).then(setIsMuted);
+    }, [conversationId]);
+
+    const handleToggleMute = async (checked: boolean) => {
+        setIsMuted(checked); // Optimistic UI update
+
+        try {
+            // 1. Update Database
+            const result = await toggleChatMute(conversationId, checked);
+            if (result.error) throw new Error(result.error);
+
+            // 2. Update OneSignal Tags (Native Only)
+            if (Capacitor.isNativePlatform()) {
+                console.log(`Attempting to update OneSignal Tag: muted_chat_${conversationId} = ${checked}`);
+
+                try {
+                    const OneSignalModule = await import('onesignal-cordova-plugin');
+                    const OneSignal = OneSignalModule.default;
+
+                    if (!OneSignal) {
+                        console.error("OneSignal module not found during mute toggle");
+                        return;
+                    }
+
+                    const tagKey = `muted_chat_${conversationId}`;
+
+                    if (checked) {
+                        // MUTE: Add Tag
+                        if (OneSignal.User && typeof OneSignal.User.addTag === 'function') {
+                            OneSignal.User.addTag(tagKey, "true");
+                            console.log(`OneSignal Tag Added: ${tagKey}`);
+                        } else if ((OneSignal as any).sendTag) {
+                            // Fallback for older versions
+                            (OneSignal as any).sendTag(tagKey, "true");
+                        } else {
+                            console.warn("OneSignal.User.addTag not available");
+                        }
+                    } else {
+                        // UNMUTE: Remove Tag
+                        if (OneSignal.User && typeof OneSignal.User.removeTag === 'function') {
+                            OneSignal.User.removeTag(tagKey);
+                            console.log(`OneSignal Tag Removed: ${tagKey}`);
+                        } else if ((OneSignal as any).deleteTag) {
+                            // Fallback for older versions
+                            (OneSignal as any).deleteTag(tagKey);
+                        } else {
+                            console.warn("OneSignal.User.removeTag not available");
+                        }
+                    }
+                } catch (osError) {
+                    console.error("OneSignal Tag Update Critical Fail:", osError);
+                    // We don't revert UI for this, as DB update succeeded.
+                    // But we might want to tell the user notifications might still come?
+                }
+            }
+
+            toast.success(checked ? "Notifications muted" : "Notifications enabled");
+
+        } catch (error: any) {
+            console.error("Mute Toggle Error:", error);
+            setIsMuted(!checked); // Revert UI
+            toast.error("Failed to update settings");
+        }
+    };
 
     const scrollToBottom = (instant = false) => {
         messagesEndRef.current?.scrollIntoView({ behavior: instant ? "auto" : "smooth" });
@@ -168,24 +238,18 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                 setUploading(false);
             }
 
-            const { error } = await supabase.from("chat_messages").insert({
-                conversation_id: conversationId,
-                sender_id: currentUserId,
-                content: finalContent,
-                type: finalType,
-                media_url: finalMediaUrl,
-                reply_to_id: replyingTo?.id || null
-            });
+            const result = await sendChatMessage(
+                conversationId,
+                finalContent,
+                finalType,
+                finalMediaUrl,
+                replyingTo?.id || null
+            );
 
-            if (error) {
-                console.error("Supabase Insert Error:", {
-                    message: error.message,
-                    details: error.details,
-                    hint: error.hint,
-                    code: error.code
-                });
-                throw error;
-            }
+            if (result.error) throw new Error(result.error);
+            // No need to manually insert locally since we subscribe to Supabase events above
+            // But we might want to clear input immediately
+
 
             setInputText("");
             setMediaFile(null);
@@ -249,16 +313,15 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                         return;
                     }
 
-                    const { error } = await supabase.from("chat_messages").insert({
-                        conversation_id: conversationId,
-                        sender_id: currentUserId,
-                        content: "",
-                        type: "audio",
-                        media_url: result.url,
-                        reply_to_id: replyingTo?.id || null
-                    });
+                    const sendResult = await sendChatMessage(
+                        conversationId,
+                        "",
+                        "audio",
+                        result.url!,
+                        replyingTo?.id || null
+                    );
 
-                    if (error) throw error;
+                    if (sendResult.error) throw new Error(sendResult.error);
 
                     setReplyingTo(null);
                     setUploading(false);
@@ -325,6 +388,23 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                         <p className="text-xs text-slate-500">Group Chat</p>
                     )}
                 </div>
+                {/* Mute Toggle (Only for Group Chats) */}
+                {chatInfo.is_group && (
+                    <div className="ml-auto flex items-center">
+                        <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-full border border-slate-100 dark:border-slate-800">
+                            {isMuted ? <BellOff className="w-3.5 h-3.5 text-slate-400" /> : <Bell className="w-3.5 h-3.5 text-purple-600" />}
+                            <Label htmlFor="mute-chat" className="text-[10px] font-medium text-slate-600 dark:text-slate-300 cursor-pointer hidden sm:block">
+                                {isMuted ? 'Muted' : 'Notifications'}
+                            </Label>
+                            <Switch
+                                id="mute-chat"
+                                checked={isMuted}
+                                onCheckedChange={handleToggleMute}
+                                className="scale-75 data-[state=checked]:bg-purple-600"
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Messages Area */}

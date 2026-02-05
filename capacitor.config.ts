@@ -11,18 +11,18 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 3000,
-      launchAutoHide: false, // വെബ്സൈറ്റ് ലോഡ് ആകുന്നത് വരെ നിൽക്കാൻ
+      launchShowDuration: 0, // Infinite duration until we manually hide it
+      launchAutoHide: false, // We will manually hide it when the app is ready
       backgroundColor: "#ffffff",
       androidSplashResourceName: "splash",
       androidScaleType: "CENTER_CROP",
-      showSpinner: true, // സ്പിന്നർ കാണിക്കാൻ
+      showSpinner: true,
       androidSpinnerStyle: "large",
       iosSpinnerStyle: "small",
-      spinnerColor: "#4f46e5", // Purple Color
+      spinnerColor: "#4f46e5",
       splashFullScreen: true,
       splashImmersive: true,
-      useDialog: true, // ഇത് സ്പിന്നർ വരാൻ സഹായിക്കും
+      useDialog: true,
     },
   },
 };

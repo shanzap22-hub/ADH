@@ -63,7 +63,7 @@ export default async function CourseIdPage({
                 .eq("id", user.id)
                 .single();
 
-            const userTier = profile?.membership_tier || "bronze";
+            const userTier = profile?.membership_tier;
             const userRole = profile?.role;
 
             // Admins & Instructors get access

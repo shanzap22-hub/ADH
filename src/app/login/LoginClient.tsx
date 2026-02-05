@@ -3,9 +3,10 @@
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+
 import { createClient } from '@/lib/supabase/client'
 import { Capacitor } from '@capacitor/core'
-import { App } from '@capacitor/app'
+import { App as CapacitorApp } from '@capacitor/app'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -29,48 +30,77 @@ function LoginForm() {
         } else if (errorParam) {
             setError(decodeURIComponent(errorParam))
         }
+    }, [searchParams])
 
-        // Listener for Android/iOS Deep Link (OAuth Callback)
-        if (Capacitor.isNativePlatform()) {
-            App.addListener('appUrlOpen', async (data) => {
-                // data.url contains "adh://login-callback#access_token=...&refresh_token=..."
-                if (data.url.includes('access_token') || data.url.includes('refresh_token')) {
-                    setGoogleLoading(true); // Show loading while processing
+    // Handle Capacitor Deep Links (OAuth Callback)
+    useEffect(() => {
+        if (!Capacitor.isNativePlatform()) return;
 
-                    // Parse the hash parameters
-                    // adh://login-callback#access_token=... -> we need to manually set session
-                    // Supabase helper often works if we just ensure the client sees this.
-                    // But safest is to extract and setSession.
+        const handleDeepLink = async (event: { url: string }) => {
+            if (event.url.includes('login-callback')) {
+                // Determine if it's a specific scheme match just in case
+                // Convert custom scheme to HTTP url so URL object can parse it easily if needed, 
+                // or just extract params.
 
+                // Supabase PKCE flow returns 'code' in query params
+                const urlObj = new URL(event.url.replace('adh://', 'https://adh.today/'));
+                const code = urlObj.searchParams.get('code');
+                const error = urlObj.searchParams.get('error');
+                const errorDesc = urlObj.searchParams.get('error_description');
+
+                if (error) {
+                    setError(errorDesc || error);
+                    setGoogleLoading(false);
+                    return;
+                }
+
+                if (code) {
                     try {
-                        const url = new URL(data.url); // Might fail if custom scheme isn't fully standard, but usually works
-                        // Supabase redirect puts tokens in the hash (#)
-                        const hash = url.hash.substring(1); // remove #
-                        const params = new URLSearchParams(hash);
-                        const access_token = params.get('access_token');
-                        const refresh_token = params.get('refresh_token');
+                        const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
+                        if (sessionError) throw sessionError;
 
-                        if (access_token && refresh_token) {
-                            const { error } = await supabase.auth.setSession({
-                                access_token,
-                                refresh_token
-                            });
-                            if (!error) {
-                                // Login Success - Loop will trigger user check
-                                router.refresh();
-                            } else {
-                                setError("Failed to restore session: " + error.message);
+                        // Session exchanged successfully! 
+                        // Proceed to fetch profile and redirect (using the same logic as handleLogin)
+                        // For simplicity, we trigger a page reload or let the state update flow handle it.
+                        // But better to reuse the 'fetch profile' logic.
+
+                        // Quick verification:
+                        if (data.user) {
+                            // Fetch Role Logic (Duplicate of handleLogin logic, ideally refactor, but copying for safety now)
+                            const { data: profile } = await supabase.from('profiles').select('role, membership_tier').eq('id', data.user.id).single();
+
+                            if (profile?.membership_tier === 'cancelled' && profile.role !== 'super_admin') {
+                                setError('Your membership has been cancelled.');
+                                await supabase.auth.signOut();
+                                setGoogleLoading(false);
+                                return;
                             }
+
+                            let redirectPath = '/dashboard';
+                            if (profile?.role === 'instructor') redirectPath = '/instructor/courses';
+
+                            router.push(redirectPath);
+                            router.refresh();
                         }
-                    } catch (e) {
-                        console.error("Deep Link Error", e);
-                    } finally {
+
+                    } catch (err: any) {
+                        setError(err.message || 'Authentication failed');
                         setGoogleLoading(false);
                     }
+                } else {
+                    // Implicit flow (Hash params) - Not default in Supabase v2 but handling just in case
+                    // Or user clicked back.
+                    setGoogleLoading(false);
                 }
-            });
-        }
-    }, [searchParams])
+            }
+        };
+
+        const listener = CapacitorApp.addListener('appUrlOpen', handleDeepLink);
+
+        return () => {
+            listener.then(handle => handle.remove());
+        };
+    }, [router, supabase]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()

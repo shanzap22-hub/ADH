@@ -1,6 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
-import { FeedView } from "@/components/community/FeedView";
-import { CreatePost } from "@/components/community/CreatePost";
+import nextDynamic from "next/dynamic";
+import { MetaballLoader } from "@/components/ui/metaball-loader";
+
+const FeedView = nextDynamic(() => import("@/components/community/FeedView").then(mod => mod.FeedView), {
+    loading: () => <div className="h-[400px] w-full flex items-center justify-center bg-white/50 rounded-xl"><MetaballLoader /></div>
+});
+
+const CreatePost = nextDynamic(() => import("@/components/community/CreatePost").then(mod => mod.CreatePost), {
+    loading: () => <div className="h-[150px] w-full flex items-center justify-center bg-white/50 rounded-xl"><MetaballLoader /></div>
+});
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
 

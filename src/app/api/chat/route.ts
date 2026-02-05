@@ -29,8 +29,8 @@ export async function POST(req: Request) {
 
         if (!apiKey) {
             console.error('[AI Chat] GEMINI_API_KEY is missing!');
-            return new Response(JSON.stringify({ error: 'AI service not configured' }), {
-                status: 500,
+            return new Response(JSON.stringify({ error: 'AI Configuration Missing (GEMINI_API_KEY)' }), {
+                status: 503,
                 headers: { 'Content-Type': 'application/json' }
             });
         }

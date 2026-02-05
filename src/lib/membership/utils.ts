@@ -7,18 +7,19 @@ export function getTierHierarchy(tier: string): string[] {
         case "platinum":
             return ["platinum"];
         case "diamond":
-            return ["bronze", "silver", "gold", "diamond"];
+            return ["diamond"];
         case "gold":
-            return ["bronze", "silver", "gold"];
+            return ["gold"];
         case "silver":
-            return ["bronze", "silver"];
+            return ["silver"];
         case "expired":
             return ["expired"];
         case "cancelled":
             return [];
         case "bronze":
-        default:
             return ["bronze"];
+        default:
+            return [];
     }
 }
 

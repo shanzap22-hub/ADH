@@ -27,7 +27,38 @@ export default async function LearnPage({
         .eq("course_id", courseId)
         .single();
 
-    if (!enrollment) {
+    // Check Tier Access (Fix for automatic redirect)
+    let hasTierAccess = false;
+    try {
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("membership_tier, role")
+            .eq("id", user.id)
+            .single();
+
+        // 1. Check Admin/Instructor Access
+        const userRole = profile?.role;
+        if (["super_admin", "admin", "instructor"].includes(userRole)) {
+            hasTierAccess = true;
+        } else {
+            // 2. Check Tier Access
+            const userTier = profile?.membership_tier?.toLowerCase();
+
+            const { data: allowedTiers } = await supabase
+                .from("course_tier_access")
+                .select("tier")
+                .eq("course_id", courseId);
+
+            if (userTier && allowedTiers && allowedTiers.length > 0) {
+                // Strict Match logic as requested - no presets/hierarchy
+                hasTierAccess = allowedTiers.some((t: any) => t.tier?.toLowerCase() === userTier);
+            }
+        }
+    } catch (err) {
+        console.error("Tier Check Error:", err);
+    }
+
+    if (!enrollment && !hasTierAccess) {
         return redirect(`/courses/${courseId}`);
     }
 

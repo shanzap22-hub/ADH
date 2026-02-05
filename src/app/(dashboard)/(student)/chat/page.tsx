@@ -1,6 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import ChatPageClient from "@/components/chat/ChatPageClient";
+import { MetaballLoader } from "@/components/ui/metaball-loader";
+import nextDynamic from "next/dynamic";
+
+const ChatPageClient = nextDynamic(() => import("@/components/chat/ChatPageClient"), {
+    loading: () => <div className="h-[80vh] w-full flex items-center justify-center"><MetaballLoader /></div>
+});
 
 export const metadata = {
     title: "Chat | ADH Connect",

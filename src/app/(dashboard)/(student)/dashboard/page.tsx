@@ -4,8 +4,16 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardCourses } from "@/actions/get-dashboard-courses";
 import { CoursesList } from "@/components/courses-list";
-import { FeedView } from "@/components/community/FeedView";
-import { LiveSessionsBanner } from "@/components/community/LiveSessionsBanner";
+import nextDynamic from "next/dynamic";
+import { MetaballLoader } from "@/components/ui/metaball-loader";
+
+const FeedView = nextDynamic(() => import("@/components/community/FeedView").then(mod => mod.FeedView), {
+    loading: () => <div className="h-[400px] w-full flex items-center justify-center bg-white/50 rounded-xl"><MetaballLoader /></div>
+});
+
+const LiveSessionsBanner = nextDynamic(() => import("@/components/community/LiveSessionsBanner").then(mod => mod.LiveSessionsBanner), {
+    loading: () => <div className="flex items-center justify-center h-[200px] w-full bg-white/50 rounded-xl mb-8"><MetaballLoader /></div>
+});
 import {
     Clock,
     Sparkles,
