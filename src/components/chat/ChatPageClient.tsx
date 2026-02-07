@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { AIChatInterface } from "@/components/chat/AIChatInterface";
 import { cn } from "@/lib/utils";
 import { MessageSquare, ShieldAlert, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getGlobalGroupChat } from "@/actions/chat-actions";
 
 interface ChatPageClientProps {
     currentUserId: string;
@@ -16,6 +18,7 @@ interface ChatPageClientProps {
     termsAcceptedCommunity: boolean;
     hasAiAccess: boolean;
     hasCommunityAccess: boolean;
+    initialGroupChat?: any;
 }
 
 export default function ChatPageClient({
@@ -25,10 +28,12 @@ export default function ChatPageClient({
     termsAcceptedAi: initialAiTerms,
     termsAcceptedCommunity: initialCommunityTerms,
     hasAiAccess,
-    hasCommunityAccess
+    hasCommunityAccess,
+    initialGroupChat
 }: ChatPageClientProps) {
     const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
     const [selectedChatInfo, setSelectedChatInfo] = useState<any>(null);
+    const searchParams = useSearchParams();
 
     // Terms State
     const [termsAiAccepted, setTermsAiAccepted] = useState(initialAiTerms);
@@ -36,6 +41,40 @@ export default function ChatPageClient({
     const [showTermsModal, setShowTermsModal] = useState(false);
     const [pendingChatSelection, setPendingChatSelection] = useState<{ id: string, info: any } | null>(null);
     const [loadingTerms, setLoadingTerms] = useState(false);
+
+    // Deep Linking: Handle URL parameters
+    useEffect(() => {
+        const action = searchParams.get('action');
+        const chatId = searchParams.get('id');
+
+        const autoOpenChat = async () => {
+            if (action === 'community' && hasCommunityAccess && termsCommunityAccepted) {
+                try {
+                    const group = await getGlobalGroupChat();
+                    if (group) {
+                        setSelectedChatId(group.id);
+                        setSelectedChatInfo({
+                            full_name: group.group_name,
+                            is_group: true
+                        });
+                    }
+                } catch (e) {
+                    console.error("Failed to auto-open community chat", e);
+                }
+            } else if (action === 'ai' && hasAiAccess && termsAiAccepted) {
+                setSelectedChatId('ai-coach');
+                setSelectedChatInfo({
+                    full_name: "ADH AI Coach",
+                    is_ai: true
+                });
+            } else if (chatId && (hasCommunityAccess || hasAiAccess)) {
+                // Generic chat ID opening - you'd need to fetch chat info
+                // For now, we'll skip this as it needs more context
+            }
+        };
+
+        autoOpenChat();
+    }, [searchParams, hasCommunityAccess, hasAiAccess, termsAiAccepted, termsCommunityAccepted]);
 
     // Limited Offer Banner Logic
     const showUpgradeBanner = ["bronze", "silver"].includes(currentUserTier);
@@ -117,6 +156,7 @@ export default function ChatPageClient({
                     selectedConversationId={selectedChatId}
                     hasCommunityAccess={hasCommunityAccess}
                     hasAiAccess={hasAiAccess}
+                    initialGroupChat={initialGroupChat}
                 />
             </div>
 

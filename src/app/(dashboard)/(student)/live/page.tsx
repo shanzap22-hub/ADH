@@ -11,6 +11,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { LiveCountDown } from "@/components/live/LiveCountDown";
 import { ReschedulePicker } from "@/components/booking/ReschedulePicker";
+import { LiveSessionCardSkeleton } from "@/components/skeletons/live-page-skeleton";
 
 export default function LivePage() {
     const [hasBookingAccess, setHasBookingAccess] = useState(false);
@@ -156,7 +157,11 @@ export default function LivePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
                 {isLoading ? (
-                    <MetaballLoader fullscreen />
+                    <>
+                        <LiveSessionCardSkeleton />
+                        <LiveSessionCardSkeleton />
+                        <LiveSessionCardSkeleton />
+                    </>
                 ) : (
                     <>
                         {/* 0. Upcomming Bookings */}

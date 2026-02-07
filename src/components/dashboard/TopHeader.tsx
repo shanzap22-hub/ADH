@@ -17,6 +17,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NotificationBell } from "./NotificationBell";
+import { SearchModal } from "./SearchModal";
 
 const navItems = [
     { label: "Community", icon: Home, href: "/community" },
@@ -29,6 +31,7 @@ const navItems = [
 export const TopHeader = () => {
     const [user, setUser] = useState<User | null>(null);
     const [isMounted, setIsMounted] = useState(false);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const router = useRouter();
     const pathname = usePathname();
     const supabase = createClient();
@@ -107,16 +110,15 @@ export const TopHeader = () => {
                 {/* Right Section */}
                 <div className="flex items-center gap-3">
                     {/* Search - Hidden on mobile */}
-                    <button className="hidden sm:flex items-center justify-center w-9 h-9 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <button
+                        onClick={() => setIsSearchOpen(true)}
+                        className="hidden sm:flex items-center justify-center w-9 h-9 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition outline-none"
+                    >
                         <Search className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                     </button>
 
                     {/* Notifications */}
-                    <button className="relative flex items-center justify-center w-9 h-9 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition">
-                        <Bell className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                        {/* Notification badge */}
-                        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-                    </button>
+                    <NotificationBell />
 
                     {/* User Avatar */}
                     <DropdownMenu>
@@ -149,6 +151,9 @@ export const TopHeader = () => {
                     </DropdownMenu>
                 </div>
             </div>
+
+            {/* Search Modal */}
+            <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
         </header>
     );
 };

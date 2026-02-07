@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea"; // Better for chat input
 import { Mic, Send, Image as ImageIcon, Loader2, Bot, StopCircle, User, ArrowLeft, X } from "lucide-react";
+import Image from "next/image";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -283,12 +284,15 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
                                     : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-100 rounded-tl-none"
                             )}>
                                 {m.image_url && (
-                                    <div className="mb-3 rounded-lg overflow-hidden bg-black/5 dark:bg-white/5 border border-white/10">
-                                        <img
+                                    <div className="mb-3 rounded-lg overflow-hidden bg-black/5 dark:bg-white/5 border border-white/10 relative">
+                                        <Image
                                             src={m.image_url}
                                             alt="Attached"
+                                            width={0}
+                                            height={0}
+                                            sizes="100vw"
                                             className="max-h-60 w-auto object-contain rounded"
-                                            loading="lazy"
+                                            style={{ width: 'auto', height: 'auto' }}
                                         />
                                     </div>
                                 )}

@@ -37,6 +37,7 @@ interface BottomNavProps {
         canViewCommunity: boolean;
         canViewLive: boolean;
         canViewChat: boolean;
+        hideOnPlayer?: boolean;
     };
 }
 
@@ -56,6 +57,18 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
             setIsNavigating(true);
         }
     };
+
+    // Hide on Course Player (Chapters) pages if requested (default to false to avoid breaking other layouts)
+    const isChapterPage = pathname.includes("/chapters/");
+
+    // Also check for "learn" if that's used, but based on file structure it's chapters.
+    // However, if the user mentioned "learn/page.tsx" in history, I should double check. 
+    // The previous history mentions learn/page.tsx. Let's cover that too just in case.
+    const isPlayerPage = isChapterPage || pathname.includes("/learn");
+
+    if (permissions?.hideOnPlayer && isPlayerPage) {
+        return null;
+    }
 
     const visibleNavItems = navItems.filter((item) => {
         if (item.href === "/live" && permissions && !permissions.canViewLive) return false;

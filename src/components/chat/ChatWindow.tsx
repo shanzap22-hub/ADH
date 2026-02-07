@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -463,16 +464,24 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                                 {msg.type === 'image' && msg.media_url && (
                                     <Dialog>
                                         <DialogTrigger asChild>
-                                            <div className="mb-2 w-full max-w-[240px] aspect-square rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-black/5">
-                                                <img src={msg.media_url} alt="Image" className="w-full h-full object-cover" loading="lazy" />
+                                            <div className="mb-2 w-full max-w-[240px] aspect-square rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-black/5 relative">
+                                                <Image
+                                                    src={msg.media_url}
+                                                    alt="Image"
+                                                    fill
+                                                    className="object-cover"
+                                                    sizes="(max-width: 768px) 100vw, 240px"
+                                                />
                                             </div>
                                         </DialogTrigger>
                                         <DialogContent className="max-w-4xl p-0 bg-transparent border-none shadow-none flex items-center justify-center">
-                                            <div className="relative">
-                                                <img
+                                            <div className="relative w-full h-full min-w-[50vw] min-h-[50vh] flex items-center justify-center">
+                                                <Image
                                                     src={msg.media_url}
                                                     alt="Full Preview"
-                                                    className="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl"
+                                                    width={1200}
+                                                    height={1200}
+                                                    className="max-w-[90vw] max-h-[90vh] w-auto h-auto rounded-lg shadow-2xl object-contain"
                                                 />
                                                 <a
                                                     href={msg.media_url}

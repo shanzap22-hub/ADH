@@ -1,14 +1,19 @@
 "use client";
 
 import { PostCard } from "./PostCard";
+import { Button } from "@/components/ui/button";
 
 interface FeedViewProps {
     posts: any[];
     isAdmin: boolean;
     currentUserId?: string;
+    limit?: number; // Optional limit for Dashboard view
 }
 
-export function FeedView({ posts, isAdmin, currentUserId }: FeedViewProps) {
+export function FeedView({ posts, isAdmin, currentUserId, limit }: FeedViewProps) {
+    const displayedPosts = limit ? posts.slice(0, limit) : posts;
+    const hasMore = limit ? posts.length > limit : false;
+
     if (posts.length === 0) {
         return (
             <div className="text-center py-20 animate-in fade-in duration-500">
@@ -25,11 +30,24 @@ export function FeedView({ posts, isAdmin, currentUserId }: FeedViewProps) {
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {posts.map((post, i) => (
-                <div key={post.id} style={{ animationDelay: `${i * 50}ms` }} className="animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards">
-                    <PostCard post={post} isAdmin={isAdmin} currentUserId={currentUserId} />
-                </div>
+            {displayedPosts.map((post) => (
+                <PostCard
+                    key={post.id}
+                    post={post}
+                    isAdmin={isAdmin}
+                    currentUserId={currentUserId}
+                />
             ))}
+
+            {hasMore && (
+                <div className="text-center pt-4">
+                    <Button variant="outline" className="w-full py-6 text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700 transition-all font-semibold" asChild>
+                        <a href="/community">
+                            View All Posts ({posts.length})
+                        </a>
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }

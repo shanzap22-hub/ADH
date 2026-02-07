@@ -10,20 +10,23 @@ export const SplashScreenProvider = () => {
 
     useEffect(() => {
         const initSplash = async () => {
-            // Wait for App Load only - NO ARTIFICIAL DELAY
+            // 1. Wait for App Load (Browser Window Ready)
             const loadPromise = new Promise((resolve) => {
                 if (document.readyState === 'complete') {
                     resolve(true);
                 } else {
                     window.addEventListener('load', () => resolve(true));
-                    // Fallback to avoid hanging if load event missed
-                    setTimeout(() => resolve(true), 10000);
+                    setTimeout(() => resolve(true), 5000); // Fallback
                 }
             });
 
             await loadPromise;
 
-            // Hide Native Splash
+            // 2. Safety Buffer: Ensure React has actually painted the <ModernLoader /> 
+            //    This prevents the "White Screen" flash between Native Splash and HTML content.
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // 3. Hide Native Splash
             if (typeof window !== 'undefined') {
                 try {
                     const { SplashScreen } = await import('@capacitor/splash-screen');
@@ -33,7 +36,12 @@ export const SplashScreenProvider = () => {
                 }
             }
 
-            // Fade out HTML Splash
+            // 4. "Browser Loading" Simulation / Data Wait
+            //    User requested: "3 seconds fixed time... until loading comes"
+            //    We keep the HTML Spinner visible for 3s to represent this loading phase.
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+            // 5. Fade out HTML Splash
             setIsVisible(false);
         };
 
@@ -51,6 +59,7 @@ export const SplashScreenProvider = () => {
                     alt="ADH Connect"
                     fill
                     className="object-contain"
+                    sizes="(max-width: 768px) 100vw, 33vw"
                     priority
                 />
             </div>

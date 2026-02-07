@@ -6,11 +6,21 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'idlvnncaqmiixwnyleci.supabase.co',
-        pathname: '/storage/v1/object/public/**',
+        pathname: '/**',
       },
       {
         protocol: 'https',
         hostname: 'adh-connect.b-cdn.net',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'storage.bunnycdn.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.b-cdn.net',
         pathname: '/**',
       },
     ],

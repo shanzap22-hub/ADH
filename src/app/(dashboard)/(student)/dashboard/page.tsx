@@ -43,12 +43,46 @@ export default async function Dashboard() {
     const { data: posts } = await supabase
         .from("posts")
         .select(`
-            *,
+            id,
+            content,
+            image_url,
+            link,
+            created_at,
+            is_pinned,
+            author_id,
             post_tier_access ( tier ),
             author:profiles ( full_name, avatar_url )
         `)
         .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false });
+
+    // Check Feature Access (Admin Control)
+    const userTier = profile?.membership_tier || "bronze";
+    const { data: tierSettings } = await supabase
+        .from("tier_pricing")
+        .select("has_community_feed_access")
+        .eq("tier", userTier)
+        .single();
+
+    const hasFeedAccess = tierSettings?.has_community_feed_access !== false; // Default true if missing
+
+    // Filter Posts based on Tier Access
+    // Explicitly filter posts:
+    // 1. If post has NO tier restrictions (public) -> Show it.
+    // 2. If post HAS restrictions -> User must have one of the allowed tiers.
+    let filteredPosts: any[] = [];
+
+    if (hasFeedAccess) {
+        filteredPosts = (posts || []).filter((post: any) => {
+            const accesslist = post.post_tier_access || [];
+            if (accesslist.length === 0) return true; // Public
+            return accesslist.some((a: any) => a.tier === userTier);
+        });
+    } else {
+        console.log(`[DASHBOARD] Feed Access DISABLED for tier '${userTier}'`);
+    }
+
+    console.log(`[DASHBOARD] Feed: User is '${userTier}'. Access: ${hasFeedAccess}. Fetched ${posts?.length} posts. Showing ${filteredPosts.length}.`);
 
     // Fetch Live Sessions (buffer -24h)
     const yesterday = new Date(Date.now() - 86400000).toISOString();
@@ -95,13 +129,13 @@ export default async function Dashboard() {
                         weeklySessions={weeklySessions || []}
                         bookings={bookings || []}
                     />
-                    <FeedView posts={posts || []} isAdmin={false} currentUserId={user.id} />
+                    <FeedView posts={filteredPosts} isAdmin={false} currentUserId={user.id} limit={3} />
                 </div>
 
                 {/* Sidebar Column (Right) - Stats & Learning */}
                 <div className="lg:col-span-4 space-y-8">
                     {/* Welcome / Stats Card */}
-                    <Card className="overflow-hidden border-none shadow-lg bg-gradient-to-br from-indigo-600 to-violet-600 text-white relative">
+                    <Card className="overflow-hidden border-none shadow-lg bg-gradient-to-br from-[#2e1065] via-[#4c1d95] to-[#581c87] text-white relative">
                         {/* Decorative Background Circles */}
                         <div className="absolute top-[-50%] right-[-50%] w-full h-full rounded-full bg-white/10 blur-3xl pointer-events-none" />
 
@@ -112,13 +146,13 @@ export default async function Dashboard() {
                                 </div>
                                 <div>
                                     <CardTitle className="text-xl">Welcome back,</CardTitle>
-                                    <p className="text-indigo-100 font-medium">{profile?.full_name?.split(' ')[0] || "Student"}!</p>
+                                    <p className="text-primary-foreground/90 font-medium">{profile?.full_name?.split(' ')[0] || "Student"}!</p>
                                 </div>
                             </div>
                         </CardHeader>
                         <CardContent className="relative z-10">
                             <div className="mt-4 p-4 bg-black/20 rounded-xl backdrop-blur-sm">
-                                <div className="flex justify-between text-sm mb-2 text-indigo-100 font-medium">
+                                <div className="flex justify-between text-sm mb-2 text-primary-foreground/90 font-medium">
                                     <span>Overall Progress</span>
                                     <span>{Math.round((completedChapters / (totalChapters || 1)) * 100)}%</span>
                                 </div>
@@ -127,14 +161,14 @@ export default async function Dashboard() {
 
                             <div className="grid grid-cols-2 gap-3 mt-4">
                                 <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm text-center border border-white/10">
-                                    <BookOpen className="w-5 h-5 mx-auto text-indigo-200 mb-1" />
+                                    <BookOpen className="w-5 h-5 mx-auto text-primary-foreground/80 mb-1" />
                                     <div className="text-xl font-bold">{coursesInProgress.length}</div>
-                                    <div className="text-[10px] uppercase text-indigo-200 font-bold tracking-wider">In Progress</div>
+                                    <div className="text-[10px] uppercase text-primary-foreground/70 font-bold tracking-wider">In Progress</div>
                                 </div>
                                 <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm text-center border border-white/10">
-                                    <TrendingUp className="w-5 h-5 mx-auto text-emerald-300 mb-1" />
+                                    <TrendingUp className="w-5 h-5 mx-auto text-primary-foreground/80 mb-1" />
                                     <div className="text-xl font-bold">{completedChapters}</div>
-                                    <div className="text-[10px] uppercase text-indigo-200 font-bold tracking-wider">Chapters Done</div>
+                                    <div className="text-[10px] uppercase text-primary-foreground/70 font-bold tracking-wider">Chapters Done</div>
                                 </div>
                             </div>
                         </CardContent>
@@ -163,6 +197,6 @@ export default async function Dashboard() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

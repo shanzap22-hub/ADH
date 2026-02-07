@@ -14,6 +14,7 @@ interface ChatSidebarProps {
     selectedConversationId: string | null;
     hasCommunityAccess: boolean;
     hasAiAccess: boolean;
+    initialGroupChat?: any;
 }
 
 export function ChatSidebar({
@@ -21,24 +22,27 @@ export function ChatSidebar({
     onSelectChat,
     selectedConversationId,
     hasCommunityAccess,
-    hasAiAccess
+    hasAiAccess,
+    initialGroupChat
 }: ChatSidebarProps) {
-    const [groupChat, setGroupChat] = useState<any>(null);
+    const [groupChat, setGroupChat] = useState<any>(initialGroupChat || null);
     const supabase = createClient();
 
-    // Fetch Global Chat only if user has community access
+    // Fetch Global Chat only if user has community access AND no initial data
     useEffect(() => {
         if (!hasCommunityAccess) return;
 
-        const fetchGroup = async () => {
-            try {
-                const group = await getGlobalGroupChat();
-                setGroupChat(group);
-            } catch (e) {
-                console.error("Failed to load group chat", e);
-            }
-        };
-        fetchGroup();
+        if (!initialGroupChat && !groupChat) {
+            const fetchGroup = async () => {
+                try {
+                    const group = await getGlobalGroupChat();
+                    setGroupChat(group);
+                } catch (e) {
+                    console.error("Failed to load group chat", e);
+                }
+            };
+            fetchGroup();
+        }
 
         // Subscribe to changes
         const channel = supabase.channel('group_chat_list')
@@ -52,7 +56,7 @@ export function ChatSidebar({
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
-    }, [supabase, hasCommunityAccess]);
+    }, [supabase, hasCommunityAccess, initialGroupChat]);
 
     return (
         <div className="flex flex-col h-full bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-sm border-r border-white/20 dark:border-slate-800">

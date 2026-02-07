@@ -5,6 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Pin, ExternalLink, Globe, Lock, MoreHorizontal, Pencil, Trash } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     DropdownMenu,
@@ -77,11 +78,15 @@ export function PostCard({ post, isAdmin, currentUserId }: PostCardProps) {
     };
 
     const ImageContent = (
-        <div className="mt-3 relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex justify-center">
-            <img
+        <div className="mt-3 relative w-full rounded-lg overflow-hidden border border-purple-100 dark:border-purple-900/20 bg-purple-50/50 dark:bg-purple-900/10">
+            <Image
                 src={post.image_url!}
                 alt="Post attachment"
-                className="w-auto h-auto max-w-full max-h-[500px] object-contain"
+                width={0}
+                height={0}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className="w-full h-auto max-h-[500px] object-contain bg-slate-100 dark:bg-slate-800"
+                style={{ width: '100%', height: 'auto' }}
             />
         </div>
     );
@@ -104,7 +109,7 @@ export function PostCard({ post, isAdmin, currentUserId }: PostCardProps) {
                 <div className="flex items-start gap-4">
                     <Avatar className="h-10 w-10 border-2 border-white dark:border-slate-700 shadow-sm">
                         <AvatarImage src={post.author.avatar_url || ""} />
-                        <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white">
+                        <AvatarFallback className="bg-gradient-to-br from-orange-500 to-pink-600 text-white">
                             {post.author.full_name?.[0]?.toUpperCase() || "A"}
                         </AvatarFallback>
                     </Avatar>

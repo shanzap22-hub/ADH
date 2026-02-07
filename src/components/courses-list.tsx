@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { CourseCard } from "@/components/course-card";
 import { cn } from "@/lib/utils";
 
@@ -41,26 +41,29 @@ export const CoursesList = ({
         );
     }
 
-    const filteredItems = items.filter((item) => {
-        const progress = item.progress || 0;
+    // Memoize filtered items to avoid recalculating on every render
+    const filteredItems = useMemo(() => {
+        return items.filter((item) => {
+            const progress = item.progress || 0;
 
-        if (activeFilter === "in_progress") {
-            // Started but not finished (assuming > 0 and < 95 based on prompt)
-            // Or usually in_progress means > 0.
-            return progress > 0 && progress < 95;
-        }
+            if (activeFilter === "in_progress") {
+                // Started but not finished (assuming > 0 and < 95 based on prompt)
+                // Or usually in_progress means > 0.
+                return progress > 0 && progress < 95;
+            }
 
-        if (activeFilter === "completed") {
-            return progress >= 95;
-        }
+            if (activeFilter === "completed") {
+                return progress >= 95;
+            }
 
-        if (activeFilter === "expired") {
-            // Logic for expired courses.
-            return false;
-        }
+            if (activeFilter === "expired") {
+                // Logic for expired courses.
+                return false;
+            }
 
-        return true;
-    });
+            return true;
+        });
+    }, [items, activeFilter]);
 
     return (
         <div className="space-y-6">

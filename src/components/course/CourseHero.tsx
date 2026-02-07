@@ -1,6 +1,7 @@
 "use client";
 
 import { BookOpen, Clock, Award } from "lucide-react";
+import Image from "next/image";
 
 interface CourseHeroProps {
     title: string;
@@ -24,10 +25,12 @@ export const CourseHero = ({
                 <div className="w-full md:w-1/3 flex-shrink-0">
                     <div className="relative aspect-video rounded-lg overflow-hidden bg-slate-800 border border-slate-700">
                         {imageUrl ? (
-                            <img
+                            <Image
                                 src={imageUrl}
                                 alt={title}
-                                className="w-full h-full object-cover"
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 768px) 100vw, 33vw"
                             />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center">

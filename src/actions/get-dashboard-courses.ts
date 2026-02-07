@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCourseProgress } from "./get-course-progress";
+import { cache } from "react";
 
 export type DashboardCourse = {
     id: string;
     title: string;
-    description: string | null;
+    description?: string | null; // Optional now
     price: number | null;
     image_url: string | null;
     category: { name: string } | null;
@@ -15,11 +16,13 @@ export type DashboardCourse = {
     progress: number | null;
 };
 
-export const getDashboardCourses = async (userId: string): Promise<DashboardCourse[]> => {
+export const getDashboardCourses = cache(async (userId: string): Promise<DashboardCourse[]> => {
     try {
         const supabase = await createClient();
 
-        // Get user's tier first
+        console.log("[GET_DASHBOARD_COURSES] Starting...");
+
+        // 1. Get user's tier
         const { data: profile } = await supabase
             .from("profiles")
             .select("membership_tier")
@@ -28,24 +31,34 @@ export const getDashboardCourses = async (userId: string): Promise<DashboardCour
 
         const userTier = profile?.membership_tier || "bronze";
 
-        // Fetch purchased courses for this user
-        const { data: purchases, error: purchasesError } = await supabase
+        // 2. Get Direct Purchases
+        const { data: purchases } = await supabase
             .from("purchases")
             .select("course_id")
             .eq("user_id", userId);
 
-        if (purchasesError) {
-            console.error("[GET_DASHBOARD_COURSES]", purchasesError);
+        const purchasedCourseIds = purchases?.map(p => p.course_id) || [];
+
+        // 3. Get Tier-Accessible Courses (if applicable)
+        // Fetch all tier access records for this tier
+        const { data: tierAccess } = await supabase
+            .from("course_tier_access")
+            .select("course_id")
+            .eq("tier", userTier);
+
+        const tierCourseIds = tierAccess?.map(t => t.course_id) || [];
+
+        // 4. Combine Unique IDs
+        const allCourseIds = Array.from(new Set([...purchasedCourseIds, ...tierCourseIds]));
+
+        if (allCourseIds.length === 0) {
+            console.log("[GET_DASHBOARD_COURSES] No accessible courses found.");
             return [];
         }
 
-        if (!purchases || purchases.length === 0) {
-            return [];
-        }
+        console.log(`[GET_DASHBOARD_COURSES] Found ${allCourseIds.length} unique courses (Purchased: ${purchasedCourseIds.length}, Tier: ${tierCourseIds.length})`);
 
-        const courseIds = purchases.map((p) => p.course_id);
-
-        // Fetch course details with ALL required fields
+        // 5. Fetch Course Details
         const { data: courses, error: coursesError } = await supabase
             .from("courses")
             .select(`
@@ -59,46 +72,17 @@ export const getDashboardCourses = async (userId: string): Promise<DashboardCour
                     is_published
                 )
             `)
-            .in("id", courseIds)
+            .in("id", allCourseIds)
             .eq("is_published", true);
 
         if (coursesError) {
-            console.error("[GET_DASHBOARD_COURSES]", coursesError);
+            console.error("[GET_DASHBOARD_COURSES] DB Error:", coursesError);
             return [];
         }
 
-        if (!courses) {
-            return [];
-        }
-
-        // Get tier access for all courses
-        const { data: tierAccess } = await supabase
-            .from("course_tier_access")
-            .select("course_id, tier");
-
-        // Create a map of course_id -> allowed tiers
-        const courseAccessMap = new Map<string, string[]>();
-        if (tierAccess) {
-            tierAccess.forEach((access) => {
-                if (!courseAccessMap.has(access.course_id)) {
-                    courseAccessMap.set(access.course_id, []);
-                }
-                courseAccessMap.get(access.course_id)!.push(access.tier);
-            });
-        }
-
-        // Calculate progress for each course AND filter by tier
+        // 6. Calculate Progress & Map
         const coursesWithProgress = await Promise.all(
-            courses.map(async (course: any) => {
-                // Check if user's tier matches course tier
-                const allowedTiers = courseAccessMap.get(course.id);
-
-                // If no tier assignments OR user's tier doesn't match, return null
-                if (!allowedTiers || !allowedTiers.includes(userTier)) {
-                    console.log(`[GET_DASHBOARD_COURSES] Filtering out "${course.title}" - not assigned to tier "${userTier}"`);
-                    return null;
-                }
-
+            (courses || []).map(async (course: any) => {
                 const progress = await getCourseProgress(userId, course.id);
                 const publishedChapters = course.chapters?.filter((ch: any) => ch.is_published) || [];
 
@@ -108,7 +92,7 @@ export const getDashboardCourses = async (userId: string): Promise<DashboardCour
                     description: course.description,
                     price: course.price,
                     image_url: course.image_url,
-                    category: null, // Category removed - field doesn't exist
+                    category: null,
                     chaptersCount: publishedChapters.length,
                     chapters: publishedChapters,
                     progress,
@@ -116,10 +100,10 @@ export const getDashboardCourses = async (userId: string): Promise<DashboardCour
             })
         );
 
-        // Filter out null values (courses not assigned to user's tier)
-        return coursesWithProgress.filter((course): course is DashboardCourse => course !== null);
+        return coursesWithProgress;
+
     } catch (error) {
-        console.error("[GET_DASHBOARD_COURSES]", error);
+        console.error("[GET_DASHBOARD_COURSES] CRITICAL ERROR:", error);
         return [];
     }
-};
+});

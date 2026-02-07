@@ -50,6 +50,16 @@ export default async function ChatPage() {
         return <UpgradeTierMessage feature="Chat" />;
     }
 
+    let initialGroupChat = null;
+    if (hasCommunityAccess) {
+        try {
+            const { getGlobalGroupChat } = await import("@/actions/chat-actions");
+            initialGroupChat = await getGlobalGroupChat();
+        } catch (e) {
+            console.error("Failed to prefetch group chat", e);
+        }
+    }
+
     return (
         <ChatPageClient
             currentUserId={user.id}
@@ -59,6 +69,7 @@ export default async function ChatPage() {
             termsAcceptedCommunity={profile?.terms_community_accepted || false}
             hasAiAccess={hasAiAccess}
             hasCommunityAccess={hasCommunityAccess}
+            initialGroupChat={initialGroupChat}
         />
     );
 }

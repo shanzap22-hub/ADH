@@ -96,6 +96,15 @@ export async function getGlobalGroupChat() {
         .eq("group_name", "Community Chat")
         .single();
 
+    // Check Tier Access for Chat
+    const { data: profile } = await supabase.from("profiles").select("membership_tier").eq("id", user.id).single();
+    const tier = profile?.membership_tier || "bronze";
+    const { data: tierSettings } = await supabase.from("tier_pricing").select("has_community_chat_access").eq("tier", tier).single();
+
+    if (tierSettings && !tierSettings.has_community_chat_access) {
+        throw new Error(`Chat access is restricted for ${tier} tier.`);
+    }
+
     if (group) return group;
 
     // If somehow missing (should be created by SQL), try to create

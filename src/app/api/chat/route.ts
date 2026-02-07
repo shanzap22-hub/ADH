@@ -45,6 +45,31 @@ export async function POST(req: Request) {
             return new Response('Unauthorized', { status: 401 });
         }
 
+        // 1.5. CHECK TIER PERMISSION for AI
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("membership_tier")
+            .eq("id", user.id)
+            .single();
+
+        const tier = profile?.membership_tier || "bronze";
+
+        const { data: tierSettings } = await supabase
+            .from("tier_pricing")
+            .select("has_ai_access")
+            .eq("tier", tier)
+            .single();
+
+        if (!tierSettings?.has_ai_access) {
+            console.warn(`[AI Chat] Access Denied for Tier: ${tier}`);
+            return new Response(JSON.stringify({
+                error: `AI access is restricted for ${tier} tier. Please upgrade.`
+            }), {
+                status: 403,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         // 1. Get the new user message
         const lastMessage = messages[messages.length - 1];
         const imageUrl = data?.imageUrl;
