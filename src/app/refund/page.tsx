@@ -1,3 +1,6 @@
+// 2026 Performance: 1-hour cache for static legal content
+export const revalidate = 3600;
+
 export default function RefundPage() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-20">

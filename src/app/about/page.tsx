@@ -8,6 +8,9 @@ export const metadata: Metadata = {
     description: "Learn about ADH Connect, Kerala's first AI & Digital Marketing community dedicated to empowering business owners.",
 };
 
+// 2026 Performance: 1-hour cache for static content
+export const revalidate = 3600;
+
 export default function AboutPage() {
     return (
         <div className="min-h-screen bg-white">

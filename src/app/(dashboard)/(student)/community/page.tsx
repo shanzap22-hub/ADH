@@ -17,7 +17,8 @@ export const metadata: Metadata = {
     description: "Stay updated with the latest news",
 };
 
-
+// 2026 Performance: 1-minute cache for social feed
+export const revalidate = 60;
 
 // ... (imports)
 

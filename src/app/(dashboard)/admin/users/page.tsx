@@ -1,6 +1,8 @@
 import { getAllUsers } from "@/actions/admin/get-all-users";
 import UserManagementClient from "@/components/admin/UserManagementClient";
 
+// 2026 Performance: 2-minute cache for admin pages
+export const revalidate = 120;
 export const dynamic = 'force-dynamic';
 
 export default async function AdminUsersPage() {

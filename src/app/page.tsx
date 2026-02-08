@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { RazorpayButtonWrapper } from "@/components/payment/RazorpayButtonWrapper";
 
+// 2026 Performance: ISR with 1-hour cache for landing page
+export const revalidate = 3600;
+
 export default async function HomePage() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">

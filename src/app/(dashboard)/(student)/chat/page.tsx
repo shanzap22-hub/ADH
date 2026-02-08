@@ -12,6 +12,8 @@ export const metadata = {
     description: "Connect with your peers",
 };
 
+// 2026 Performance: Always fresh for real-time chat
+export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
 export default async function ChatPage() {

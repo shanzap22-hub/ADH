@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { BookOpen, User, Calendar } from "lucide-react";
 
+// 2026 Performance: 2-minute cache for admin pages
+export const revalidate = 120;
 export const dynamic = 'force-dynamic';
 
 export default async function AdminCoursesPage() {

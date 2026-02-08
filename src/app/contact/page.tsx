@@ -8,6 +8,8 @@ export const metadata: Metadata = {
     description: "Get in touch with the ADH CONNECT team regarding courses, support, or partnership inquiries.",
 };
 
+// 2026 Performance: 5-minute cache for contact form
+export const revalidate = 300;
 export const dynamic = 'force-dynamic';
 
 export default function ContactPage() {

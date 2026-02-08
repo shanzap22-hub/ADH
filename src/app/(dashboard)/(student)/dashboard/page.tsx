@@ -25,6 +25,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+// 2026 Performance: ISR with 5-minute cache for dashboard
+export const revalidate = 300;
 export const dynamic = 'force-dynamic';
 
 export default async function Dashboard() {

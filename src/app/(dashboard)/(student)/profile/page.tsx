@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { ProfileSignOutButton } from "@/components/dashboard/ProfileSignOutButton";
 import { DeleteAccountButton } from "@/components/dashboard/DeleteAccountButton";
 
+// 2026 Performance: 5-minute cache for profile data
+export const revalidate = 300;
 export const dynamic = 'force-dynamic';
 
 export default async function ProfilePage() {

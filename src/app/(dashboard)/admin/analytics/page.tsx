@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, TrendingUp, Users, BookOpen } from "lucide-react";
 
+// 2026 Performance: 2-minute cache for admin pages
+export const revalidate = 120;
 export const dynamic = 'force-dynamic';
 
 export default async function AdminAnalyticsPage() {

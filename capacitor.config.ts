@@ -25,6 +25,12 @@ const config: CapacitorConfig = {
       useDialog: true,
     },
   },
+  // 2026 Performance: Android WebView optimization
+  android: {
+    allowMixedContent: false,
+    captureInput: true,
+    webContentsDebuggingEnabled: false,
+  },
 };
 
 export default config;

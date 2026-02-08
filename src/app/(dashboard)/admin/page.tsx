@@ -1,10 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, BookOpen, GraduationCap, Shield } from "lucide-react";
+import { redirect } from "next/navigation";
 
-export const dynamic = 'force-dynamic';
+// 2026 Performance: 2-minute cache for admin pages
+export const revalidate = 120;
 
-export default async function AdminDashboard() {
+export default async function AdminPage() {
     const supabase = await createClient();
 
     // Get platform statistics

@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import LearnPageClient from "./LearnPageClient";
 
+// 2026 Performance: 5-minute cache for course content
+export const revalidate = 300;
+
 export default async function LearnPage({
     params,
     searchParams
