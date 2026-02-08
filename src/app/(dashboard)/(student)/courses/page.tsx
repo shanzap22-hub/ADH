@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { CoursesList } from "@/components/courses-list";
 import { BookOpen, AlertCircle } from "lucide-react";
