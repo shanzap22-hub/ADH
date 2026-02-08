@@ -40,15 +40,6 @@ export function NotificationBell() {
                     const data = await res.json();
                     let fetchedNotifications: Notification[] = data.notifications || [];
 
-                    // Filter out cleared notifications
-                    const clearedAt = localStorage.getItem("notifications_cleared_at");
-                    if (clearedAt) {
-                        const clearedTime = parseInt(clearedAt);
-                        fetchedNotifications = fetchedNotifications.filter(n =>
-                            new Date(n.created_at).getTime() > clearedTime
-                        );
-                    }
-
                     setNotifications(fetchedNotifications);
 
                     // Check for unread
@@ -82,13 +73,24 @@ export function NotificationBell() {
         }
     };
 
-    const handleClearAll = () => {
-        // "Clear" means we hide everything currently fetched.
-        // We do this by saving the timestamp of the *latest* notification (or "now")
-        // into a "cleared_at" key.
-        const now = Date.now();
-        localStorage.setItem("notifications_cleared_at", now.toString());
-        setNotifications([]);
+    const handleClearAll = async () => {
+        try {
+            setLoading(true);
+            const res = await fetch("/api/notifications/clear-all", {
+                method: "POST",
+            });
+            if (res.ok) {
+                setNotifications([]);
+                setHasUnread(false);
+            } else {
+                toast.error("Failed to clear notifications");
+            }
+        } catch (error) {
+            console.error("Failed to clear notifications", error);
+            toast.error("Failed to clear notifications");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleNotificationClick = (notification: Notification) => {

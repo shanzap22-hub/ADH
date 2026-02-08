@@ -16,12 +16,16 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Fetch Notifications from OneSignal API
-        // Endpoint: View Notifications
-        // Query: ?limit=20&kind=1 (1 = Dashboard only? No, default is 0 or 1).
-        // Note: OneSignal API returns ALL notifications sent by the App.
-        // We need to filter only those that are relevant (e.g. sent to 'All' or via Segments).
+        // Fetch user profile to get last cleared time
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('notifications_last_cleared_at')
+            .eq('id', user.id)
+            .single();
 
+        const lastClearedAt = profile?.notifications_last_cleared_at ? new Date(profile.notifications_last_cleared_at).getTime() : 0;
+
+        // Fetch Notifications from OneSignal API
         const response = await fetch(`https://onesignal.com/api/v1/notifications?app_id=${ONESIGNAL_APP_ID}&limit=20`, {
             method: 'GET',
             headers: {
@@ -36,14 +40,19 @@ export async function GET(req: Request) {
 
         const data = await response.json();
 
-        // Transform the data for the frontend
-        const notifications = (data.notifications || []).map((n: any) => ({
-            id: n.id,
-            title: n.headings?.en || "Notification",
-            message: n.contents?.en || "No content",
-            created_at: new Date(n.send_after * 1000).toISOString(), // send_after is unix timestamp
-            url: n.data?.url || n.url || null
-        }));
+        // Transform the data for the frontend and filter by cleared time
+        const notifications = (data.notifications || [])
+            .filter((n: any) => {
+                const createdAt = new Date(n.send_after * 1000).getTime();
+                return createdAt > lastClearedAt;
+            })
+            .map((n: any) => ({
+                id: n.id,
+                title: n.headings?.en || "Notification",
+                message: n.contents?.en || "No content",
+                created_at: new Date(n.send_after * 1000).toISOString(),
+                url: n.data?.url || n.url || null
+            }));
 
         return NextResponse.json({ notifications });
 

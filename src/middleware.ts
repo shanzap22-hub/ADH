@@ -50,7 +50,7 @@ export async function middleware(request: NextRequest) {
 
     // 2026 Security: Rate Limiting for Auth & API Routes
     // Protect against brute force attacks and DDoS
-    if (pathname.startsWith('/api/auth') || pathname === '/login' || pathname === '/signup') {
+    if (pathname.startsWith('/api/auth') || pathname === '/login') {
         // Strict rate limit for authentication endpoints (5 requests per minute)
         const rateLimitResponse = await rateLimit(request, RateLimitPresets.STRICT);
         if (rateLimitResponse) return rateLimitResponse;
@@ -143,7 +143,7 @@ export async function middleware(request: NextRequest) {
     const isProtectedApi = pathname.startsWith('/api') && !publicApiRoutes.some(route => pathname.startsWith(route));
 
     // Handle Auth Redirects (If user is logged in, keep them away from login/signup)
-    if (user && ['/login', '/signup', '/forgot-password'].includes(pathname)) {
+    if (user && ['/login', '/forgot-password'].includes(pathname)) {
         try {
             const { data: profile } = await supabase
                 .from('profiles')
