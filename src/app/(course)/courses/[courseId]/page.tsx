@@ -8,6 +8,10 @@ import { CourseEnrollButton } from "@/components/course-enroll-button";
 import { getBunnyVideoLength } from "@/actions/bunny";
 import { CourseContentBackButton } from "./_components/course-content-back-button";
 
+// 2026 Performance: ISR - Revalidate every hour
+// Reduces database load while keeping course data fresh
+export const revalidate = 3600;
+
 export default async function CourseIdPage({
     params
 }: {

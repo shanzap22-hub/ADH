@@ -122,15 +122,18 @@ export default function SettingsPage() {
                 </CardContent>
             </Card>
 
-            {/* Support & About */}
+            {/* Support & Legal - 2026 Play Store Compliance */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Info className="h-5 w-5" />
                         About & Support
                     </CardTitle>
+                    <CardDescription>
+                        Get help and review legal information
+                    </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-2">
                     <Link href="/contact" className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
                         <div className="flex items-center gap-3">
                             <Mail className="h-5 w-5 text-slate-500" />
@@ -139,19 +142,56 @@ export default function SettingsPage() {
                         <span className="text-xs text-slate-400">info@adh.today</span>
                     </Link>
 
-                    <Link href="/privacy" className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
-                        <div className="flex items-center gap-3">
-                            <Shield className="h-5 w-5 text-slate-500" />
-                            <span className="font-medium">Privacy Policy</span>
-                        </div>
-                    </Link>
+                    <Separator className="my-2" />
+
+                    {/* Legal Links - Play Store Requirement */}
+                    <div className="space-y-2">
+                        <p className="text-xs font-semibold text-muted-foreground px-3 pt-2">
+                            Legal Information
+                        </p>
+
+                        <Link
+                            href="/privacy"
+                            className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Shield className="h-5 w-5 text-blue-500" />
+                                <span className="font-medium">Privacy Policy</span>
+                            </div>
+                            <span className="text-xs text-slate-400">→</span>
+                        </Link>
+
+                        <Link
+                            href="/terms"
+                            className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Shield className="h-5 w-5 text-green-500" />
+                                <span className="font-medium">Terms of Service</span>
+                            </div>
+                            <span className="text-xs text-slate-400">→</span>
+                        </Link>
+
+                        <Link
+                            href="/refund"
+                            className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Shield className="h-5 w-5 text-orange-500" />
+                                <span className="font-medium">Refund Policy</span>
+                            </div>
+                            <span className="text-xs text-slate-400">→</span>
+                        </Link>
+                    </div>
+
+                    <Separator className="my-2" />
 
                     <div className="flex items-center justify-between p-3">
                         <div className="flex items-center gap-3">
                             <Smartphone className="h-5 w-5 text-slate-500" />
                             <span className="font-medium">App Version</span>
                         </div>
-                        <span className="text-sm text-slate-500">v1.0.0</span>
+                        <span className="text-sm text-slate-500">v1.1.0</span>
                     </div>
                 </CardContent>
             </Card>

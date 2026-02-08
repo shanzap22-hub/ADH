@@ -3,7 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { CoursesList } from "@/components/courses-list";
 import { BookOpen, AlertCircle } from "lucide-react";
 
-export const dynamic = 'force-dynamic';
+// 2026 Performance: ISR with shorter revalidation for course listings
+// Balances freshness with performance (revalidate every 10 minutes)
+export const revalidate = 600;
 
 export default async function CoursesPage() {
     // Auth check - MUST be outside try-catch to allow redirects

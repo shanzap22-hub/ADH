@@ -6,7 +6,9 @@ import { Calendar, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export const dynamic = 'force-dynamic';
+// 2026 Performance: ISR for blog listings
+// Blog content changes infrequently, so revalidate every 24 hours
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
     title: "Blog | ADH Connect - Insights on SMM & Business Growth",

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { rateLimit, RateLimitPresets } from '@/lib/rate-limit'
 
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
@@ -45,6 +46,18 @@ export async function middleware(request: NextRequest) {
     if (publicApiRoutes.some(route => pathname.startsWith(route))) {
         console.log('[MIDDLEWARE] Allowing public API access:', pathname);
         return NextResponse.next();
+    }
+
+    // 2026 Security: Rate Limiting for Auth & API Routes
+    // Protect against brute force attacks and DDoS
+    if (pathname.startsWith('/api/auth') || pathname === '/login' || pathname === '/signup') {
+        // Strict rate limit for authentication endpoints (5 requests per minute)
+        const rateLimitResponse = await rateLimit(request, RateLimitPresets.STRICT);
+        if (rateLimitResponse) return rateLimitResponse;
+    } else if (pathname.startsWith('/api/')) {
+        // Moderate rate limit for general API endpoints (20 requests per minute)
+        const rateLimitResponse = await rateLimit(request, RateLimitPresets.MODERATE);
+        if (rateLimitResponse) return rateLimitResponse;
     }
 
     // Create Supabase Client for Middleware
