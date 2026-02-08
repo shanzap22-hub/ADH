@@ -214,18 +214,30 @@ export const ChapterVideoForm = ({
                         </TabsContent>
 
                         <TabsContent value="other" className="mt-4">
-                            <FileUpload
-                                endpoint="chapter-videos"
-                                onChange={(url) => {
-                                    if (url) {
-                                        // Emit change to parent instead of saving
-                                        onChange(url);
-                                        toggleEdit();
-                                    }
-                                }}
-                            />
+                            <div className="flex items-center gap-x-2">
+                                <Input
+                                    placeholder="Paste YouTube, Vimeo, or Google Drive link"
+                                    onChange={(e) => { }}
+                                    className="flex-1"
+                                    id="other-video-url-input"
+                                />
+                                <Button
+                                    onClick={() => {
+                                        const input = document.getElementById("other-video-url-input") as HTMLInputElement;
+                                        if (input && input.value.trim()) {
+                                            onChange(input.value.trim());
+                                            toast.success("Video URL added");
+                                            toggleEdit();
+                                        } else {
+                                            toast.error("Please enter a URL");
+                                        }
+                                    }}
+                                >
+                                    Add
+                                </Button>
+                            </div>
                             <div className="text-xs text-muted-foreground mt-4">
-                                Upload a video file (MP4/MOV) or paste a YouTube/Vimeo link
+                                Paste a link from YouTube, Vimeo, or Google Drive. Note: These videos will not have secure protection.
                             </div>
                         </TabsContent>
                     </Tabs>
