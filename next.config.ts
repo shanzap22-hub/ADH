@@ -33,6 +33,8 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ['pdf-parse'],
   typescript: {
+    // TODO: Fix params Promise migration in 68 API routes (Next.js 15+)
+    // Requires: { params }: { params: Promise<{ id: string }> }
     ignoreBuildErrors: true,
   },
   experimental: {
