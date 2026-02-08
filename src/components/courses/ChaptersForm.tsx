@@ -29,7 +29,7 @@ interface ChaptersFormProps {
 }
 
 const formSchema = z.object({
-  title: z.string().min(1),
+  title: z.string(),
 });
 
 export const ChaptersForm = ({

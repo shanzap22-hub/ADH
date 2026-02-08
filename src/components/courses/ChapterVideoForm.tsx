@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { FileUpload } from "@/components/file-upload";
 import { VideoUpload } from "@/components/bunny/VideoUpload";
 import { BunnyVideoPlayer } from "@/components/bunny/BunnyVideoPlayer";
@@ -163,8 +164,9 @@ export const ChapterVideoForm = ({
             {isEditing && (
                 <div className="mt-4">
                     <Tabs defaultValue="bunny" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
+                        <TabsList className="grid w-full grid-cols-3">
                             <TabsTrigger value="bunny">Bunny.net Upload</TabsTrigger>
+                            <TabsTrigger value="manual">Bunny ID</TabsTrigger>
                             <TabsTrigger value="other">Other Sources</TabsTrigger>
                         </TabsList>
 
@@ -175,6 +177,39 @@ export const ChapterVideoForm = ({
                             />
                             <div className="text-xs text-muted-foreground mt-4">
                                 Upload your video directly to Bunny.net for optimized streaming and playback.
+                            </div>
+                        </TabsContent>
+
+                        <TabsContent value="manual" className="mt-4">
+                            <div className="flex items-center gap-x-2">
+                                <Input
+                                    placeholder="Enter Bunny Video ID (e.g. 56214d...)"
+                                    onChange={(e) => {
+                                        // Store internally or use state if needed, 
+                                        // but for simplicity we can just use a local ref or state 
+                                        // Since we need a button to submit, let's use a small form or just state
+                                    }}
+                                    className="flex-1"
+                                    id="manual-bunny-id-input"
+                                />
+                                <Button
+                                    onClick={() => {
+                                        const input = document.getElementById("manual-bunny-id-input") as HTMLInputElement;
+                                        if (input && input.value.trim()) {
+                                            const id = input.value.trim();
+                                            onChange(`bunny://${id}`);
+                                            toast.success("Video ID added");
+                                            toggleEdit();
+                                        } else {
+                                            toast.error("Please enter a Video ID");
+                                        }
+                                    }}
+                                >
+                                    Add
+                                </Button>
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-4">
+                                Paste the Video ID from your Bunny.net Dashboard. This is the fastest method.
                             </div>
                         </TabsContent>
 
