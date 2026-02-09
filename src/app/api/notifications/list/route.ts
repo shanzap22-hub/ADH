@@ -32,6 +32,7 @@ export async function GET(req: Request) {
                 Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
                 "Content-Type": "application/json",
             },
+            cache: 'no-store'
         });
 
         if (!response.ok) {
@@ -43,14 +44,17 @@ export async function GET(req: Request) {
         // Transform the data for the frontend and filter by cleared time
         const notifications = (data.notifications || [])
             .filter((n: any) => {
-                const createdAt = new Date(n.send_after * 1000).getTime();
+                // Use queued_at (processed time) if available, otherwise send_after (scheduled time)
+                const timestamp = n.queued_at || n.send_after;
+                const createdAt = new Date(timestamp * 1000).getTime();
+                console.log(`[Notification Debug] ID: ${n.id}, CreatedAt: ${createdAt}, LastClearedAt: ${lastClearedAt}, ShouldShow: ${createdAt > lastClearedAt}`);
                 return createdAt > lastClearedAt;
             })
             .map((n: any) => ({
                 id: n.id,
                 title: n.headings?.en || "Notification",
                 message: n.contents?.en || "No content",
-                created_at: new Date(n.send_after * 1000).toISOString(),
+                created_at: new Date((n.queued_at || n.send_after) * 1000).toISOString(),
                 url: n.data?.url || n.url || null
             }));
 
