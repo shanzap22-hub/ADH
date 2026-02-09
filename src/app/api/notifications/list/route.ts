@@ -41,14 +41,22 @@ export async function GET(req: Request) {
 
         const data = await response.json();
 
-        // Transform the data for the frontend and filter by cleared time
+        const userCreatedAt = user.created_at ? new Date(user.created_at).getTime() : 0;
+
+        // Transform the data for the frontend and filter by cleared time AND user creation time
         const notifications = (data.notifications || [])
             .filter((n: any) => {
                 // Use queued_at (processed time) if available, otherwise send_after (scheduled time)
                 const timestamp = n.queued_at || n.send_after;
                 const createdAt = new Date(timestamp * 1000).getTime();
-                console.log(`[Notification Debug] ID: ${n.id}, CreatedAt: ${createdAt}, LastClearedAt: ${lastClearedAt}, ShouldShow: ${createdAt > lastClearedAt}`);
-                return createdAt > lastClearedAt;
+
+                // Debugging
+                // console.log(`[Notification Debug] ID: ${n.id}, CreatedAt: ${createdAt}, LastClearedAt: ${lastClearedAt}, UserCreated: ${userCreatedAt}`);
+
+                // Filter logic:
+                // 1. Must be after last cleared time
+                // 2. Must be AFTER user account creation time (prevent old notifications for new users)
+                return createdAt > lastClearedAt && createdAt > userCreatedAt;
             })
             .map((n: any) => ({
                 id: n.id,
