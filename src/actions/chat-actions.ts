@@ -246,8 +246,11 @@ export async function sendChatMessage(
                 const notificationBody = type === 'image' ? 'Sent an image' : type === 'audio' ? 'Sent a voice note' : content;
 
                 // Mute Filter: Exclude users who have tag "muted_chat_CONVID" = "true"
+                // AND Exclude Sender: Exclude user who has tag "user_id" = user.id
                 const filters = [
-                    { field: "tag", key: `muted_chat_${conversationId}`, relation: "!=", value: "true" }
+                    { field: "tag", key: `muted_chat_${conversationId}`, relation: "!=", value: "true" },
+                    { operator: "AND" },
+                    { field: "tag", key: "user_id", relation: "!=", value: user.id }
                 ];
 
                 await sendOneSignalNotification(

@@ -65,6 +65,7 @@ export const OneSignalProvider = () => {
                 if (session?.user?.id) {
                     console.log("OneSignal: Logging in user", session.user.id);
                     OneSignal.login(session.user.id);
+                    OneSignal.User.addTag("user_id", session.user.id);
                 }
 
                 // Listen for auth changes
@@ -72,8 +73,10 @@ export const OneSignalProvider = () => {
                     if (session?.user?.id) {
                         console.log("OneSignal: Auth Change - Logging in", session.user.id);
                         OneSignal.login(session.user.id);
+                        OneSignal.User.addTag("user_id", session.user.id);
                     } else {
                         console.log("OneSignal: Auth Change - Logging out");
+                        OneSignal.User.removeTag("user_id");
                         OneSignal.logout();
                     }
                 });
