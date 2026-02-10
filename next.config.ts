@@ -56,13 +56,23 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      // API Routes - Cache with Stale-While-Revalidate
+      // General API Routes - Cache with Stale-While-Revalidate
       {
         source: '/api/:path*',
         headers: [
           {
             key: 'Cache-Control',
             value: 'public, s-maxage=60, stale-while-revalidate=120',
+          },
+        ],
+      },
+      // Chat API Routes - Force No-Cache (Overrides general API rule)
+      {
+        source: '/api/chat/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
           },
         ],
       },
