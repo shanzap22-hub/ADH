@@ -154,7 +154,9 @@ RESPONSE FORMAT:
 
         // 6. Build conversation history in Gemini format
         let chatHistory: any[] = [];
-        const rawHistory = history ? history.reverse().slice(0, -1) : [];
+        // History is now fetched Newest -> Oldest. 
+        // We need to reverse it to be Oldest -> Newest for the AI context window.
+        const rawHistory = history ? history.reverse() : [];
 
         for (const msg of rawHistory) {
             const role = msg.role === 'user' ? 'user' : 'model';

@@ -19,7 +19,7 @@ export async function GET() {
             .from('ai_chat_messages') // Updated table name
             .select('id, role, content, image_url, created_at')
             .eq('user_id', user.id)
-            .order('created_at', { ascending: true }) // Load oldest first for chat UI
+            .order('created_at', { ascending: false }) // Load newest first from DB
             .limit(50);
 
         if (error) {
