@@ -139,217 +139,184 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
         }
     }, [messages]);
 
+    // define fetchMessagesRef at top level to be accessible by handleScroll
+    const fetchMessagesRef = useRef<(userId: string, beforeDate?: string) => Promise<void>>(async () => { });
+
+    // Main Effect: Fetch Initial Messages & Subscribe
+    useEffect(() => {
+        let isMounted = true;
+
+        // Define channel outside so cleanup can access it
+        const channel = supabase.channel(`chat:${conversationId}`);
+
+        const fetchMessages = async (userId: string, beforeDate?: string) => {
+            if (!isMounted) return;
+            console.log('[ChatWindow] Fetching messages...', { beforeDate });
+
+            // If loading more (beforeDate exists), set loading state
+            if (beforeDate) setIsLoadingMore(true);
+
+            // 1. Fetch Raw Messages (Newest First)
+            let query = supabase
+                .from("chat_messages")
+                .select('*')
+                .eq("conversation_id", conversationId)
+                .order("created_at", { ascending: false })
+                .limit(50);
+
+            if (beforeDate) {
+                query = query.lt("created_at", beforeDate);
+            }
+
+            const { data: msgs, error } = await query;
+
+            if (error) {
+                console.error("[CHAT_FETCH_ERROR] Failed to load messages:", error);
+                if (isMounted) setIsLoadingMore(false);
+                return;
+            }
+
+            if (!msgs || msgs.length === 0) {
+                if (!beforeDate && isMounted) setMessages([]);
+                if (beforeDate && isMounted) setHasMore(false);
+                if (isMounted) setIsLoadingMore(false);
+                return;
+            }
+
+            if (msgs.length < 50) {
+                if (isMounted) setHasMore(false);
+            }
+
+            // 2. Fetch Profiles for Senders
+            const senderIds = Array.from(new Set(msgs.map(m => m.sender_id)));
+            const { data: profiles } = await supabase
+                .from('profiles')
+                .select('id, full_name, avatar_url')
+                .in('id', senderIds);
+
+            const profileMap = new Map(profiles?.map(p => [p.id, p]));
+
+            // 3. Simple Reply Handling
+            const replyIds = msgs.filter(m => m.reply_to_id).map(m => m.reply_to_id);
+            const { data: replies } = await supabase
+                .from('chat_messages')
+                .select('id, content, type, sender_id')
+                .in('id', replyIds);
+
+            const replyMap = new Map(replies?.map(r => [r.id, r]));
+
+            // 4. Merge Data
+            const completeMessages = msgs.map(msg => {
+                const sender = profileMap.get(msg.sender_id);
+                const replyRaw = msg.reply_to_id ? replyMap.get(msg.reply_to_id) : null;
+                const replySender = replyRaw ? profileMap.get(replyRaw.sender_id) : null;
+
+                return {
+                    ...msg,
+                    sender: sender,
+                    reply_to: replyRaw ? { ...replyRaw, sender: replySender } : null
+                };
+            }).reverse(); // Reverse to show Oldest -> Newest
+
+            if (isMounted) {
+                if (beforeDate) {
+                    // Prepend older messages
+                    setMessages(prev => [...completeMessages, ...prev]);
+                    setIsLoadingMore(false);
+                } else {
+                    setMessages(completeMessages);
+                    // Scroll to bottom on initial load
+                    if (isFirstLoad.current) {
+                        setTimeout(() => scrollToBottom(true), 100);
+                        isFirstLoad.current = false;
+                    }
+                }
+            }
+        };
+
+        // expose fetchMessages to ref
+        fetchMessagesRef.current = fetchMessages;
+
+        const setupSubscription = () => {
+            channel
+                .on(
+                    'postgres_changes',
+                    { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `conversation_id=eq.${conversationId}` },
+                    async (payload) => {
+                        const { data: senderProfile } = await supabase
+                            .from('profiles')
+                            .select('full_name, avatar_url')
+                            .eq('id', payload.new.sender_id)
+                            .single();
+
+                        let replyInfo = null;
+                        if (payload.new.reply_to_id) {
+                            const { data: replyData } = await supabase
+                                .from('chat_messages')
+                                .select(`id, content, type, sender:profiles(full_name)`)
+                                .eq('id', payload.new.reply_to_id)
+                                .single();
+                            replyInfo = replyData;
+                        }
+
+                        const newMessage = { ...payload.new, sender: senderProfile, reply_to: replyInfo };
+
+                        if (isMounted) {
+                            setMessages((prev) => [...prev, newMessage]);
+                            // Auto-scroll if near bottom or if it's my message
+                            if (payload.new.sender_id === currentUserId) {
+                                setTimeout(() => scrollToBottom(), 100);
+                            }
+                        }
+                    }
+                )
+                .subscribe();
+        };
+
+        const initChat = async () => {
+            const { data: { session: initialSession } } = await supabase.auth.getSession();
+            if (initialSession?.user) {
+                await fetchMessages(initialSession.user.id);
+                setupSubscription();
+            }
+
+            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+                if (session?.user && isMounted) {
+                    // Only re-fetch if empty? or always? limiting re-fetches to avoid flicker
+                    if (messages.length === 0) {
+                        await fetchMessages(session.user.id);
+                        setupSubscription();
+                    }
+                }
+            });
+            return () => subscription.unsubscribe();
+        };
+
+        const cleanupPromise = initChat();
+
+        return () => {
+            isMounted = false;
+            supabase.removeChannel(channel);
+            cleanupPromise.then(cleanup => cleanup && cleanup());
+        };
+    }, [conversationId, supabase, currentUserId]); // added currentUserId
+
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         const { scrollTop } = e.currentTarget;
+        // Check if scrolled to top
         if (scrollTop === 0 && !isLoadingMore && hasMore && messages.length > 0) {
-            setIsLoadingMore(true);
             const oldestMessage = messages[0];
-            // Save scroll height before loading
-            const scrollContainer = e.currentTarget;
-            const oldScrollHeight = scrollContainer.scrollHeight;
+            const beforeDate = oldestMessage.created_at;
+            console.log('Load more triggered. Oldest msg date:', beforeDate);
 
-            // Fetch users session to get ID (or store it in ref)
+            // Trigger fetch via ref
             supabase.auth.getSession().then(({ data: { session } }) => {
                 if (session?.user) {
-                    // Small delay to show loader
-                    setTimeout(() => {
-                        // We need to access fetchMessages here. 
-                        // Since fetchMessages is inside useEffect, we should move it out or use a ref/trigger.
-                        // For simplicity in this refactor, we will trigger a re-fetch via a state or ref, 
-                        // BUT fetchMessages is currently inside useEffect closure.
-                        // Ideally, we move fetchMessages OUTSIDE. 
-                        // See next Step: Refactoring fetchMessages to be accessible.
-                    }, 100);
+                    fetchMessagesRef.current(session.user.id, beforeDate);
                 }
             });
         }
     };
-
-    // Unified Session & Message Loading Logic
-    useEffect(() => {
-        // State for pagination
-        const [isLoadingMore, setIsLoadingMore] = useState(false);
-        const [hasMore, setHasMore] = useState(true);
-
-        // Ref to store the fetch function so it can be called from scroll
-        const fetchMessagesRef = useRef<(userId: string, beforeDate?: string) => Promise<void>>(async () => { });
-
-        useEffect(() => {
-            let isMounted = true;
-            const channel = supabase.channel(`chat:${conversationId}`);
-
-            // Function to fetch messages
-            const fetchMessages = async (userId: string, beforeDate?: string) => {
-                if (!isMounted) return;
-                console.log('[ChatWindow] Fetching messages...', { beforeDate });
-
-                // 1. Fetch Raw Messages (Newest First)
-                let query = supabase
-                    .from("chat_messages")
-                    .select('*')
-                    .eq("conversation_id", conversationId)
-                    .order("created_at", { ascending: false })
-                    .limit(50);
-
-                if (beforeDate) {
-                    query = query.lt("created_at", beforeDate);
-                }
-
-                const { data: msgs, error } = await query;
-
-                if (error) {
-                    console.error("[CHAT_FETCH_ERROR] Failed to load messages:", error);
-                    setIsLoadingMore(false);
-                    return;
-                }
-
-                if (!msgs || msgs.length === 0) {
-                    if (!beforeDate && isMounted) setMessages([]);
-                    if (beforeDate && isMounted) setHasMore(false);
-                    setIsLoadingMore(false);
-                    return;
-                }
-
-                if (msgs.length < 50) {
-                    if (isMounted) setHasMore(false);
-                }
-
-                // Show messages immediately while profiles load (Reverse for display)
-                // If pagination, we append to top. If initial, we set.
-                // But we need profiles first to avoid flickering "User" names.
-
-                // 2. Fetch Profiles for Senders
-                const senderIds = Array.from(new Set(msgs.map(m => m.sender_id)));
-                const { data: profiles } = await supabase
-                    .from('profiles')
-                    .select('id, full_name, avatar_url')
-                    .in('id', senderIds);
-
-                const profileMap = new Map(profiles?.map(p => [p.id, p]));
-
-                // 3. Simple Reply Handling
-                const replyIds = msgs.filter(m => m.reply_to_id).map(m => m.reply_to_id);
-                const { data: replies } = await supabase
-                    .from('chat_messages')
-                    .select('id, content, type, sender_id')
-                    .in('id', replyIds);
-
-                const replyMap = new Map(replies?.map(r => [r.id, r]));
-
-                // 4. Merge Data
-                const completeMessages = msgs.map(msg => {
-                    const sender = profileMap.get(msg.sender_id);
-                    const replyRaw = msg.reply_to_id ? replyMap.get(msg.reply_to_id) : null;
-                    const replySender = replyRaw ? profileMap.get(replyRaw.sender_id) : null;
-
-                    return {
-                        ...msg,
-                        sender: sender,
-                        reply_to: replyRaw ? { ...replyRaw, sender: replySender } : null
-                    };
-                }).reverse(); // Reverse to show Oldest -> Newest
-
-                if (isMounted) {
-                    if (beforeDate) {
-                        setMessages(prev => [...completeMessages, ...prev]);
-                        setIsLoadingMore(false);
-                    } else {
-                        setMessages(completeMessages);
-                    }
-                }
-            };
-
-            // Assign to ref for external access
-            fetchMessagesRef.current = fetchMessages;
-
-            const setupSubscription = () => {
-                channel
-                    .on(
-                        'postgres_changes',
-                        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `conversation_id=eq.${conversationId}` },
-                        async (payload) => {
-                            const { data: senderProfile } = await supabase
-                                .from('profiles')
-                                .select('full_name, avatar_url')
-                                .eq('id', payload.new.sender_id)
-                                .single();
-
-                            let replyInfo = null;
-                            if (payload.new.reply_to_id) {
-                                const { data: replyData } = await supabase
-                                    .from('chat_messages')
-                                    .select(`id, content, type, sender:profiles(full_name)`)
-                                    .eq('id', payload.new.reply_to_id)
-                                    .single();
-                                replyInfo = replyData;
-                            }
-
-                            const newMessage = { ...payload.new, sender: senderProfile, reply_to: replyInfo };
-                            if (isMounted) setMessages((prev) => [...prev, newMessage]);
-                        }
-                    )
-                    .subscribe();
-            };
-
-            // Initialize Session & Fetch
-            const initChat = async () => {
-                // Get initial session
-                const { data: { session: initialSession } } = await supabase.auth.getSession();
-
-                if (initialSession?.user) {
-                    console.log('[ChatWindow] Found existing session, fetching...');
-                    await fetchMessages(initialSession.user.id);
-                    setupSubscription();
-                } else {
-                    console.log('[ChatWindow] No active session found initially. Waiting for auth state change...');
-                }
-
-                // Listen for Auth Changes (Sign In, Token Refresh, Storage Restore)
-                const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-                    if (session?.user && isMounted) {
-                        console.log('[ChatWindow] Auth state changed: User authenticated. Fetching...');
-                        // Only fetch if we haven't successfully loaded messages yet or if we want to ensure freshness
-                        // For now, we fetch whenever we get a valid session event to be safe against race conditions
-                        await fetchMessages(session.user.id);
-                        setupSubscription();
-                    }
-                });
-
-                return () => {
-                    subscription.unsubscribe();
-                };
-            };
-
-            const cleanupPromise = initChat();
-
-            return () => {
-                isMounted = false;
-                supabase.removeChannel(channel);
-                cleanupPromise.then(cleanup => cleanup && cleanup());
-            };
-        }, [conversationId, supabase]);
-
-        const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-            const { scrollTop } = e.currentTarget;
-            if (scrollTop === 0 && !isLoadingMore && hasMore && messages.length > 0) {
-                setIsLoadingMore(true);
-                const oldestMessage = messages[0];
-                const beforeDate = oldestMessage.created_at;
-
-                console.log('Load more triggered. Oldest msg date:', beforeDate);
-
-                // Save scroll height before loading to maintain position later?
-                // Actually, React might need manual scroll adjustment after render. 
-                // For now, let's just trigger the fetch.
-
-                supabase.auth.getSession().then(({ data: { session } }) => {
-                    if (session?.user) {
-                        fetchMessagesRef.current(session.user.id, beforeDate);
-                    }
-                });
-            }
-        };
-    }, [conversationId, supabase]);
 
 
 
