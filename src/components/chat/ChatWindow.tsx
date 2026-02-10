@@ -137,12 +137,15 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
         }
     }, [messages]);
 
-    // Fetch Messages with Sender Profile AND Reply Info
+    // Unified Session & Message Loading Logic
     useEffect(() => {
         let isMounted = true;
+        const channel = supabase.channel(`chat:${conversationId}`);
 
-        const fetchMessages = async () => {
+        // Function to fetch messages (Moved inside to access current session if needed, or pass it)
+        const fetchMessages = async (userId: string) => {
             if (!isMounted) return;
+            console.log('[ChatWindow] Fetching messages for user:', userId);
 
             // 1. Fetch Raw Messages
             const { data: msgs, error } = await supabase
@@ -198,38 +201,70 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
             if (isMounted) setMessages(completeMessages);
         };
 
-        fetchMessages();
-
-        const channel = supabase.channel(`chat:${conversationId}`)
-            .on(
-                'postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `conversation_id=eq.${conversationId}` },
-                async (payload) => {
-                    const { data: senderProfile } = await supabase
-                        .from('profiles')
-                        .select('full_name, avatar_url')
-                        .eq('id', payload.new.sender_id)
-                        .single();
-
-                    let replyInfo = null;
-                    if (payload.new.reply_to_id) {
-                        const { data: replyData } = await supabase
-                            .from('chat_messages')
-                            .select(`id, content, type, sender:profiles(full_name)`)
-                            .eq('id', payload.new.reply_to_id)
+        const setupSubscription = () => {
+            channel
+                .on(
+                    'postgres_changes',
+                    { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `conversation_id=eq.${conversationId}` },
+                    async (payload) => {
+                        const { data: senderProfile } = await supabase
+                            .from('profiles')
+                            .select('full_name, avatar_url')
+                            .eq('id', payload.new.sender_id)
                             .single();
-                        replyInfo = replyData;
-                    }
 
-                    const newMessage = { ...payload.new, sender: senderProfile, reply_to: replyInfo };
-                    if (isMounted) setMessages((prev) => [...prev, newMessage]);
+                        let replyInfo = null;
+                        if (payload.new.reply_to_id) {
+                            const { data: replyData } = await supabase
+                                .from('chat_messages')
+                                .select(`id, content, type, sender:profiles(full_name)`)
+                                .eq('id', payload.new.reply_to_id)
+                                .single();
+                            replyInfo = replyData;
+                        }
+
+                        const newMessage = { ...payload.new, sender: senderProfile, reply_to: replyInfo };
+                        if (isMounted) setMessages((prev) => [...prev, newMessage]);
+                    }
+                )
+                .subscribe();
+        };
+
+        // Initialize Session & Fetch
+        const initChat = async () => {
+            // Get initial session
+            const { data: { session: initialSession } } = await supabase.auth.getSession();
+
+            if (initialSession?.user) {
+                console.log('[ChatWindow] Found existing session, fetching...');
+                await fetchMessages(initialSession.user.id);
+                setupSubscription();
+            } else {
+                console.log('[ChatWindow] No active session found initially. Waiting for auth state change...');
+            }
+
+            // Listen for Auth Changes (Sign In, Token Refresh, Storage Restore)
+            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+                if (session?.user && isMounted) {
+                    console.log('[ChatWindow] Auth state changed: User authenticated. Fetching...');
+                    // Only fetch if we haven't successfully loaded messages yet or if we want to ensure freshness
+                    // For now, we fetch whenever we get a valid session event to be safe against race conditions
+                    await fetchMessages(session.user.id);
+                    setupSubscription();
                 }
-            )
-            .subscribe();
+            });
+
+            return () => {
+                subscription.unsubscribe();
+            };
+        };
+
+        const cleanupPromise = initChat();
 
         return () => {
             isMounted = false;
             supabase.removeChannel(channel);
+            cleanupPromise.then(cleanup => cleanup && cleanup());
         };
     }, [conversationId, supabase]);
 
