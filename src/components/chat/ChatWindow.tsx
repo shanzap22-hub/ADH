@@ -26,6 +26,8 @@ interface ChatWindowProps {
 }
 
 export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUserRole, onBack }: ChatWindowProps) {
+    console.log('[ChatWindow] 🔥 Component rendering!', { conversationId, currentUserId });
+
     const [messages, setMessages] = useState<any[]>([]);
     const [replyingTo, setReplyingTo] = useState<any>(null);
     const [inputText, setInputText] = useState("");
@@ -37,7 +39,13 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
     const audioChunksRef = useRef<Blob[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const supabase = createClient();
+
+    // Memoize the client to prevent recreation on every render
+    const [supabase] = useState(() => {
+        console.log('[ChatWindow] 📞 Initializing Supabase client...');
+        return createClient();
+    });
+
     const isFirstLoad = useRef(true);
     const [isMuted, setIsMuted] = useState(false);
 
@@ -131,18 +139,30 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
 
     // Fetch Messages with Sender Profile AND Reply Info
     useEffect(() => {
-        setMessages([]);
+        let isMounted = true;
+
         const fetchMessages = async () => {
-            // 1. Fetch Raw Messages (Guaranteed to work)
+            if (!isMounted) return;
+
+            // 1. Fetch Raw Messages
             const { data: msgs, error } = await supabase
                 .from("chat_messages")
                 .select('*')
                 .eq("conversation_id", conversationId)
                 .order("created_at", { ascending: true });
 
-            if (msgs) setMessages(msgs || []); // Show messages immediately while profiles load
+            if (error) {
+                console.error("[CHAT_FETCH_ERROR] Failed to load messages:", error);
+                return;
+            }
 
-            if (!msgs || msgs.length === 0) return;
+            if (!msgs || msgs.length === 0) {
+                if (isMounted) setMessages([]);
+                return;
+            }
+
+            // Show messages immediately while profiles load
+            if (isMounted) setMessages(msgs);
 
             // 2. Fetch Profiles for Senders
             const senderIds = Array.from(new Set(msgs.map(m => m.sender_id)));
@@ -153,8 +173,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
 
             const profileMap = new Map(profiles?.map(p => [p.id, p]));
 
-            // 3. Simple Reply Handling (Fetch reply content if missing)
-            // Optimisation: Reuse messages we already have if possible
+            // 3. Simple Reply Handling
             const replyIds = msgs.filter(m => m.reply_to_id).map(m => m.reply_to_id);
             const { data: replies } = await supabase
                 .from('chat_messages')
@@ -167,7 +186,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
             const completeMessages = msgs.map(msg => {
                 const sender = profileMap.get(msg.sender_id);
                 const replyRaw = msg.reply_to_id ? replyMap.get(msg.reply_to_id) : null;
-                const replySender = replyRaw ? profileMap.get(replyRaw.sender_id) : null; // Try to get name from existing map
+                const replySender = replyRaw ? profileMap.get(replyRaw.sender_id) : null;
 
                 return {
                     ...msg,
@@ -176,8 +195,9 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                 };
             });
 
-            setMessages(completeMessages);
+            if (isMounted) setMessages(completeMessages);
         };
+
         fetchMessages();
 
         const channel = supabase.channel(`chat:${conversationId}`)
@@ -202,13 +222,18 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                     }
 
                     const newMessage = { ...payload.new, sender: senderProfile, reply_to: replyInfo };
-                    setMessages((prev) => [...prev, newMessage]);
+                    if (isMounted) setMessages((prev) => [...prev, newMessage]);
                 }
             )
             .subscribe();
 
-        return () => { supabase.removeChannel(channel); };
+        return () => {
+            isMounted = false;
+            supabase.removeChannel(channel);
+        };
     }, [conversationId, supabase]);
+
+
 
     // Send Message
     const handleSend = async () => {

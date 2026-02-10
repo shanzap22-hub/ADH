@@ -26,7 +26,7 @@ export function ChatSidebar({
     initialGroupChat
 }: ChatSidebarProps) {
     const [groupChat, setGroupChat] = useState<any>(initialGroupChat || null);
-    const supabase = createClient();
+    const [supabase] = useState(() => createClient());
 
     // Fetch Global Chat only if user has community access AND no initial data
     useEffect(() => {

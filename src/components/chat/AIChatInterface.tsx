@@ -72,7 +72,10 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
     useEffect(() => {
         const loadHistory = async () => {
             try {
-                const response = await fetch('/api/chat/history');
+                const response = await fetch(`/api/chat/history?t=${new Date().getTime()}`, {
+                    cache: 'no-store',
+                    headers: { 'Pragma': 'no-cache' }
+                });
                 if (response.ok) {
                     const data = await response.json();
                     if (data.messages) {

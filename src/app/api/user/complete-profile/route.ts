@@ -141,14 +141,7 @@ export async function POST(request: Request) {
     try {
         const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbwsBDuj15M1f_nHng6kQjkZIhl6FZsXNCI71Vf55jrZKjJ55EB7joj4XjJstLgVghRT/exec";
 
-        // Use the transaction object fetched in previous block (lines 108-115)
-        // Note: transaction might be undefined if no match found, so check existence
         if (GOOGLE_SCRIPT_URL) {
-            // Re-fetch transaction if needed or verify scope. 
-            // The previous block logic keeps 'transaction' scoped to try-catch block? 
-            // Ah, 'transaction' is const inside try block (line 108). It is NOT visible here.
-            // I must re-fetch or expand scope. Re-fetching is safer and cleaner code separation.
-
             const { data: latestTxn } = await supabaseAdmin
                 .from('transactions')
                 .select('*')
@@ -160,31 +153,55 @@ export async function POST(request: Request) {
 
             if (latestTxn) {
                 const payload = {
-                    action: 'verify', // This will update/append row with REAL details
+                    action: 'verify',
                     order_id: latestTxn.razorpay_order_id,
                     payment_id: latestTxn.razorpay_payment_id || "MANUAL",
-                    email: email, // The NEW real email
-                    name: fullName, // The NEW real name
+                    email: email,
+                    name: fullName,
                     phone: contactNumber,
                     whatsapp: whatsappNumber,
                     plan: latestTxn.membership_plan || "silver",
-                    amount: (Number(latestTxn.amount) || 0) / 100, // Convert Paise to Rupees
+                    amount: (Number(latestTxn.amount) || 0) / 100,
                     status: 'verified',
                     created_at: latestTxn.created_at
                 };
 
-                // Fire and forget
-                fetch(GOOGLE_SCRIPT_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                }).catch(err => console.error("[SHEET_SYNC_UPDATE_ERROR]", err));
-
                 console.log("[GOOGLE_SYNC] Sending Updated Profile Data to Sheet for Order:", latestTxn.razorpay_order_id);
+
+                // IMPROVED: Await the fetch with timeout to ensure reliability
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+                try {
+                    const response = await fetch(GOOGLE_SCRIPT_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload),
+                        signal: controller.signal
+                    });
+
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok) {
+                        console.error("[SHEET_SYNC_ERROR] HTTP Error:", response.status, await response.text());
+                    } else {
+                        console.log("[GOOGLE_SYNC] ✓ Successfully synced to Google Sheet");
+                    }
+                } catch (fetchErr: any) {
+                    clearTimeout(timeoutId);
+                    if (fetchErr.name === 'AbortError') {
+                        console.error("[SHEET_SYNC_ERROR] Timeout: Google Script did not respond within 10s");
+                    } else {
+                        console.error("[SHEET_SYNC_ERROR] Network Error:", fetchErr.message);
+                    }
+                    // We don't throw here to avoid blocking the user's onboarding completion
+                }
+            } else {
+                console.log("[GOOGLE_SYNC] No verified transaction found for user:", user.id);
             }
         }
     } catch (sheetUpdateErr) {
-        console.error("Sheet Update Logic Error", sheetUpdateErr);
+        console.error("[SHEET_SYNC_ERROR] Exception:", sheetUpdateErr);
     }
 
     return NextResponse.json({ success: true });
