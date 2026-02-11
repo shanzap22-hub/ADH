@@ -17,12 +17,12 @@ export async function GET() {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // 2. Fetch chat history (last 50 messages)
+        // 2. Fetch chat history (latest 50 messages, newest first)
         const { data: history, error } = await supabase
             .from('ai_chat_messages') // Updated table name
             .select('id, role, content, image_url, created_at')
             .eq('user_id', user.id)
-            .order('created_at', { ascending: true }) // Chronological order (oldest → newest)
+            .order('created_at', { ascending: false }) // Fetch LATEST messages first
             .limit(50);
 
         if (error) {
@@ -30,11 +30,14 @@ export async function GET() {
             return Response.json({ error: 'Failed to load history' }, { status: 500 });
         }
 
-        // 3. Return messages with explicit no-cache headers
+        // 3. Reverse for chronological order (oldest → newest) for UI display
+        const chronologicalHistory = history ? [...history].reverse() : [];
+
+        // 4. Return messages with explicit no-cache headers
         return Response.json({
             success: true,
-            messages: history || [],
-            count: history?.length || 0
+            messages: chronologicalHistory,
+            count: chronologicalHistory.length
         }, {
             headers: {
                 'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
