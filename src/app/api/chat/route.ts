@@ -77,7 +77,7 @@ export async function POST(req: Request) {
         const imageUrl = data?.imageUrl;
 
         // 2. Save USER message to Supabase
-        await supabase.from('ai_chat_history').insert({
+        await supabase.from('ai_chat_messages').insert({
             user_id: user.id,
             role: 'user',
             content: lastMessage.content,
@@ -86,7 +86,7 @@ export async function POST(req: Request) {
 
         // 3. Fetch chat history for context
         const { data: history } = await supabase
-            .from('ai_chat_history')
+            .from('ai_chat_messages')
             .select('role, content, image_url')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
@@ -269,7 +269,7 @@ RESPONSE FORMAT:
         console.log('[AI Chat] Response received, length:', fullText.length);
 
         // 11. Save AI response to database
-        await supabase.from('ai_chat_history').insert({
+        await supabase.from('ai_chat_messages').insert({
             user_id: user.id,
             role: 'assistant',
             content: fullText,
