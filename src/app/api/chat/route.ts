@@ -81,13 +81,13 @@ export async function POST(req: Request) {
             user_id: user.id,
             role: 'user',
             content: lastMessage.content,
-            media_url: imageUrl || null
+            image_url: imageUrl || null
         });
 
         // 3. Fetch chat history for context
         const { data: history } = await supabase
             .from('ai_chat_history')
-            .select('role, content, media_url')
+            .select('role, content, image_url')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
             .limit(10);

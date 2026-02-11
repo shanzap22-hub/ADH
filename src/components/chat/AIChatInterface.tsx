@@ -18,7 +18,7 @@ interface Message {
     id: string;
     role: 'user' | 'assistant';
     content: string;
-    media_url?: string;
+    image_url?: string;
     created_at?: string;
 }
 
@@ -154,7 +154,7 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
             id: tempId,
             role: 'user',
             content: input,
-            media_url: imageUrl || undefined,
+            image_url: imageUrl || undefined,
             created_at: new Date().toISOString()
         };
 
@@ -290,10 +290,10 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
                                     ? "bg-indigo-600 text-white rounded-tr-none"
                                     : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-100 rounded-tl-none"
                             )}>
-                                {m.media_url && (
+                                {m.image_url && (
                                     <div className="mb-3 rounded-lg overflow-hidden bg-black/5 dark:bg-white/5 border border-white/10 relative">
                                         <Image
-                                            src={m.media_url}
+                                            src={m.image_url}
                                             alt="Attached"
                                             width={0}
                                             height={0}

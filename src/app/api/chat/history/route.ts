@@ -20,7 +20,7 @@ export async function GET() {
         // 2. Fetch chat history (last 50 messages)
         const { data: history, error } = await supabase
             .from('ai_chat_history') // Updated table name
-            .select('id, role, content, media_url, created_at')
+            .select('id, role, content, image_url, created_at')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false }) // Load newest first from DB
             .limit(50);
