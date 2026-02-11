@@ -10,38 +10,56 @@ export const SplashScreenProvider = () => {
 
     useEffect(() => {
         const initSplash = async () => {
-            // 1. Wait for App Load (Browser Window Ready)
-            const loadPromise = new Promise((resolve) => {
+            // 1. Wait for complete DOM load
+            const domLoadPromise = new Promise((resolve) => {
                 if (document.readyState === 'complete') {
                     resolve(true);
                 } else {
                     window.addEventListener('load', () => resolve(true));
-                    setTimeout(() => resolve(true), 5000); // Fallback
+                    // Fallback timeout after 10 seconds
+                    setTimeout(() => resolve(true), 10000);
                 }
             });
 
-            await loadPromise;
+            await domLoadPromise;
 
-            // 2. Safety Buffer: Ensure React has actually painted the <ModernLoader /> 
-            //    This prevents the "White Screen" flash between Native Splash and HTML content.
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // 2. Wait for Next.js to hydrate (check for Next.js readiness)
+            const hydrationPromise = new Promise((resolve) => {
+                // Check if React has hydrated by looking for interactive elements
+                const checkHydration = () => {
+                    // If we can find interactive elements, the app is likely hydrated
+                    const hasInteractiveElements = document.querySelectorAll('button, a, input').length > 0;
+                    if (hasInteractiveElements) {
+                        resolve(true);
+                    } else {
+                        requestAnimationFrame(checkHydration);
+                    }
+                };
+                checkHydration();
 
-            // 3. Hide Native Splash
+                // Fallback after 5 seconds
+                setTimeout(() => resolve(true), 5000);
+            });
+
+            await hydrationPromise;
+
+            // 3. Small buffer to ensure smooth transition
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            // 4. Hide Native Splash
             if (typeof window !== 'undefined') {
                 try {
                     const { SplashScreen } = await import('@capacitor/splash-screen');
-                    await SplashScreen.hide();
+                    await SplashScreen.hide({ fadeOutDuration: 300 });
                 } catch (e) {
                     console.warn("Splash Screen Hide Failed (Non-Native?)", e);
                 }
             }
 
-            // 4. "Browser Loading" Simulation / Data Wait
-            //    User requested: "3 seconds fixed time... until loading comes"
-            //    We keep the HTML Spinner visible for 3s to represent this loading phase.
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            // 5. Wait a bit more for content to paint
+            await new Promise(resolve => setTimeout(resolve, 500));
 
-            // 5. Fade out HTML Splash
+            // 6. Fade out HTML Splash
             setIsVisible(false);
         };
 

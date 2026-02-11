@@ -15,14 +15,13 @@ const config: CapacitorConfig = {
       launchAutoHide: false, // We will manually hide it when the app is ready
       backgroundColor: "#ffffff",
       androidSplashResourceName: "splash",
-      androidScaleType: "CENTER_CROP",
+      androidScaleType: "CENTER",
       showSpinner: true,
       androidSpinnerStyle: "large",
-      iosSpinnerStyle: "small",
+      iosSpinnerStyle: "large",
       spinnerColor: "#4f46e5",
       splashFullScreen: true,
       splashImmersive: true,
-      useDialog: true,
     },
   },
   // 2026 Performance: Android WebView optimization
