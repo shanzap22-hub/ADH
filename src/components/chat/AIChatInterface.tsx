@@ -172,7 +172,11 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                cache: 'no-store',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Pragma': 'no-cache'
+                },
                 body: JSON.stringify({
                     messages: [...messages, userMessage],
                     data: { imageUrl: currentImageUrl }

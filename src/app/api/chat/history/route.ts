@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 
+export const dynamic = 'force-dynamic';
+
+
 /**
  * GET /api/chat/history
  * Fetches the user's chat history from the database
