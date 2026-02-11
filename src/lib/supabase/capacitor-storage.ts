@@ -27,6 +27,16 @@ export const createCapacitorStorage = () => {
             // Mobile: Use secure storage
             try {
                 const { value } = await SecureStoragePlugin.get({ key });
+
+                // CRITICAL FIX: Sync to document.cookie if found
+                // This ensures that if the app restarts and has a token in Native Storage,
+                // it is immediately available to the WebView for Middleware checks.
+                if (value) {
+                    // Set cookie with same params as setItem
+                    document.cookie = `${key}=${value}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+                    console.debug(`[CapacitorStorage] Hydrated cookie for ${key}`);
+                }
+
                 return value;
             } catch (error) {
                 // Key doesn't exist or error occurred
