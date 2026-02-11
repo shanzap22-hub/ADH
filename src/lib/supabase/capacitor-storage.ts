@@ -51,6 +51,14 @@ export const createCapacitorStorage = () => {
             try {
                 await SecureStoragePlugin.set({ key, value });
                 console.debug(`[CapacitorStorage] Saved ${key}`);
+
+                // CRITICAL FIX: Sync to document.cookie for Middleware/Server visibility
+                // Calculate expiry (default to 1 year or parse from session if possible)
+                // Since this is just the raw JSON string, we set it as a cookie.
+                // Note: Cookies have size limits. If token is too large this might fail, 
+                // but for standard sessions it should be ok.
+                // We set 'path=/' and 'SameSite=Lax' to ensure it's sent.
+                document.cookie = `${key}=${value}; path=/; max-age=31536000; SameSite=Lax; Secure`;
             } catch (error) {
                 console.error(`[CapacitorStorage] Failed to set ${key}:`, error);
                 throw error;
@@ -72,6 +80,9 @@ export const createCapacitorStorage = () => {
             try {
                 await SecureStoragePlugin.remove({ key });
                 console.debug(`[CapacitorStorage] Removed ${key}`);
+
+                // CRITICAL FIX: Remove from document.cookie
+                document.cookie = `${key}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure`;
             } catch (error) {
                 // Key might not exist, ignore error
                 console.debug(`[CapacitorStorage] Failed to remove ${key}:`, error);

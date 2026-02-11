@@ -37,7 +37,10 @@ public class MainActivity extends BridgeActivity {
             settings.setAllowContentAccess(false);
 
             // Enable safe browsing
-            settings.setSafeBrowsingEnabled(true);
+            // Enable safe browsing (API 26+)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                settings.setSafeBrowsingEnabled(true);
+            }
 
             // Mixed content mode - block all mixed content (HTTP in HTTPS)
             settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
