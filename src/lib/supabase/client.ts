@@ -23,7 +23,14 @@ export function createClient() {
                     storage: createCapacitorStorage(),
                     autoRefreshToken: true,
                     persistSession: true,
+
                     detectSessionInUrl: false, // Mobile doesn't need URL session detection
+                },
+                global: {
+                    // FORCE NO-CACHE FOR MOBILE: Prevent WebView from serving stale data
+                    fetch: (url, options) => {
+                        return fetch(url, { ...options, cache: 'no-store' });
+                    },
                 },
             }
         );
