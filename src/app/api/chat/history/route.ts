@@ -22,7 +22,7 @@ export async function GET() {
             .from('ai_chat_messages') // Updated table name
             .select('id, role, content, image_url, created_at')
             .eq('user_id', user.id)
-            .order('created_at', { ascending: false }) // Load newest first from DB
+            .order('created_at', { ascending: true }) // Chronological order (oldest → newest)
             .limit(50);
 
         if (error) {
@@ -30,11 +30,17 @@ export async function GET() {
             return Response.json({ error: 'Failed to load history' }, { status: 500 });
         }
 
-        // 3. Return messages
+        // 3. Return messages with explicit no-cache headers
         return Response.json({
             success: true,
             messages: history || [],
             count: history?.length || 0
+        }, {
+            headers: {
+                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0',
+            }
         });
 
     } catch (error: any) {

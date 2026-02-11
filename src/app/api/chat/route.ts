@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createClient } from '@/lib/supabase/server';
+import { revalidatePath } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,13 +77,22 @@ export async function POST(req: Request) {
         const lastMessage = messages[messages.length - 1];
         const imageUrl = data?.imageUrl;
 
-        // 2. Save USER message to Supabase
-        await supabase.from('ai_chat_messages').insert({
+        // 2. Save USER message to Supabase with explicit timestamp
+        const userMessageTimestamp = new Date().toISOString();
+        const { error: userInsertError } = await supabase.from('ai_chat_messages').insert({
             user_id: user.id,
             role: 'user',
             content: lastMessage.content,
-            image_url: imageUrl || null
+            image_url: imageUrl || null,
+            created_at: userMessageTimestamp
         });
+
+        if (userInsertError) {
+            console.error('[AI Chat] Failed to save user message:', userInsertError);
+            throw new Error('Failed to save message to database');
+        }
+        console.log('[AI Chat] User message saved successfully');
+
 
         // 3. Fetch chat history for context
         const { data: history } = await supabase
@@ -268,14 +278,24 @@ RESPONSE FORMAT:
 
         console.log('[AI Chat] Response received, length:', fullText.length);
 
-        // 11. Save AI response to database
-        await supabase.from('ai_chat_messages').insert({
+        // 11. Save AI response to database with explicit timestamp
+        const aiResponseTimestamp = new Date().toISOString();
+        const { error: aiInsertError } = await supabase.from('ai_chat_messages').insert({
             user_id: user.id,
             role: 'assistant',
             content: fullText,
+            created_at: aiResponseTimestamp
         });
 
-        console.log('[AI Chat] Response saved to database');
+        if (aiInsertError) {
+            console.error('[AI Chat] Failed to save AI response:', aiInsertError);
+            throw new Error('Failed to save AI response to database');
+        }
+        console.log('[AI Chat] AI response saved successfully at', aiResponseTimestamp);
+
+        // CRITICAL: Force cache invalidation for chat history
+        revalidatePath('/api/chat/history');
+        console.log('[AI Chat] Cache invalidated for history endpoint');
 
         // 12. Return complete response (no streaming)
         return Response.json({
