@@ -8,6 +8,7 @@ export async function createClient() {
         process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://example.com',
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-key',
         {
+        {
             cookies: {
                 getAll() {
                     return cookieStore.getAll()
@@ -22,6 +23,12 @@ export async function createClient() {
                         // This can be ignored if you have middleware refreshing
                         // user sessions.
                     }
+                },
+            },
+            global: {
+                // FORCE NO-CACHE: Prevent Next.js Data Cache from serving stale DB results
+                fetch: (url, options) => {
+                    return fetch(url, { ...options, cache: 'no-store' });
                 },
             },
         }
