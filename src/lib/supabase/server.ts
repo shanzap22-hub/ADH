@@ -8,7 +8,6 @@ export async function createClient() {
         process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://example.com',
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-key',
         {
-        {
             cookies: {
                 getAll() {
                     return cookieStore.getAll()
