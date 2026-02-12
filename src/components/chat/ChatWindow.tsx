@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { uploadChatMedia, deleteChatMessage, sendChatMessage, toggleChatMute, getChatMuteStatus } from "@/actions/chat-actions";
 import { toast } from "sonner";
 import { Capacitor } from '@capacitor/core';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -41,6 +42,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
     const audioChunksRef = useRef<Blob[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
 
     // Memoize the client to prevent recreation on every render
     const [supabase] = useState(() => {
@@ -318,6 +320,45 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
         }
     };
 
+    // Handle Image Pick with Platform Detection
+    const handleImagePick = async () => {
+        try {
+            if (Capacitor.isNativePlatform()) {
+                // Use native Camera API for mobile
+                const image = await Camera.getPhoto({
+                    quality: 80,
+                    allowEditing: false,
+                    resultType: CameraResultType.Uri,
+                    source: CameraSource.Photos, // Gallery only
+                });
+
+                if (!image.webPath) {
+                    toast.error("Failed to load image");
+                    return;
+                }
+
+                // Convert to File object
+                const response = await fetch(image.webPath);
+                const blob = await response.blob();
+                const file = new File([blob], `image.${image.format || 'jpg'}`, {
+                    type: `image/${image.format || 'jpeg'}`
+                });
+
+                setMediaFile(file);
+                setImagePreview(image.webPath);
+                toast.success("Image attached!");
+            } else {
+                // Use file input for web
+                fileInputRef.current?.click();
+            }
+        } catch (error: any) {
+            console.error("Image pick error:", error);
+            if (error.message && !error.message.includes('User cancelled')) {
+                toast.error("Failed to pick image: " + error.message);
+            }
+        }
+    };
+
 
 
     // Send Message
@@ -340,13 +381,10 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                 const result = await uploadChatMedia(formData);
 
                 if (result.error) {
-                    toast.error(result.error);
-                    setUploading(false);
-                    return;
+                    throw new Error(result.error);
                 }
 
                 finalMediaUrl = result.url;
-                setUploading(false);
             }
 
             const result = await sendChatMessage(
@@ -358,18 +396,19 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
             );
 
             if (result.error) throw new Error(result.error);
-            // No need to manually insert locally since we subscribe to Supabase events above
-            // But we might want to clear input immediately
 
-
+            // Success - clear input
             setInputText("");
             setMediaFile(null);
+            setImagePreview(null);
             setReplyingTo(null);
 
         } catch (error: any) {
             console.error("Send failed:", error);
             const errorMsg = error.hint || error.details || error.message || "Unknown error";
             toast.error("Failed to send: " + errorMsg);
+        } finally {
+            // Always reset uploading state
             setUploading(false);
         }
     };
@@ -689,15 +728,41 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                     </div>
                 )}
 
-                {/* File Preview */}
-                {mediaFile && (
+                {/* Image Preview */}
+                {(mediaFile && imagePreview) && (
+                    <div className="mb-2 relative inline-block group">
+                        <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="h-20 w-auto rounded-lg border shadow-sm object-cover bg-slate-100"
+                        />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute -top-2 -right-2 h-6 w-6 bg-slate-500 hover:bg-red-500 text-white rounded-full shadow-md"
+                            onClick={() => {
+                                setMediaFile(null);
+                                setImagePreview(null);
+                                if (fileInputRef.current) fileInputRef.current.value = "";
+                            }}
+                        >
+                            <X className="w-3 h-3" />
+                        </Button>
+                    </div>
+                )}
+
+                {/* File Preview (for non-image files) */}
+                {(mediaFile && !imagePreview) && (
                     <div className="flex items-center gap-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg mb-2 w-fit">
                         <span className="text-xs truncate max-w-[200px]">{mediaFile.name}</span>
                         <Button
                             variant="ghost"
                             size="icon"
                             className="h-5 w-5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full"
-                            onClick={() => setMediaFile(null)}
+                            onClick={() => {
+                                setMediaFile(null);
+                                if (fileInputRef.current) fileInputRef.current.value = "";
+                            }}
                         >
                             <X className="w-3 h-3" />
                         </Button>
@@ -713,15 +778,20 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                             ref={fileInputRef}
                             onChange={(e) => {
                                 const file = e.target.files?.[0];
-                                if (file) setMediaFile(file);
+                                if (file) {
+                                    setMediaFile(file);
+                                    // Create preview for web
+                                    const preview = URL.createObjectURL(file);
+                                    setImagePreview(preview);
+                                }
                             }}
                         />
                         <Button
                             variant="ghost"
                             size="icon"
                             className="h-10 w-10 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={isRecording}
+                            onClick={handleImagePick}
+                            disabled={isRecording || uploading}
                         >
                             <ImageIcon className="w-5 h-5" />
                         </Button>

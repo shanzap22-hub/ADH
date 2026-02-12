@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { Capacitor } from "@capacitor/core";
 
 import { ModernLoader } from "@/components/ui/modern-loader";
 
@@ -10,6 +11,8 @@ export const SplashScreenProvider = () => {
 
     useEffect(() => {
         const initSplash = async () => {
+            const isMobile = Capacitor.isNativePlatform();
+
             // 1. Wait for complete DOM load
             const domLoadPromise = new Promise((resolve) => {
                 if (document.readyState === 'complete') {
@@ -23,7 +26,14 @@ export const SplashScreenProvider = () => {
 
             await domLoadPromise;
 
-            // 2. Wait for Next.js to hydrate (check for Next.js readiness)
+            // 2. Wait for fonts to load (critical for preventing layout shift)
+            try {
+                await document.fonts.ready;
+            } catch (e) {
+                console.warn("Fonts API not supported", e);
+            }
+
+            // 3. Wait for Next.js to hydrate (check for Next.js readiness)
             const hydrationPromise = new Promise((resolve) => {
                 // Check if React has hydrated by looking for interactive elements
                 const checkHydration = () => {
@@ -43,10 +53,11 @@ export const SplashScreenProvider = () => {
 
             await hydrationPromise;
 
-            // 3. Small buffer to ensure smooth transition
-            await new Promise(resolve => setTimeout(resolve, 300));
+            // 4. Buffer to ensure smooth transition (longer on mobile)
+            const bufferTime = isMobile ? 800 : 300;
+            await new Promise(resolve => setTimeout(resolve, bufferTime));
 
-            // 4. Hide Native Splash
+            // 5. Hide Native Splash
             if (typeof window !== 'undefined') {
                 try {
                     const { SplashScreen } = await import('@capacitor/splash-screen');
@@ -56,10 +67,11 @@ export const SplashScreenProvider = () => {
                 }
             }
 
-            // 5. Wait a bit more for content to paint
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // 6. Wait for content to paint (longer on mobile to ensure assets loaded)
+            const paintTime = isMobile ? 1000 : 500;
+            await new Promise(resolve => setTimeout(resolve, paintTime));
 
-            // 6. Fade out HTML Splash
+            // 7. Fade out HTML Splash
             setIsVisible(false);
         };
 
