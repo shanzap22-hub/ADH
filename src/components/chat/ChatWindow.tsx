@@ -6,12 +6,12 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Send, Mic, Image as ImageIcon, X, Loader2, ArrowLeft, Users, Trash2, Reply, MoreHorizontal, Bell, BellOff } from "lucide-react";
+import { Send, Mic, Image as ImageIcon, X, Loader2, ArrowLeft, Users, Trash2, Reply, MoreHorizontal, Bell, BellOff, RefreshCw } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { uploadChatMedia, deleteChatMessage, sendChatMessage, toggleChatMute, getChatMuteStatus } from "@/actions/chat-actions";
+import { deleteChatMessage, sendChatMessage, toggleChatMute, getChatMuteStatus } from "@/actions/chat-actions";
 import { toast } from "sonner";
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -153,7 +153,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
 
         const fetchMessages = async (userId: string, beforeDate?: string) => {
             if (!isMounted) return;
-            console.log('[ChatWindow] Fetching messages...', { beforeDate });
+            console.log('[ChatWindow] 📥 Fetching messages...', { conversationId, beforeDate });
 
             // If loading more (beforeDate exists), set loading state
             if (beforeDate) setIsLoadingMore(true);
@@ -173,17 +173,20 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
             const { data: msgs, error } = await query;
 
             if (error) {
-                console.error("[CHAT_FETCH_ERROR] Failed to load messages:", error);
+                console.error("[CHAT_FETCH_ERROR] ❌ Failed to load messages:", error);
                 if (isMounted) setIsLoadingMore(false);
                 return;
             }
 
             if (!msgs || msgs.length === 0) {
+                console.log('[ChatWindow] 📭 No messages found');
                 if (!beforeDate && isMounted) setMessages([]);
                 if (beforeDate && isMounted) setHasMore(false);
                 if (isMounted) setIsLoadingMore(false);
                 return;
             }
+
+            console.log(`[ChatWindow] ✅ Loaded ${msgs.length} messages`);
 
             if (msgs.length < 50) {
                 if (isMounted) setHasMore(false);
@@ -240,11 +243,15 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
         fetchMessagesRef.current = fetchMessages;
 
         const setupSubscription = () => {
+            console.log('[SUBSCRIPTION] 📡 Setting up real-time subscription...', conversationId);
+
             channel
                 .on(
                     'postgres_changes',
                     { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `conversation_id=eq.${conversationId}` },
                     async (payload) => {
+                        console.log('[REALTIME] 🔔 New message received:', payload.new);
+
                         const { data: senderProfile } = await supabase
                             .from('profiles')
                             .select('full_name, avatar_url')
@@ -265,6 +272,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
 
                         if (isMounted) {
                             setMessages((prev) => [...prev, newMessage]);
+                            console.log('[REALTIME] ✅ Message added to state');
                             // Auto-scroll if near bottom or if it's my message
                             if (payload.new.sender_id === currentUserId) {
                                 setTimeout(() => scrollToBottom(), 100);
@@ -272,7 +280,9 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                         }
                     }
                 )
-                .subscribe();
+                .subscribe((status) => {
+                    console.log('[SUBSCRIPTION] 📊 Status:', status);
+                });
         };
 
         const initChat = async () => {
@@ -361,9 +371,24 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
 
 
 
+    // Manual Refresh for Debugging
+    const manualRefresh = async () => {
+        console.log('[MANUAL_REFRESH] 🔄 Refreshing messages...');
+        toast.loading("Refreshing...", { id: 'refresh' });
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+            await fetchMessagesRef.current(session.user.id);
+            toast.success("Refreshed!", { id: 'refresh' });
+        } else {
+            toast.error("Not authenticated", { id: 'refresh' });
+        }
+    };
+
     // Send Message
     const handleSend = async () => {
         if ((!inputText.trim() && !mediaFile) || uploading) return;
+
+        console.log('[SEND] 🚀 Starting send...', { hasMedia: !!mediaFile, text: inputText.slice(0, 20) });
 
         let finalType = "text";
         let finalContent = inputText;
@@ -371,20 +396,34 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
 
         try {
             if (mediaFile) {
+                console.log('[UPLOAD] 📤 Starting upload...', { name: mediaFile.name, size: mediaFile.size });
+                toast.loading("Uploading image...", { id: 'upload' });
                 setUploading(true);
+
                 if (mediaFile.type.startsWith("image/")) finalType = "image";
                 else if (mediaFile.type.startsWith("audio/")) finalType = "audio";
                 else finalType = "file";
 
                 const formData = new FormData();
                 formData.append("file", mediaFile);
-                const result = await uploadChatMedia(formData);
 
-                if (result.error) {
-                    throw new Error(result.error);
+                // Use API route instead of server action (same as AI Chat)
+                const res = await fetch('/api/upload/bunny?folder=chat-media', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    console.error('[UPLOAD] ❌ Upload failed:', errorData);
+                    toast.error("Upload failed", { id: 'upload' });
+                    throw new Error(errorData.error || 'Upload failed');
                 }
 
-                finalMediaUrl = result.url;
+                const data = await res.json();
+                finalMediaUrl = data.url;
+                console.log('[UPLOAD] ✅ Upload complete:', finalMediaUrl);
+                toast.success("Image uploaded!", { id: 'upload' });
             }
 
             const result = await sendChatMessage(
@@ -404,10 +443,11 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
             setReplyingTo(null);
 
         } catch (error: any) {
-            console.error("Send failed:", error);
+            console.error('[SEND] ❌ Send failed:', error);
             const errorMsg = error.hint || error.details || error.message || "Unknown error";
             toast.error("Failed to send: " + errorMsg);
         } finally {
+            console.log('[SEND] 🏁 Cleanup...');
             // Always reset uploading state
             setUploading(false);
         }
@@ -540,7 +580,18 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                 </div>
                 {/* Mute Toggle (Only for Group Chats) */}
                 {chatInfo.is_group && (
-                    <div className="ml-auto flex items-center">
+                    <div className="ml-auto flex items-center gap-2">
+                        {/* Manual Refresh Button for Debugging */}
+                        <Button
+                            onClick={manualRefresh}
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            title="Refresh messages"
+                        >
+                            <RefreshCw className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                        </Button>
+
                         <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-full border border-slate-100 dark:border-slate-800">
                             {isMuted ? <BellOff className="w-3.5 h-3.5 text-slate-400" /> : <Bell className="w-3.5 h-3.5 text-purple-600" />}
                             <Label htmlFor="mute-chat" className="text-[10px] font-medium text-slate-600 dark:text-slate-300 cursor-pointer hidden sm:block">
