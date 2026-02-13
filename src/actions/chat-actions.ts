@@ -202,21 +202,23 @@ export async function sendChatMessage(
     content: string,
     type: string,
     mediaUrl: string | null,
-    replyToId: string | null
-): Promise<{ success: boolean; error?: string }> {
+    replyToId: string | null,
+    id?: string // Optional ID from client
+): Promise<{ success: boolean; error?: string; data?: any }> {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
     // 1. Insert Message
-    const { error } = await supabase.from("chat_messages").insert({
+    const { data, error } = await supabase.from("chat_messages").insert({
+        id: id || undefined, // Use client ID if provided
         conversation_id: conversationId,
         sender_id: user.id,
         content: content,
         type: type,
         media_url: mediaUrl,
         reply_to_id: replyToId
-    });
+    }).select().single();
 
     if (error) {
         console.error("Send Message Error:", error);
@@ -224,7 +226,6 @@ export async function sendChatMessage(
     }
 
     // 2. Trigger Notification (Background)
-    // We don't await this to keep UI snappy, or we can await if critical.
     (async () => {
         try {
             // Check if Group
@@ -267,5 +268,5 @@ export async function sendChatMessage(
         }
     })();
 
-    return { success: true };
+    return { success: true, data };
 }

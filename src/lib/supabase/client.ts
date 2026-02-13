@@ -1,13 +1,18 @@
 import { createBrowserClient } from '@supabase/ssr';
 import { Capacitor } from '@capacitor/core';
 import { createCapacitorStorage } from './capacitor-storage';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
-console.log('[DEBUG] client.ts loaded!');
+// Singleton client instance
+let supabaseClient: SupabaseClient | null = null;
 
 export function createClient() {
-    console.log('[DEBUG] createClient() called');
-    console.log('[DEBUG] Capacitor available?', typeof Capacitor);
-    console.log('[DEBUG] Capacitor.isNativePlatform?', typeof Capacitor.isNativePlatform);
+    // Return existing client if already initialized
+    if (supabaseClient) {
+        return supabaseClient;
+    }
+
+    console.log('[DEBUG] Creating NEW Supabase client (first time)');
 
     const isNative = Capacitor.isNativePlatform();
     console.log('[DEBUG] isNativePlatform() result:', isNative);
@@ -15,7 +20,7 @@ export function createClient() {
     // Mobile: Use custom secure storage adapter for session persistence
     if (isNative) {
         console.log('[Supabase] ✅ Initializing with Capacitor storage (MOBILE)');
-        return createBrowserClient(
+        supabaseClient = createBrowserClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://example.com',
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-key',
             {
@@ -34,12 +39,14 @@ export function createClient() {
                 },
             }
         );
+    } else {
+        // Browser: Keep default behavior (cookies-based, zero changes)
+        console.log('[Supabase] ⚠️ Initializing with default storage (BROWSER)');
+        supabaseClient = createBrowserClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://example.com',
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-key'
+        );
     }
 
-    // Browser: Keep default behavior (cookies-based, zero changes)
-    console.log('[Supabase] ⚠️ Initializing with default storage (BROWSER)');
-    return createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://example.com',
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-key'
-    );
+    return supabaseClient;
 }

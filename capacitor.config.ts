@@ -6,8 +6,9 @@ const config: CapacitorConfig = {
   webDir: 'public',
   appendUserAgent: 'ADH_APP',
   server: {
-    url: 'https://adh.today',
-    androidScheme: 'https',
+    url: 'http://10.0.2.2:3000',
+    cleartext: true,
+    androidScheme: 'http',
   },
   plugins: {
     SplashScreen: {

@@ -79,14 +79,10 @@ export function PostCard({ post, isAdmin, currentUserId }: PostCardProps) {
 
     const ImageContent = (
         <div className="mt-3 relative w-full rounded-lg overflow-hidden border border-purple-100 dark:border-purple-900/20 bg-purple-50/50 dark:bg-purple-900/10">
-            <Image
+            <img
                 src={post.image_url!}
                 alt="Post attachment"
-                width={0}
-                height={0}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="w-full h-auto max-h-[500px] object-contain bg-slate-100 dark:bg-slate-800"
-                style={{ width: '100%', height: 'auto' }}
             />
         </div>
     );

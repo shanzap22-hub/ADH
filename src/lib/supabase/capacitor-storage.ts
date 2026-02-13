@@ -20,6 +20,8 @@ export const createCapacitorStorage = () => {
          */
         async getItem(key: string): Promise<string | null> {
             if (!isNative) {
+                // Server-side check: prevent crash during SSR
+                if (typeof window === 'undefined') return null;
                 // Web: Use standard localStorage
                 return localStorage.getItem(key);
             }
@@ -52,6 +54,8 @@ export const createCapacitorStorage = () => {
          */
         async setItem(key: string, value: string): Promise<void> {
             if (!isNative) {
+                // Server-side check: prevent crash during SSR
+                if (typeof window === 'undefined') return;
                 // Web: Use standard localStorage
                 localStorage.setItem(key, value);
                 return;
@@ -81,6 +85,8 @@ export const createCapacitorStorage = () => {
          */
         async removeItem(key: string): Promise<void> {
             if (!isNative) {
+                // Server-side check: prevent crash during SSR
+                if (typeof window === 'undefined') return;
                 // Web: Use standard localStorage
                 localStorage.removeItem(key);
                 return;

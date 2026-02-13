@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { Capacitor } from "@capacitor/core";
 
 import { ModernLoader } from "@/components/ui/modern-loader";
@@ -84,13 +83,10 @@ export const SplashScreenProvider = () => {
         <div className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center">
             {/* Logo Animation: Zoom In */}
             <div className="relative w-32 h-32 mb-8 animate-in fade-in zoom-in duration-1000">
-                <Image
+                <img
                     src="/logo.png"
                     alt="ADH Connect"
-                    fill
-                    className="object-contain"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    priority
+                    className="w-full h-full object-contain"
                 />
             </div>
 

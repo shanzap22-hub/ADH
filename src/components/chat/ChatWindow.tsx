@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
+import { v4 as uuidv4 } from "uuid";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -250,13 +251,19 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                     'postgres_changes',
                     { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `conversation_id=eq.${conversationId}` },
                     async (payload) => {
-                        console.log('[REALTIME] 🔔 New message received:', payload.new);
+                        console.log('[REALTIME_DEBUG] 🔔 New message received:', JSON.stringify(payload.new));
+                        console.log('[REALTIME_DEBUG] Message type:', payload.new.type);
+                        console.log('[REALTIME_DEBUG] Media URL:', payload.new.media_url);
+                        console.log('[REALTIME_DEBUG] Content:', payload.new.content);
+                        console.log('[REALTIME_DEBUG] Sender ID:', payload.new.sender_id);
 
                         const { data: senderProfile } = await supabase
                             .from('profiles')
                             .select('full_name, avatar_url')
                             .eq('id', payload.new.sender_id)
                             .single();
+
+                        console.log('[REALTIME] Sender profile fetched:', senderProfile);
 
                         let replyInfo = null;
                         if (payload.new.reply_to_id) {
@@ -270,9 +277,26 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
 
                         const newMessage = { ...payload.new, sender: senderProfile, reply_to: replyInfo };
 
+                        console.log('[REALTIME_DEBUG] Final message object:', JSON.stringify({
+                            id: newMessage.id,
+                            type: newMessage.type,
+                            media_url: newMessage.media_url,
+                            has_sender: !!newMessage.sender,
+                            content: newMessage.content?.slice(0, 20)
+                        }));
+                        console.log('[REALTIME_DEBUG] Will render as image?', newMessage.type === 'image' && !!newMessage.media_url);
+
                         if (isMounted) {
-                            setMessages((prev) => [...prev, newMessage]);
-                            console.log('[REALTIME] ✅ Message added to state');
+                            setMessages((prev) => {
+                                // Deduplication: if message already exists (from optimistic update reconciliation), ignore event
+                                if (prev.some(m => m.id === newMessage.id)) {
+                                    console.log('[REALTIME] ⚠️ Duplicate message ignored:', newMessage.id);
+                                    return prev;
+                                }
+                                console.log('[REALTIME_DEBUG] ✅ Message added to state. Messages count:', prev.length + 1);
+                                return [...prev, newMessage];
+                            });
+
                             // Auto-scroll if near bottom or if it's my message
                             if (payload.new.sender_id === currentUserId) {
                                 setTimeout(() => scrollToBottom(), 100);
@@ -294,11 +318,12 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
 
             const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
                 if (session?.user && isMounted) {
-                    // Only re-fetch if empty? or always? limiting re-fetches to avoid flicker
+                    // Always setup subscription on auth change to ensure real-time updates work
+                    // Don't re-fetch messages if we already have them (avoid flicker)
                     if (messages.length === 0) {
                         await fetchMessages(session.user.id);
-                        setupSubscription();
                     }
+                    setupSubscription();
                 }
             });
             return () => subscription.unsubscribe();
@@ -332,8 +357,16 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
 
     // Handle Image Pick with Platform Detection
     const handleImagePick = async () => {
+        console.log('[IMAGE_PICK] 📸 Button clicked!');
+        console.log('[IMAGE_PICK] Platform check:', {
+            isNative: Capacitor.isNativePlatform(),
+            platform: Capacitor.getPlatform()
+        });
+
         try {
             if (Capacitor.isNativePlatform()) {
+                console.log('[IMAGE_PICK] 📱 Using native Camera API...');
+
                 // Use native Camera API for mobile
                 const image = await Camera.getPhoto({
                     quality: 80,
@@ -342,29 +375,53 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                     source: CameraSource.Photos, // Gallery only
                 });
 
+                console.log('[IMAGE_PICK] ✅ Camera.getPhoto returned:', {
+                    webPath: image.webPath,
+                    format: image.format,
+                    saved: image.saved
+                });
+
                 if (!image.webPath) {
+                    console.error('[IMAGE_PICK] ❌ No webPath in image!');
                     toast.error("Failed to load image");
                     return;
                 }
 
+                console.log('[IMAGE_PICK] 🔄 Converting to File object...');
+
                 // Convert to File object
                 const response = await fetch(image.webPath);
+                console.log('[IMAGE_PICK] Fetch response:', { ok: response.ok, status: response.status });
+
                 const blob = await response.blob();
+                console.log('[IMAGE_PICK] Blob created:', { size: blob.size, type: blob.type });
+
                 const file = new File([blob], `image.${image.format || 'jpg'}`, {
                     type: `image/${image.format || 'jpeg'}`
                 });
+                console.log('[IMAGE_PICK] File created:', { name: file.name, size: file.size, type: file.type });
 
                 setMediaFile(file);
                 setImagePreview(image.webPath);
+                console.log('[IMAGE_PICK] ✅ Image attached successfully!');
                 toast.success("Image attached!");
             } else {
+                console.log('[IMAGE_PICK] 🌐 Using web file input...');
                 // Use file input for web
                 fileInputRef.current?.click();
             }
         } catch (error: any) {
-            console.error("Image pick error:", error);
+            console.error('[IMAGE_PICK] ❌ ERROR:', error);
+            console.error('[IMAGE_PICK] Error details:', {
+                message: error.message,
+                stack: error.stack,
+                name: error.name
+            });
+
             if (error.message && !error.message.includes('User cancelled')) {
                 toast.error("Failed to pick image: " + error.message);
+            } else {
+                console.log('[IMAGE_PICK] User cancelled image selection');
             }
         }
     };
@@ -388,11 +445,36 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
     const handleSend = async () => {
         if ((!inputText.trim() && !mediaFile) || uploading) return;
 
-        console.log('[SEND] 🚀 Starting send...', { hasMedia: !!mediaFile, text: inputText.slice(0, 20) });
+        const tempId = uuidv4();
+        console.log('[SEND] 🚀 Starting send...', { tempId, hasMedia: !!mediaFile, text: inputText.slice(0, 20) });
 
         let finalType = "text";
         let finalContent = inputText;
         let finalMediaUrl = null;
+
+        // Optimistic Update
+        const optimisticMessage = {
+            id: tempId,
+            content: finalContent,
+            type: mediaFile ? (mediaFile.type.startsWith("image/") ? "image" : mediaFile.type.startsWith("audio/") ? "audio" : "file") : "text",
+            media_url: imagePreview, // Use preview for immediate display
+            sender_id: currentUserId,
+            created_at: new Date().toISOString(),
+            sender: null, // 'me' doesn't look at sender object usually
+            reply_to: replyingTo
+        };
+
+        // Add optimistic message immediately
+        setMessages(prev => [...prev, optimisticMessage]);
+
+        // Clear input immediately
+        setInputText("");
+        setMediaFile(null);
+        setImagePreview(null);
+        setReplyingTo(null);
+
+        // Auto-scroll
+        setTimeout(() => scrollToBottom(), 100);
 
         try {
             if (mediaFile) {
@@ -417,11 +499,19 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                     const errorData = await res.json();
                     console.error('[UPLOAD] ❌ Upload failed:', errorData);
                     toast.error("Upload failed", { id: 'upload' });
+                    // Remove optimistic message on failure
+                    setMessages(prev => prev.filter(m => m.id !== tempId));
                     throw new Error(errorData.error || 'Upload failed');
                 }
 
                 const data = await res.json();
                 finalMediaUrl = data.url;
+
+                // Update optimistic message with real URL if needed
+                if (finalMediaUrl) {
+                    setMessages(prev => prev.map(m => m.id === tempId ? { ...m, media_url: finalMediaUrl } : m));
+                }
+
                 console.log('[UPLOAD] ✅ Upload complete:', finalMediaUrl);
                 toast.success("Image uploaded!", { id: 'upload' });
             }
@@ -431,21 +521,33 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                 finalContent,
                 finalType,
                 finalMediaUrl,
-                replyingTo?.id || null
+                replyingTo?.id || null,
+                tempId // Pass client-generated ID
             );
 
             if (result.error) throw new Error(result.error);
 
-            // Success - clear input
-            setInputText("");
-            setMediaFile(null);
-            setImagePreview(null);
-            setReplyingTo(null);
+            // Reconcile Optimistic Message with Real Message
+            if (result.data) {
+                const realMessage = result.data;
+                console.log('[SEND] ✅ Success. ID matches:', { tempId, realId: realMessage.id });
+
+                setMessages(prev => {
+                    // Just update timestamp/details, ID is already correct
+                    return prev.map(m => m.id === tempId ? {
+                        ...m,
+                        created_at: realMessage.created_at,
+                        // Keep optimistic sender/reply_to
+                    } : m);
+                });
+            }
 
         } catch (error: any) {
             console.error('[SEND] ❌ Send failed:', error);
             const errorMsg = error.hint || error.details || error.message || "Unknown error";
             toast.error("Failed to send: " + errorMsg);
+            // Revert optimistic update
+            setMessages(prev => prev.filter(m => m.id !== tempId));
         } finally {
             console.log('[SEND] 🏁 Cleanup...');
             // Always reset uploading state
@@ -508,7 +610,8 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                         "",
                         "audio",
                         result.url!,
-                        replyingTo?.id || null
+                        replyingTo?.id || null,
+                        uuidv4() // Generate ID for voice message too
                     );
 
                     if (sendResult.error) throw new Error(sendResult.error);
@@ -620,6 +723,12 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                 )}
                 {messages.map((msg) => {
                     const isMe = msg.sender_id === currentUserId;
+
+                    // Debug: Log image messages
+                    if (msg.type === 'image') {
+                        console.log('[RENDER] Image message:', { id: msg.id, media_url: msg.media_url, type: msg.type });
+                    }
+
                     return (
                         <div
                             key={msg.id}
@@ -673,22 +782,18 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                                     <Dialog>
                                         <DialogTrigger asChild>
                                             <div className="mb-2 w-full max-w-[240px] aspect-square rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-black/5 relative">
-                                                <Image
+                                                <img
                                                     src={msg.media_url}
                                                     alt="Image"
-                                                    fill
-                                                    className="object-cover"
-                                                    sizes="(max-width: 768px) 100vw, 240px"
+                                                    className="w-full h-full object-cover"
                                                 />
                                             </div>
                                         </DialogTrigger>
                                         <DialogContent className="max-w-4xl p-0 bg-transparent border-none shadow-none flex items-center justify-center">
                                             <div className="relative w-full h-full min-w-[50vw] min-h-[50vh] flex items-center justify-center">
-                                                <Image
+                                                <img
                                                     src={msg.media_url}
                                                     alt="Full Preview"
-                                                    width={1200}
-                                                    height={1200}
                                                     className="max-w-[90vw] max-h-[90vh] w-auto h-auto rounded-lg shadow-2xl object-contain"
                                                 />
                                                 <a

@@ -16,4 +16,10 @@
         <domain includeSubdomains="true">firebaseapp.com</domain>
         <domain includeSubdomains="true">firebase.com</domain>
     </domain-config>
+
+    <!-- Allow cleartext traffic for local development -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+    </domain-config>
 </network-security-config>
