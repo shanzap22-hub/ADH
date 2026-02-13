@@ -3,13 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // import Image from "next/image"; // Removed unused import
 import { Button } from "@/components/ui/button";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Send, Mic, Image as ImageIcon, X, Loader2, ArrowLeft, Users, Trash2, Reply, MoreHorizontal, Bell, BellOff, RefreshCw } from "lucide-react";
+import { Send, Mic, Image as ImageIcon, X, Loader2, ArrowLeft, Users, Trash2, Reply, MoreHorizontal, Bell, BellOff, RefreshCw, ZoomIn } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -46,6 +43,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
     // Memoize the client to prevent recreation on every render
     const [supabase] = useState(() => {
@@ -753,7 +751,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                                         {console.log('[RENDER] Image Msg:', msg.id, msg.media_url)}
                                         <div
                                             className="mb-2 w-full max-w-[240px] aspect-square rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-black/5 relative"
-                                            onClick={() => toast.info("Image preview disabled for debugging")}
+                                            onClick={() => setSelectedImage(msg.media_url)}
                                         >
                                             <img
                                                 src={msg.media_url}
@@ -960,6 +958,30 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                     )}
                 </div>
             </div>
+
+            {/* Full Screen Image Overlay */}
+            {selectedImage && (
+                <div
+                    className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200"
+                    onClick={() => setSelectedImage(null)}
+                >
+                    <div className="relative max-w-full max-h-full">
+                        <img
+                            src={selectedImage}
+                            alt="Full Preview"
+                            className="max-w-full max-h-[90vh] object-contain rounded-md shadow-2xl"
+                            onClick={(e) => e.stopPropagation()} // Prevent close when clicking image
+                        />
+                        <Button
+                            className="absolute -top-12 right-0 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                            size="icon"
+                            onClick={() => setSelectedImage(null)}
+                        >
+                            <X className="w-6 h-6" />
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
