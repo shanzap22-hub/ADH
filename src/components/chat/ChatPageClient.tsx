@@ -48,6 +48,8 @@ export default function ChatPageClient({
         const chatId = searchParams.get('id');
 
         const autoOpenChat = async () => {
+            console.log('[ChatPage] 🔄 Auto-open check:', { action, chatId, hasCommunityAccess });
+
             if (action === 'community' && hasCommunityAccess && termsCommunityAccepted) {
                 try {
                     const group = await getGlobalGroupChat();
@@ -172,6 +174,7 @@ export default function ChatPageClient({
                 ) : selectedChatId && selectedChatInfo ? (
                     <div className="w-full h-full flex flex-col">
                         <ChatWindow
+                            key={selectedChatId}
                             conversationId={selectedChatId}
                             chatInfo={selectedChatInfo}
                             currentUserId={currentUserId}

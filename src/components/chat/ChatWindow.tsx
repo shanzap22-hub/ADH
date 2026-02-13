@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Image from "next/image";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+// import Image from "next/image"; // Removed unused import
+import { Button } from "@/components/ui/button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -149,14 +151,15 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
     useEffect(() => {
         let isMounted = true;
 
-        // Define channel outside so cleanup can access it
-        const channel = supabase.channel(`chat:${conversationId}`);
+        // Use a unique channel key to prevent collisions with previous unmounted instances (zombie channels)
+        const channelKey = `chat:${conversationId}:${Date.now()}`;
+        console.log(`[ChatWindow] 🔌 Creating channel: ${channelKey}`);
+        const channel = supabase.channel(channelKey);
 
         const fetchMessages = async (userId: string, beforeDate?: string) => {
             if (!isMounted) return;
             console.log('[ChatWindow] 📥 Fetching messages...', { conversationId, beforeDate });
 
-            // If loading more (beforeDate exists), set loading state
             if (beforeDate) setIsLoadingMore(true);
 
             // 1. Fetch Raw Messages (Newest First)
@@ -226,16 +229,12 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
 
             if (isMounted) {
                 if (beforeDate) {
-                    // Prepend older messages
                     setMessages(prev => [...completeMessages, ...prev]);
                     setIsLoadingMore(false);
                 } else {
                     setMessages(completeMessages);
                     // Scroll to bottom on initial load
-                    if (isFirstLoad.current) {
-                        setTimeout(() => scrollToBottom(true), 100);
-                        isFirstLoad.current = false;
-                    }
+                    setTimeout(() => scrollToBottom(true), 100);
                 }
             }
         };
@@ -244,26 +243,20 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
         fetchMessagesRef.current = fetchMessages;
 
         const setupSubscription = () => {
-            console.log('[SUBSCRIPTION] 📡 Setting up real-time subscription...', conversationId);
+            console.log('[SUBSCRIPTION] 📡 Setting up real-time subscription...', channelKey);
 
             channel
                 .on(
                     'postgres_changes',
                     { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `conversation_id=eq.${conversationId}` },
                     async (payload) => {
-                        console.log('[REALTIME_DEBUG] 🔔 New message received:', JSON.stringify(payload.new));
-                        console.log('[REALTIME_DEBUG] Message type:', payload.new.type);
-                        console.log('[REALTIME_DEBUG] Media URL:', payload.new.media_url);
-                        console.log('[REALTIME_DEBUG] Content:', payload.new.content);
-                        console.log('[REALTIME_DEBUG] Sender ID:', payload.new.sender_id);
+                        console.log('[REALTIME_DEBUG] 🔔 New message received:', payload.new.id);
 
                         const { data: senderProfile } = await supabase
                             .from('profiles')
                             .select('full_name, avatar_url')
                             .eq('id', payload.new.sender_id)
                             .single();
-
-                        console.log('[REALTIME] Sender profile fetched:', senderProfile);
 
                         let replyInfo = null;
                         if (payload.new.reply_to_id) {
@@ -277,27 +270,12 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
 
                         const newMessage = { ...payload.new, sender: senderProfile, reply_to: replyInfo };
 
-                        console.log('[REALTIME_DEBUG] Final message object:', JSON.stringify({
-                            id: newMessage.id,
-                            type: newMessage.type,
-                            media_url: newMessage.media_url,
-                            has_sender: !!newMessage.sender,
-                            content: newMessage.content?.slice(0, 20)
-                        }));
-                        console.log('[REALTIME_DEBUG] Will render as image?', newMessage.type === 'image' && !!newMessage.media_url);
-
                         if (isMounted) {
                             setMessages((prev) => {
-                                // Deduplication: if message already exists (from optimistic update reconciliation), ignore event
-                                if (prev.some(m => m.id === newMessage.id)) {
-                                    console.log('[REALTIME] ⚠️ Duplicate message ignored:', newMessage.id);
-                                    return prev;
-                                }
-                                console.log('[REALTIME_DEBUG] ✅ Message added to state. Messages count:', prev.length + 1);
+                                if (prev.some(m => m.id === newMessage.id)) return prev;
                                 return [...prev, newMessage];
                             });
 
-                            // Auto-scroll if near bottom or if it's my message
                             if (payload.new.sender_id === currentUserId) {
                                 setTimeout(() => scrollToBottom(), 100);
                             }
@@ -305,38 +283,30 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                     }
                 )
                 .subscribe((status) => {
-                    console.log('[SUBSCRIPTION] 📊 Status:', status);
+                    console.log(`[SUBSCRIPTION] 📊 Status (${channelKey}):`, status);
                 });
         };
 
         const initChat = async () => {
-            const { data: { session: initialSession } } = await supabase.auth.getSession();
-            if (initialSession?.user) {
-                await fetchMessages(initialSession.user.id);
+            // 1. Initial Load from Props if available, or fetch session
+            // We use props.currentUserId so we don't strictly need getSession, but it's safer for token check
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                await fetchMessages(session.user.id);
                 setupSubscription();
+            } else {
+                console.warn('[ChatWindow] ⚠️ No session found in initChat');
             }
-
-            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-                if (session?.user && isMounted) {
-                    // Always setup subscription on auth change to ensure real-time updates work
-                    // Don't re-fetch messages if we already have them (avoid flicker)
-                    if (messages.length === 0) {
-                        await fetchMessages(session.user.id);
-                    }
-                    setupSubscription();
-                }
-            });
-            return () => subscription.unsubscribe();
         };
 
-        const cleanupPromise = initChat();
+        initChat();
 
         return () => {
+            console.log(`[ChatWindow] 🧹 Cleaning up channel: ${channelKey}`);
             isMounted = false;
             supabase.removeChannel(channel);
-            cleanupPromise.then(cleanup => cleanup && cleanup());
         };
-    }, [conversationId, supabase, currentUserId]); // added currentUserId
+    }, [conversationId, supabase, currentUserId]);
 
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         const { scrollTop } = e.currentTarget;
@@ -777,37 +747,21 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                                     </p>
                                 )}
 
-                                {/* Media Content with Dialog for Preview */}
+                                {/* Media Content with Dialog for Preview - DISABLED for debug */}
                                 {msg.type === 'image' && msg.media_url && (
-                                    <Dialog>
-                                        <DialogTrigger asChild>
-                                            <div className="mb-2 w-full max-w-[240px] aspect-square rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-black/5 relative">
-                                                <img
-                                                    src={msg.media_url}
-                                                    alt="Image"
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                        </DialogTrigger>
-                                        <DialogContent className="max-w-4xl p-0 bg-transparent border-none shadow-none flex items-center justify-center">
-                                            <div className="relative w-full h-full min-w-[50vw] min-h-[50vh] flex items-center justify-center">
-                                                <img
-                                                    src={msg.media_url}
-                                                    alt="Full Preview"
-                                                    className="max-w-[90vw] max-h-[90vh] w-auto h-auto rounded-lg shadow-2xl object-contain"
-                                                />
-                                                <a
-                                                    href={msg.media_url}
-                                                    download
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="absolute bottom-4 right-4 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-xs border border-white/20 transition-colors"
-                                                >
-                                                    Open Original
-                                                </a>
-                                            </div>
-                                        </DialogContent>
-                                    </Dialog>
+                                    <>
+                                        {console.log('[RENDER] Image Msg:', msg.id, msg.media_url)}
+                                        <div
+                                            className="mb-2 w-full max-w-[240px] aspect-square rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-black/5 relative"
+                                            onClick={() => toast.info("Image preview disabled for debugging")}
+                                        >
+                                            <img
+                                                src={msg.media_url}
+                                                alt="Image"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                    </>
                                 )}
 
                                 {msg.type === 'audio' && msg.media_url && (

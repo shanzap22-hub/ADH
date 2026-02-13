@@ -6,9 +6,17 @@ const config: CapacitorConfig = {
   webDir: 'public',
   appendUserAgent: 'ADH_APP',
   server: {
-    url: 'http://10.0.2.2:3000',
-    cleartext: true,
-    androidScheme: 'http',
+    // Production URL (Loads directly in WebView)
+    url: 'https://adh.today',
+    cleartext: true, // Only for debugging, optional in prod if https
+    androidScheme: 'https',
+    allowNavigation: [
+      'adh.today',
+      '*.adh.today',
+      '*.google.com',
+      '*.googleapis.com',
+      '*.gstatic.com'
+    ]
   },
   plugins: {
     SplashScreen: {
