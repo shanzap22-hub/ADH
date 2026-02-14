@@ -49,41 +49,35 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
     // Wrapper to handle history state for full screen image
     const setSelectedImage = (url: string | null) => {
         if (url) {
-            // Opening image: Push history state
-            window.history.pushState({ imageOpen: true }, "", window.location.href);
+            // Opening image: Push history state with a unique identifier
+            const state = { imageOpen: true, id: Date.now() };
+            window.history.pushState(state, "", window.location.href);
             setSelectedImageState(url);
         } else {
-            // Closing image: Check if we need to go back
-            // If we are closing via ID/Button, we should likely just go back
-            // BUT, we need to know if we are here because of POP (back button) or manual close.
-            // If manual close, go back. If POP, just set state.
-            // A simple way is to just set state here, and let the effect handle the pop.
-            // However, to keep history clean, if we close manually, we should pop the state.
-
-            // NOTE: This simple helper assumes manual close. Validating current state is hard.
-            // Safe approach: history.back() if we think we pushed.
-            // But checking history.state is unreliable across browsers sometimes.
-            // Let's rely on the user behavior:
-            // If manual close -> history.back() (which triggers popstate, which clears state)
-
-            // To avoid loops, we'll just use history.back() and let the popstate handler do the clearing
-            // Or simpler: just set state null, and if there's a history state, go back.
-
-            // Better Logic:
-            // 1. Manual Close -> window.history.back() -> triggers popstate -> sets selectedImage(null)
-            window.history.back();
+            // Closing image MANUALLY (clicked X or background)
+            // We need to go back to pop the state we pushed.
+            // Check if we actually have our state in history to avoid going back too far
+            if (window.history.state && window.history.state.imageOpen) {
+                window.history.back();
+            } else {
+                // Fallback: just close it if no state (shouldn't happen if opened via this function)
+                setSelectedImageState(null);
+            }
         }
     };
 
     // Listen for PopState (Back Button)
     useEffect(() => {
         const handlePopState = (event: PopStateEvent) => {
-            // If we receive a popstate, it means the user went back (or forward).
-            // If we had an image open, it means we should probably close it.
-            // We use the functional update to check the CURRENT value of selectedImage
+            // If the user presses Back, the browser pops the state.
+            // We just need to sync our local state.
+            // If we are currently showing an image, this pop means we should close it.
+            // The event.state will be the state of the *previous* entry (or new current),
+            // which likely doesn't have imageOpen: true if we just went back.
+
             setSelectedImageState((current) => {
                 if (current) {
-                    return null; // Close image
+                    return null; // Close image on back press
                 }
                 return current;
             });
