@@ -55,12 +55,26 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
             setSelectedImageState(url);
         } else {
             // Closing image MANUALLY (clicked X or background)
-            // We need to go back to pop the state we pushed.
-            // Check if we actually have our state in history to avoid going back too far
+            // We do NOT call history.back() here to avoid navigation issues.
+            // We just clear the state.
+            // However, we should try to clean up the history state we pushed if possible,
+            // but calling history.back() is risky if the user already navigated elsewhere or if the state stack is complex.
+            // The safest UX for "X" is just "Close this overlay".
+            // If the user presses "Back" later, they might go back to the previous page (Dashboard), which is expected behavior for "Back".
+            // If we want "Back" to also close the image, we rely on the popstate listener.
+
+            // Refined Logic for "X" / Background Click:
+            // Just close the image. 
+            // If we left a "stuck" history state, it's a minor issue compared to accidentally navigating away.
+            // OPTIONAL: We could check history.state before doing history.back(), but let's stick to the user's request:
+            // "X should just close it".
+
+            // To be safe and clean:
             if (window.history.state && window.history.state.imageOpen) {
+                // If we are definitely on our pushed state, go back.
                 window.history.back();
             } else {
-                // Fallback: just close it if no state (shouldn't happen if opened via this function)
+                // Otherwise just close.
                 setSelectedImageState(null);
             }
         }
