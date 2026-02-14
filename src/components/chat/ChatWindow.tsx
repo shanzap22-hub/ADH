@@ -47,36 +47,40 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
     const [selectedImage, setSelectedImageState] = useState<string | null>(null);
 
     // Wrapper to handle history state for full screen image
-    const setSelectedImage = (url: string | null) => {
+    const setSelectedImage = (url: string | null, e?: React.MouseEvent | React.TouchEvent) => {
+        // Stop propagation if event is provided to prevent bubbling to parent elements
+        if (e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
+
         if (url) {
             // Opening image: Push history state with a unique identifier
             const state = { imageOpen: true, id: Date.now() };
             window.history.pushState(state, "", window.location.href);
             setSelectedImageState(url);
         } else {
-            // Closing image MANUALLY (clicked X or background)
-            // We do NOT call history.back() here to avoid navigation issues.
-            // We just clear the state.
-            // However, we should try to clean up the history state we pushed if possible,
-            // but calling history.back() is risky if the user already navigated elsewhere or if the state stack is complex.
-            // The safest UX for "X" is just "Close this overlay".
-            // If the user presses "Back" later, they might go back to the previous page (Dashboard), which is expected behavior for "Back".
-            // If we want "Back" to also close the image, we rely on the popstate listener.
+            // Closing start
+            // We need to differentiate between "Browser Back" and "Manual Close (X / Background)"
 
-            // Refined Logic for "X" / Background Click:
-            // Just close the image. 
-            // If we left a "stuck" history state, it's a minor issue compared to accidentally navigating away.
-            // OPTIONAL: We could check history.state before doing history.back(), but let's stick to the user's request:
-            // "X should just close it".
+            // If this function is called, it means meaningful user interaction (click).
+            // We should try to revert the history state we pushed, so the "Forward" button doesn't take us back to the image.
 
-            // To be safe and clean:
-            if (window.history.state && window.history.state.imageOpen) {
-                // If we are definitely on our pushed state, go back.
-                window.history.back();
-            } else {
-                // Otherwise just close.
-                setSelectedImageState(null);
-            }
+            // However, checking history state is tricky.
+            // If we just `setSelectedImageState(null)`, the history state remains "open". 
+            // Then hitting "Back" might not match what we expect (it might go back to dashboard if we weren't careful, or it might just close the "already closed" image).
+
+            // SAFE APPROACH for "X" button given the bug:
+            // Just close the image state. Do NOT touch history.
+            // If the user hits "Back" later, it will likely pop the "imageOpen" state and result in... nothing visible changing (which is fine),
+            // OR it will go back to the previous page (Dashboard), which is also acceptable for a "Back" press after closing a modal.
+
+            // The priority is: X BUTTON MUST NOT REDIRECT.
+            setSelectedImageState(null);
+
+            // Optional: If we are SURE we are at the top of the stack with imageOpen, we could back().
+            // But let's trust the user's report that previous attempts failed.
+            // We'll leave the history stack "dirty" (one extra entry) rather than risking a redirect.
         }
     };
 
@@ -823,7 +827,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                                     <>
                                         <div
                                             className="mb-2 w-full max-w-[240px] aspect-square rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-black/5 relative"
-                                            onClick={() => setSelectedImage(msg.media_url)}
+                                            onClick={(e) => setSelectedImage(msg.media_url, e)}
                                         >
                                             <img
                                                 src={msg.media_url}
@@ -1042,26 +1046,13 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                 selectedImage && (
                     <div
                         className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200"
-                        onClick={() => setSelectedImage(null)}
                     >
-                        <div className="relative max-w-full max-h-full">
-                            <img
-                                src={selectedImage}
-                                alt="Full Preview"
-                                className="max-w-full max-h-[90vh] object-contain rounded-md shadow-2xl"
-                                onClick={(e) => e.stopPropagation()} // Prevent close when clicking image
-                            />
-                            <Button
-                                className="absolute -top-12 right-0 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                                size="icon"
-                                onClick={() => setSelectedImage(null)}
-                            >
-                                <X className="w-6 h-6" />
-                            </Button>
+                        <X className="w-6 h-6" />
+                    </Button>
                         </div>
-                    </div>
+                    </div >
                 )
-            }
+}
         </div >
     );
 }
