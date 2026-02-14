@@ -11,7 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { deleteChatMessage, sendChatMessage, toggleChatMute, getChatMuteStatus } from "@/actions/chat-actions";
+import { deleteChatMessage, sendChatMessage, toggleChatMute, getChatMuteStatus, uploadChatMedia } from "@/actions/chat-actions";
 import { toast } from "sonner";
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -40,10 +40,58 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
     const [recordingTime, setRecordingTime] = useState(0);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
+    const isCancelledRef = useRef(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [selectedImage, setSelectedImageState] = useState<string | null>(null);
+
+    // Wrapper to handle history state for full screen image
+    const setSelectedImage = (url: string | null) => {
+        if (url) {
+            // Opening image: Push history state
+            window.history.pushState({ imageOpen: true }, "", window.location.href);
+            setSelectedImageState(url);
+        } else {
+            // Closing image: Check if we need to go back
+            // If we are closing via ID/Button, we should likely just go back
+            // BUT, we need to know if we are here because of POP (back button) or manual close.
+            // If manual close, go back. If POP, just set state.
+            // A simple way is to just set state here, and let the effect handle the pop.
+            // However, to keep history clean, if we close manually, we should pop the state.
+
+            // NOTE: This simple helper assumes manual close. Validating current state is hard.
+            // Safe approach: history.back() if we think we pushed.
+            // But checking history.state is unreliable across browsers sometimes.
+            // Let's rely on the user behavior:
+            // If manual close -> history.back() (which triggers popstate, which clears state)
+
+            // To avoid loops, we'll just use history.back() and let the popstate handler do the clearing
+            // Or simpler: just set state null, and if there's a history state, go back.
+
+            // Better Logic:
+            // 1. Manual Close -> window.history.back() -> triggers popstate -> sets selectedImage(null)
+            window.history.back();
+        }
+    };
+
+    // Listen for PopState (Back Button)
+    useEffect(() => {
+        const handlePopState = (event: PopStateEvent) => {
+            // If we receive a popstate, it means the user went back (or forward).
+            // If we had an image open, it means we should probably close it.
+            // We use the functional update to check the CURRENT value of selectedImage
+            setSelectedImageState((current) => {
+                if (current) {
+                    return null; // Close image
+                }
+                return current;
+            });
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
 
     // Memoize the client to prevent recreation on every render
     const [supabase] = useState(() => {
@@ -526,6 +574,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
     // ... (Recording Logic with Improved Reliability)
     const startRecording = async () => {
         if (isRecording) return; // Prevent double-start
+        isCancelledRef.current = false;
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -538,6 +587,15 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
             };
 
             recorder.onstop = async () => {
+                // Check if cancelled
+                if (isCancelledRef.current) {
+                    console.log('Voice recording cancelled.');
+                    stream.getTracks().forEach(track => track.stop());
+                    setIsRecording(false);
+                    setRecordingTime(0);
+                    return;
+                }
+
                 const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
                 console.log('Voice recording stopped. Blob size:', audioBlob.size, 'bytes');
 
@@ -600,6 +658,13 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
         } catch (e) {
             console.error("Mic error:", e);
             toast.error("Could not access microphone");
+        }
+    };
+
+    const cancelRecording = () => {
+        isCancelledRef.current = true;
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+            mediaRecorderRef.current.stop();
         }
     };
 
@@ -748,7 +813,6 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                                 {/* Media Content with Dialog for Preview - DISABLED for debug */}
                                 {msg.type === 'image' && msg.media_url && (
                                     <>
-                                        {console.log('[RENDER] Image Msg:', msg.id, msg.media_url)}
                                         <div
                                             className="mb-2 w-full max-w-[240px] aspect-square rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-black/5 relative"
                                             onClick={() => setSelectedImage(msg.media_url)}
@@ -905,83 +969,91 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                         </Button>
                     </div>
 
-                    <div className="flex-1 relative">
+                    <div className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center px-4 py-2 min-h-[44px]">
                         {isRecording ? (
-                            <div className="flex items-center justify-between h-10 px-4 bg-red-50 dark:bg-red-900/20 rounded-full border border-red-200 dark:border-red-800 animate-pulse">
-                                <span className="text-red-600 dark:text-red-400 font-medium text-sm flex items-center gap-2">
-                                    <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
-                                    Recording {formatTime(recordingTime)}...
+                            <div className="flex items-center gap-3 w-full animate-in fade-in duration-200">
+                                <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-200 tabular-nums flex-1">
+                                    {formatTime(recordingTime)}
                                 </span>
+                                <span className="text-xs text-slate-500 animate-pulse hidden sm:inline-block">Recording...</span>
+
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={cancelRecording}
+                                    className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 h-8"
+                                >
+                                    <Trash2 className="w-4 h-4 mr-1.5" />
+                                    <span className="text-xs font-medium">Cancel</span>
+                                </Button>
                             </div>
                         ) : (
                             <Input
-                                placeholder="Type a message"
-                                className="rounded-full border-slate-200 dark:border-slate-700 focus-visible:ring-purple-500 bg-slate-50 dark:bg-slate-800"
+                                placeholder="Type a message..."
                                 value={inputText}
-                                onChange={(e) => { setInputText(e.target.value) }}
+                                onChange={(e) => setInputText(e.target.value)}
                                 onKeyDown={(e) => {
-                                    if (e.key === "Enter" && !e.shiftKey) {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
                                         e.preventDefault();
                                         handleSend();
                                     }
                                 }}
+                                className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-0 py-0 h-auto resize-none max-h-32 text-base"
                             />
                         )}
                     </div>
 
-                    {inputText || mediaFile ? (
-                        <Button
-                            onClick={handleSend}
-                            disabled={uploading}
-                            className="rounded-full bg-purple-600 hover:bg-purple-700 w-10 h-10 p-0 flex items-center justify-center transform hover:scale-105"
-                        >
-                            {uploading ? (
-                                <Loader2 className="w-5 h-5 animate-spin text-white" />
-                            ) : (
-                                <Send className="w-5 h-5 text-white ml-0.5" />
-                            )}
-                        </Button>
-                    ) : (
-                        <Button
-                            variant={isRecording ? "destructive" : "secondary"}
-                            className={cn(
-                                "rounded-full w-10 h-10 p-0 flex items-center justify-center transition-all duration-300",
-                                isRecording ? "scale-110 shadow-lg shadow-red-500/30" : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700"
-                            )}
-                            onMouseDown={startRecording}
-                            onMouseUp={stopRecording}
-                            onTouchStart={(e) => { e.preventDefault(); startRecording(); }}
-                            onTouchEnd={(e) => { e.preventDefault(); stopRecording(); }}
-                        >
-                            <Mic className={cn("w-5 h-5", isRecording ? "text-white fill-current" : "text-slate-500")} />
-                        </Button>
-                    )}
+                    {/* Send / Mic Button */}
+                    <Button
+                        size="icon"
+                        className={cn(
+                            "rounded-full shrink-0 transition-all duration-200",
+                            isRecording
+                                ? "bg-red-500 hover:bg-red-600 scale-110"
+                                : (inputText.trim() || mediaFile)
+                                    ? "bg-purple-600 hover:bg-purple-700"
+                                    : "bg-slate-200 dark:bg-slate-700 text-slate-500 hover:bg-slate-300 dark:hover:bg-slate-600"
+                        )}
+                        onClick={isRecording ? stopRecording : (inputText.trim() || mediaFile ? handleSend : startRecording)}
+                        disabled={uploading}
+                    >
+                        {isRecording ? (
+                            <Send className="w-5 h-5 text-white" /> // Icon changes to Send to indicate "finish recording"
+                        ) : (inputText.trim() || mediaFile) ? (
+                            uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />
+                        ) : (
+                            <Mic className="w-5 h-5" />
+                        )}
+                    </Button>
                 </div>
             </div>
 
             {/* Full Screen Image Overlay */}
-            {selectedImage && (
-                <div
-                    className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200"
-                    onClick={() => setSelectedImage(null)}
-                >
-                    <div className="relative max-w-full max-h-full">
-                        <img
-                            src={selectedImage}
-                            alt="Full Preview"
-                            className="max-w-full max-h-[90vh] object-contain rounded-md shadow-2xl"
-                            onClick={(e) => e.stopPropagation()} // Prevent close when clicking image
-                        />
-                        <Button
-                            className="absolute -top-12 right-0 rounded-full bg-white/10 hover:bg-white/20 text-white"
-                            size="icon"
-                            onClick={() => setSelectedImage(null)}
-                        >
-                            <X className="w-6 h-6" />
-                        </Button>
+            {
+                selectedImage && (
+                    <div
+                        className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200"
+                        onClick={() => setSelectedImage(null)}
+                    >
+                        <div className="relative max-w-full max-h-full">
+                            <img
+                                src={selectedImage}
+                                alt="Full Preview"
+                                className="max-w-full max-h-[90vh] object-contain rounded-md shadow-2xl"
+                                onClick={(e) => e.stopPropagation()} // Prevent close when clicking image
+                            />
+                            <Button
+                                className="absolute -top-12 right-0 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                                size="icon"
+                                onClick={() => setSelectedImage(null)}
+                            >
+                                <X className="w-6 h-6" />
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }
