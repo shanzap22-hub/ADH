@@ -10,10 +10,24 @@ export const BackButtonHandler = () => {
     const pathname = usePathname();
     const [isLoading, setIsLoading] = useState(false);
 
-    // Reset loading state on path change
+    // Reset loading state on path change or popstate (e.g. closing modals)
     useEffect(() => {
         setIsLoading(false);
     }, [pathname]);
+
+    useEffect(() => {
+        const handlePopState = () => {
+            // Only dismiss loader on popstate if we are in the chat page
+            // This allows the image overlay to close without a stuck spinner, 
+            // while keeping default behavior (spinner on back) for other pages if desired.
+            if (window.location.pathname.startsWith('/chat') || window.location.pathname.includes('/chat')) {
+                setIsLoading(false);
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
 
     useEffect(() => {
         let isListening = true;
