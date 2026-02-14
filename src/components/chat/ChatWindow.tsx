@@ -1046,13 +1046,26 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                 selectedImage && (
                     <div
                         className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200"
+                        onClick={(e) => setSelectedImage(null, e)}
                     >
-                        <X className="w-6 h-6" />
-                    </Button>
+                        <div className="relative max-w-full max-h-full">
+                            <img
+                                src={selectedImage}
+                                alt="Full Preview"
+                                className="max-w-full max-h-[90vh] object-contain rounded-md shadow-2xl"
+                                onClick={(e) => e.stopPropagation()} // Prevent close when clicking image
+                            />
+                            <Button
+                                className="absolute -top-12 right-0 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                                size="icon"
+                                onClick={(e) => setSelectedImage(null, e)}
+                            >
+                                <X className="w-6 h-6" />
+                            </Button>
                         </div>
-                    </div >
+                    </div>
                 )
-}
+            }
         </div >
     );
 }
