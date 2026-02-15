@@ -75,3 +75,73 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* React Flow Customization for Miro-like feel */
+.react-flow__pane {
+  cursor: grab !important;
+}
+
+.react-flow__pane.react-flow__pane.dragging {
+  cursor: grabbing !important;
+}
+
+/* Hide attribution and its container */
+.react-flow__attribution {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Ensure controls don't have a white bar background if that's the issue */
+.react-flow__controls {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.5rem !important;
+  overflow: hidden !important;
+}
+
+.react-flow__controls-button {
+  background-color: white !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  border-radius: 0 !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+
+.react-flow__controls-button svg {
+  fill: #64748b !important;
+}
+
+/* Hide any potential bottom bar */
+.react-flow__panel.bottom {
+  display: none !important;
+}
+
+/* Ensure cursors and text carets are visible on white backgrounds */
+.react-flow__pane,
+.react-flow__node,
+.react-flow__edge {
+  cursor: auto;
+}
+
+/* Force black caret in inputs within the mind map to avoid white-on-white issues */
+.react-flow input,
+.react-flow textarea {
+  caret-color: black !important;
+}
+
+/* Ensure hand cursor is visible if used */
+.react-flow__pane {
+  cursor: grab;
+}
+
+.react-flow__pane.dragging {
+  cursor: grabbing;
+}

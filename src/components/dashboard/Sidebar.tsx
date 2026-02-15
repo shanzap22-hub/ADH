@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, Compass, Radio, Users, Settings, Eye, UserPlus, LogOut, Shield, Calendar as CalendarIcon, Clock } from "lucide-react";
+import { LayoutDashboard, Compass, Radio, Users, Settings, Eye, UserPlus, LogOut, Shield, Calendar as CalendarIcon, Clock, Network } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -39,6 +39,12 @@ const routes = [
         icon: UserPlus,
         href: "/instructor/enroll",
         color: "text-emerald-500",
+    },
+    {
+        label: "Mind Maps",
+        icon: Network,
+        href: "/instructor/mind-maps",
+        color: "text-pink-700",
     },
     {
         label: "Settings",
