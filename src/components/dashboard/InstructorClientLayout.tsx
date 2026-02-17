@@ -40,7 +40,7 @@ export default function InstructorClientLayout({
             )}
 
             <main className={cn(
-                "h-full",
+                "h-full border-0",
                 !isMindMapEditor ? "md:pl-56 pt-[80px] md:pt-0" : "" // Remove padding if editor
             )}>
                 {children}

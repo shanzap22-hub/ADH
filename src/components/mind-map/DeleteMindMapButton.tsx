@@ -27,19 +27,20 @@ export default function DeleteMindMapButton({ id }: DeleteMindMapButtonProps) {
     const router = useRouter();
 
     const handleDelete = async (e: React.MouseEvent) => {
-        e.preventDefault(); // Prevent navigation to the map
+        // Stop propagation to prevent card click
+        e.preventDefault();
         e.stopPropagation();
 
         setIsDeleting(true);
         try {
             await deleteMindMap(id);
             toast.success('Mind map deleted');
-            router.refresh();
+            // No need to refresh, the server action revalidates the path
         } catch (error) {
             toast.error('Failed to delete mind map');
-        } finally {
             setIsDeleting(false);
         }
+        // No finally block to keep loading state if component unmounts
     };
 
     return (

@@ -1,4 +1,5 @@
-import { create } from 'zustand';
+import { create, useStore } from 'zustand';
+import { temporal } from 'zundo';
 import {
     Connection,
     Edge,
@@ -28,6 +29,7 @@ export type RFState = {
     layoutNodes: () => void;
     toggleNode: (nodeId: string) => void;
     updateNodeLabel: (nodeId: string, label: string) => void;
+    updateNodeData: (nodeId: string, data: any) => void;
     addChildNode: (parentId: string, label?: string) => void;
 };
 
@@ -62,6 +64,23 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[]) => {
 
     return { nodes: layoutedNodes, edges };
 };
+
+const BRANCH_COLORS = [
+    ['#f97316', '#fdba74'], // Deep Orange -> Orange-300
+    ['#f535aa', '#fbcfe8'], // Magenta -> Pink-200
+    ['#d946ef', '#f0abfc'], // Fuchsia -> Fuchsia-300
+    ['#8b5cf6', '#ddd6fe'], // Violet -> Violet-200
+    ['#6366f1', '#a5b4fc'], // Indigo -> Indigo-300
+    ['#3b82f6', '#93c5fd'], // Blue -> Blue-300
+    ['#2c244c', '#64748b'], // Dark Purple -> Slate-500
+    ['#be185d', '#f472b6'], // Pink -> Pink-400
+    ['#e11d48', '#fb7185'], // Rose -> Rose-400
+    ['#ea580c', '#fdba74'], // Burnt Orange -> Orange-300
+    ['#7c3aed', '#c4b5fd'], // Purple -> Purple-300
+    ['#4f46e5', '#818cf8'], // Indigo-Blue -> Indigo-400
+    ['#db2777', '#f9a8d4'], // Pink-Magenta -> Pink-300
+    ['#9333ea', '#d8b4fe'], // Purple-Violet -> Purple-300
+];
 
 // Recursive function to hide/show children
 const updateHiddenStatus = (nodeId: string, hidden: boolean, nodes: Node[], edges: Edge[]): { nodes: Node[], edges: Edge[] } => {
@@ -151,7 +170,7 @@ const toggleChildren = (nodeId: string, isHidden: boolean, nodes: Node[], edges:
 };
 
 
-const useMindMapStore = create<RFState>((set, get) => ({
+const useMindMapStore = create<RFState>()(temporal((set, get) => ({
     nodes: [],
     edges: [],
     onNodesChange: (changes: NodeChange[]) => {
@@ -183,24 +202,109 @@ const useMindMapStore = create<RFState>((set, get) => ({
             nodes: get().nodes.map((node) => {
                 if (node.id === nodeId) {
                     // it's important to create a new object here, to notify react flow about the change
-                    node.data = { ...node.data, label };
+                    return { ...node, data: { ...node.data, label } };
                 }
                 return node;
             }),
         });
     },
+    updateNodeData: (nodeId: string, data: any) => {
+        set({
+            nodes: get().nodes.map((node) => {
+                if (node.id === nodeId) {
+                    return { ...node, data: { ...node.data, ...data } };
+                }
+                return node;
+            }),
+        });
+    },
+
+
+
     addChildNode: (parentId: string, label: string = 'New Node') => {
         const parentNode = get().nodes.find(n => n.id === parentId);
         if (!parentNode) return;
+
+        // Determine if parent is root (has no incoming edges)
+        const isRoot = !get().edges.some(e => e.target === parentId);
+
+        // Determine color/gradient
+        let nodeColor = '#94a3b8'; // default slate-400
+        let nodeGradient: string[] | undefined;
+
+        if (isRoot) {
+            // New main branch - pick next gradient based on existing branches
+            const existingBranches = get().edges.filter(e => e.source === parentId).length;
+            const gradient = BRANCH_COLORS[existingBranches % BRANCH_COLORS.length];
+            if (Array.isArray(gradient)) {
+                nodeColor = gradient[0];
+                nodeGradient = gradient;
+            } else {
+                nodeColor = gradient as string;
+            }
+        } else {
+            // Sub-branch - cycle distinct gradients
+
+            // 1. Find the parent's primary color
+            const parentStroke = (parentNode.data?.style as any)?.stroke;
+
+            // 2. Find which gradient this color belongs to
+            const parentGradientIndex = BRANCH_COLORS.findIndex(g => Array.isArray(g) ? g[0] === parentStroke : g === parentStroke);
+
+            if (parentGradientIndex !== -1) {
+                // 3. Pick the next gradient in the sequence
+                const existingSiblings = get().edges.filter(e => e.source === parentId).length;
+
+                // Calculate new index: Parent Index + 1 + Sibling Index
+                const nextColorIndex = (parentGradientIndex + 1 + existingSiblings) % BRANCH_COLORS.length;
+
+                const gradient = BRANCH_COLORS[nextColorIndex];
+                if (Array.isArray(gradient)) {
+                    nodeColor = gradient[0];
+                    nodeGradient = gradient;
+                } else {
+                    nodeColor = gradient as string;
+                }
+            } else {
+                // Fallback
+                const existingSiblings = get().edges.filter(e => e.source === parentId).length;
+                const gradient = BRANCH_COLORS[existingSiblings % BRANCH_COLORS.length];
+                if (Array.isArray(gradient)) {
+                    nodeColor = gradient[0];
+                    nodeGradient = gradient;
+                } else {
+                    nodeColor = gradient as string;
+                }
+            }
+        }
+
+        const existingChildren = get().edges
+            .filter(e => e.source === parentId)
+            .map(e => get().nodes.find(n => n.id === e.target))
+            .filter((n): n is Node => !!n)
+            .sort((a, b) => a.position.y - b.position.y);
+
+        let newY = parentNode.position.y;
+        if (existingChildren.length > 0) {
+            const lastChild = existingChildren[existingChildren.length - 1];
+            // Place below the last child with some spacing
+            newY = lastChild.position.y + (lastChild.measured?.height || 60) + 20;
+        }
 
         const newNodeId = uuidv4();
         const newNode: Node = {
             id: newNodeId,
             type: 'mindMap',
-            data: { label: label },
+            data: {
+                label: label,
+                style: {
+                    stroke: nodeColor,
+                    gradient: nodeGradient
+                }
+            },
             position: {
-                x: parentNode.position.x + 200,
-                y: parentNode.position.y // dagre will fix this
+                x: parentNode.position.x + 300, // Fixed horizontal spacing
+                y: newY
             }
         };
 
@@ -208,6 +312,13 @@ const useMindMapStore = create<RFState>((set, get) => ({
             id: `e${parentId}-${newNodeId}`,
             source: parentNode.id,
             target: newNodeId,
+            type: 'gradient',
+            data: {
+                gradient: nodeGradient ? nodeGradient : [nodeColor, nodeColor]
+            },
+            style: {
+                strokeWidth: 2
+            },
         };
 
         set({
@@ -215,7 +326,8 @@ const useMindMapStore = create<RFState>((set, get) => ({
             edges: [...get().edges, newEdge]
         });
 
-        get().layoutNodes();
+        // REMOVED: get().layoutNodes(); 
+        // We do NOT want to trigger a global re-layout, effectively "pinning" old nodes.
     },
     layoutNodes: () => {
         const { nodes, edges } = getLayoutedElements(get().nodes, get().edges);
@@ -241,7 +353,20 @@ const useMindMapStore = create<RFState>((set, get) => ({
             get().layoutNodes();
         }, 10);
     }
-
+}), {
+    limit: 100, // Limit history to 100 steps
+    partialize: (state) => {
+        const { nodes, edges } = state;
+        return { nodes, edges }; // Only track nodes and edges in history
+    },
+    equality: (pastState, currentState) => {
+        // Simple equality check to avoid duplicate history entries if nothing changed
+        return JSON.stringify(pastState) === JSON.stringify(currentState);
+    }
 }));
+
+export const useTemporalStore = <T>(
+    selector: (state: any) => T,
+) => useStore(useMindMapStore.temporal, selector);
 
 export default useMindMapStore;

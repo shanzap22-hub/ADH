@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from "next"; // Restart trigger
 
 // 2026 Performance: Bundle Analyzer for optimization
 // Usage: ANALYZE=true npm run build

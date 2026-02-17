@@ -67,7 +67,10 @@ export async function createMindMap(title: string = 'Untitled Mind Map') {
             {
                 id: 'root',
                 type: 'mindMap',
-                data: { label: 'Central Topic' },
+                data: {
+                    label: 'Central Topic',
+                    style: { stroke: '#64748b' } // Default root color
+                },
                 position: { x: 0, y: 0 },
             },
         ],

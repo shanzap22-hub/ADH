@@ -17,7 +17,7 @@ export default async function MindMapPage(props: MindMapPageProps) {
     }
 
     return (
-        <div className="h-[calc(100vh-80px)]">
+        <div className="h-screen w-full border-0 overflow-hidden">
             <MindMapEditor initialData={mindMap} id={params.id} />
         </div>
     );

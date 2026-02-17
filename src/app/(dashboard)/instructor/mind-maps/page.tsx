@@ -23,29 +23,31 @@ export default async function MindMapsPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {maps.map((map) => (
-                        <Link href={`/instructor/mind-maps/${map.id}`} key={map.id}>
-                            <Card className="hover:shadow-md transition-shadow cursor-pointer h-full flex flex-col justify-between group relative">
-                                <CardHeader className="flex flex-row items-center gap-4 space-y-0">
-                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <DeleteMindMapButton id={map.id} />
-                                    </div>
-                                    <div className="p-2 bg-sky-100 rounded-md">
-                                        <FileText className="h-6 w-6 text-sky-700" />
-                                    </div>
-                                    <div>
-                                        <CardTitle className="line-clamp-1">{map.title}</CardTitle>
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            {format(new Date(map.updated_at), 'MMM d, yyyy')}
+                        <div key={map.id} className="relative group h-full">
+                            <Link href={`/instructor/mind-maps/${map.id}`} className="block h-full">
+                                <Card className="hover:shadow-md transition-shadow cursor-pointer h-full flex flex-col justify-between relative">
+                                    <CardHeader className="flex flex-row items-center gap-4 space-y-0">
+                                        <div className="p-2 bg-sky-100 rounded-md">
+                                            <FileText className="h-6 w-6 text-sky-700" />
+                                        </div>
+                                        <div>
+                                            <CardTitle className="line-clamp-1">{map.title}</CardTitle>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                {format(new Date(map.updated_at), 'MMM d, yyyy')}
+                                            </p>
+                                        </div>
+                                    </CardHeader>
+                                    <CardFooter className="pt-0">
+                                        <p className="text-xs text-muted-foreground line-clamp-2">
+                                            {map.description || 'No description'}
                                         </p>
-                                    </div>
-                                </CardHeader>
-                                <CardFooter className="pt-0">
-                                    <p className="text-xs text-muted-foreground line-clamp-2">
-                                        {map.description || 'No description'}
-                                    </p>
-                                </CardFooter>
-                            </Card>
-                        </Link>
+                                    </CardFooter>
+                                </Card>
+                            </Link>
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                <DeleteMindMapButton id={map.id} />
+                            </div>
+                        </div>
                     ))}
                 </div>
             )}

@@ -145,3 +145,20 @@
 .react-flow__pane.dragging {
   cursor: grabbing;
 }
+
+/* Remove all borders from ReactFlow wrapper and canvas */
+.react-flow,
+.react-flow__renderer,
+.react-flow__pane,
+.react-flow__viewport,
+.react-flow__container {
+  border: none !important;
+  outline: none !important;
+}
+
+/* Remove focus outlines that might create borders */
+.react-flow:focus,
+.react-flow__pane:focus {
+  outline: none !important;
+  border: none !important;
+}

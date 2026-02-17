@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>PDF Download Test</title>
+</head>
+
+<body>
+    <h1>PDF Download Test</h1>
+    <p>Click the button below. If the downloaded file has a random name like <code>d948feab...</code>, the issue is your
+        browser or an extension.</p>
+    <p>If it downloads as <code>test-download.pdf</code>, the browser is fine and the issue is in our React app.</p>
+
+    <button id="btn" onclick="downloadPdf()" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">Download
+        PDF</button>
+    <div id="status" style="margin-top: 20px; font-family: monospace;"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        async function downloadPdf() {
+            const status = document.getElementById('status');
+            status.innerText = 'Generating PDF...';
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                doc.text("Hello world!", 10, 10);
+
+                // Timestamp to prevent caching matches
+                const timestamp = new Date().getTime();
+                const filename = 'test-download-' + timestamp + '.pdf';
+
+                // Method: Data URI (same as app)
+                const dataUri = doc.output('datauristring');
+
+                const link = document.createElement('a');
+                link.href = dataUri;
+                link.download = filename;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+
+                status.innerText = 'Clicking download link for: ' + filename;
+                link.click();
+
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    status.innerText += '\nDownload triggered.';
+                }, 100);
+
+            } catch (e) {
+                status.innerText = 'Error: ' + e.message;
+                console.error(e);
+            }
+        }
+    </script>
+</body>
+
+</html>
