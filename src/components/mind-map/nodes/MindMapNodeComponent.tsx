@@ -180,7 +180,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                 className={cn(
                     "relative transition-all duration-200 flex flex-col items-center justify-center",
                     // Adjust container to just be the wrapper, styling moved to inner or handled via wrapper background
-                    data.image ? "rounded-2xl" : "rounded-full",
+                    data.image ? "rounded-2xl" : "rounded-2xl",
                     selected ? "ring-2 ring-blue-500/20 shadow-md" : "shadow-sm hover:shadow-md",
                 )}
                 style={
@@ -198,7 +198,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                 {/* Inner Content with White Background */}
                 <div className={cn(
                     "w-full h-full bg-white flex flex-col items-center justify-center",
-                    data.image ? "rounded-2xl p-2" : "rounded-full px-4 py-2"
+                    data.image ? "rounded-2xl p-2" : "rounded-2xl px-4 py-2"
                 )}>
 
                     {/* Node Toolbar for Quick Actions */}

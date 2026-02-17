@@ -312,11 +312,12 @@ const useMindMapStore = create<RFState>()(temporal((set, get) => ({
             id: `e${parentId}-${newNodeId}`,
             source: parentNode.id,
             target: newNodeId,
-            type: 'gradient',
+            type: 'default',
             data: {
                 gradient: nodeGradient ? nodeGradient : [nodeColor, nodeColor]
             },
             style: {
+                stroke: nodeColor,
                 strokeWidth: 2
             },
         };
@@ -349,9 +350,7 @@ const useMindMapStore = create<RFState>()(temporal((set, get) => ({
         const { nodes, edges } = toggleChildren(nodeId, newCollapsedState, get().nodes, get().edges);
 
         set({ nodes, edges });
-        setTimeout(() => {
-            get().layoutNodes();
-        }, 10);
+        // Removed auto-layout to preserve manual node positioning
     }
 }), {
     limit: 100, // Limit history to 100 steps

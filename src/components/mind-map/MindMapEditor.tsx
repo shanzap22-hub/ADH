@@ -409,9 +409,7 @@ function MindMapFlow({ initialData, id }: MindMapEditorProps) {
     }, []);
 
     return (
-        <div className="fixed inset-0 z-50 w-full h-full bg-slate-50 border-0 overflow-hidden" ref={reactFlowWrapper}>
-
-
+        <div className="fixed inset-0 z-50 w-full h-full bg-slate-50 overflow-hidden" ref={reactFlowWrapper}>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -424,7 +422,7 @@ function MindMapFlow({ initialData, id }: MindMapEditorProps) {
                 className="bg-slate-50"
                 deleteKeyCode={['Backspace', 'Delete']}
                 defaultEdgeOptions={{
-                    type: 'smoothstep',
+                    type: 'default',
                     animated: false,
                     style: {
                         stroke: '#94a3b8',
