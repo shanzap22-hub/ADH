@@ -212,7 +212,26 @@ const useMindMapStore = create<RFState>()(temporal((set, get) => ({
         set({
             nodes: get().nodes.map((node) => {
                 if (node.id === nodeId) {
-                    return { ...node, data: { ...node.data, ...data } };
+                    const newData = { ...node.data, ...data };
+                    // If style dimensions are provided in data, apply them to node.style and node.width/height
+                    // This forces React Flow to respect the programmatic resize (e.g. for images)
+                    let newStyle = node.style;
+                    let newWidth = node.width;
+                    let newHeight = node.height;
+
+                    if (data.style && (data.style.width || data.style.height)) {
+                        newStyle = { ...node.style, ...data.style };
+                        if (data.style.width) newWidth = data.style.width;
+                        if (data.style.height) newHeight = data.style.height;
+                    }
+
+                    return {
+                        ...node,
+                        data: newData,
+                        style: newStyle,
+                        width: newWidth,
+                        height: newHeight
+                    };
                 }
                 return node;
             }),

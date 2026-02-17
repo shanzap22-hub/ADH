@@ -75,7 +75,10 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
     // Image Handlers
     const handleUrlSubmit = () => {
         if (!imageUrl) return;
-        updateNodeData(id, { image: imageUrl });
+        updateNodeData(id, {
+            image: imageUrl,
+            style: { ...data.style, width: 300, height: 200 }
+        });
         toast.success("Image updated from URL");
         setImageUrl('');
     };
@@ -109,7 +112,10 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
 
             const data = await uploadRes.json();
             if (data.url) {
-                updateNodeData(id, { image: data.url });
+                updateNodeData(id, {
+                    image: data.url,
+                    style: { ...data.style, width: 300, height: 200 }
+                });
                 toast.success("Image uploaded successfully");
             }
         } catch (error) {
@@ -140,7 +146,10 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
             const data = await response.json();
 
             if (data.url) {
-                updateNodeData(id, { image: data.url });
+                updateNodeData(id, {
+                    image: data.url,
+                    style: { ...data.style, width: 300, height: 200 }
+                });
                 toast.success("Image generated!");
                 setAiPrompt('');
             }
@@ -158,27 +167,44 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const nodeGradient = (data.style as any)?.gradient as string[] | undefined;
 
+    // Calculate resolved dimensions
+    const resolvedWidth = (data.style as any)?.width ?? (data.image ? 300 : undefined);
+    const resolvedHeight = (data.style as any)?.height ?? (data.image ? 200 : undefined);
+    const hasExplicitSize = resolvedWidth !== undefined || resolvedHeight !== undefined;
+
     return (
-        <div className="relative group">
+        <div
+            className={cn("relative group", !hasExplicitSize && "w-full h-full")}
+            style={{
+                width: resolvedWidth,
+                height: resolvedHeight
+            }}
+        >
             <NodeResizer
                 isVisible={selected}
                 minWidth={100}
                 minHeight={40}
+                keepAspectRatio={false}
                 handleStyle={{ width: 12, height: 12, borderRadius: '50%', border: '1px solid #ddd' }}
                 lineStyle={{ border: '1px solid transparent' }} // Hide the rectangular line
+                onResize={(_, params) => {
+                    const { width, height } = params;
+                    // Directly update style to prevent desync
+                    updateNodeData(id, { style: { ...data.style, width, height } });
+                }}
             />
 
             <Handle
                 type="target"
                 position={Position.Left}
                 isConnectable={true}
-                className="w-3 h-3 bg-transparent border-none opacity-0 group-hover:opacity-100 transition-opacity z-50"
+                className="w-3 h-3 bg-transparent border-none opacity-0 group-hover:opacity-100 transition-opacity z-50 absolute left-0 top-1/2 -translate-y-1/2"
                 style={{ zIndex: 50 }}
             />
 
             <div
                 className={cn(
-                    "relative transition-all duration-200 flex flex-col items-center justify-center",
+                    "relative transition-all duration-200 flex flex-col items-center justify-center w-full h-full",
                     // Adjust container to just be the wrapper, styling moved to inner or handled via wrapper background
                     data.image ? "rounded-2xl" : "rounded-2xl",
                     selected ? "ring-2 ring-blue-500/20 shadow-md" : "shadow-sm hover:shadow-md",
@@ -326,12 +352,12 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                     </div>
 
                     {data.image && (
-                        <div className="mb-2 rounded-lg overflow-hidden shadow-sm w-full relative group/image bg-slate-100/50">
+                        <div className="mb-2 rounded-lg overflow-hidden shadow-sm w-full relative group/image bg-slate-100/50 flex-1 min-h-0">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={data.image as string}
                                 alt="Node attachment"
-                                className="w-full h-auto object-cover max-h-[100px] block"
+                                className="w-full h-full object-cover block rounded-lg pointer-events-none"
                             />
                             <Button
                                 variant="destructive"
@@ -347,7 +373,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                         </div>
                     )}
 
-                    <div className="w-full flex items-center justify-center relative z-10 px-2">
+                    <div className="w-full flex items-center justify-center relative z-10 px-2 flex-shrink-0">
                         {isEditing ? (
                             <textarea
                                 ref={textareaRef}
@@ -412,7 +438,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                 type="source"
                 position={Position.Right}
                 isConnectable={true}
-                className="w-3 h-3 bg-transparent border-none opacity-0 group-hover:opacity-100 transition-opacity z-50"
+                className="w-3 h-3 bg-transparent border-none opacity-0 group-hover:opacity-100 transition-opacity z-50 absolute right-0 top-1/2 -translate-y-1/2"
                 style={{ zIndex: 50 }}
             />
         </div >
