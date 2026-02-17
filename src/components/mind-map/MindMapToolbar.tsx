@@ -112,7 +112,7 @@ export default function MindMapToolbar({ onSave, onExport, isSaving, lastSaved, 
                         id: `e${parentId}-${id}`,
                         source: parentId,
                         target: id,
-                        type: 'smoothstep',
+                        type: 'default',
                         style: {
                             stroke: nodeColor,
                             strokeWidth: 2
