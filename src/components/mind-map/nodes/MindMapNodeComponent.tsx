@@ -381,7 +381,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                                 onChange={onLabelChange}
                                 onBlur={onBlur}
                                 onKeyDown={onKeyDown}
-                                className="w-full resize-none overflow-hidden bg-transparent text-sm text-slate-800 text-center focus:outline-none placeholder:text-slate-400 font-medium leading-relaxed"
+                                className="nodrag w-full resize-none overflow-hidden bg-transparent text-sm text-slate-800 text-center focus:outline-none placeholder:text-slate-400 font-medium leading-relaxed"
                                 rows={1}
                                 autoFocus
                             />

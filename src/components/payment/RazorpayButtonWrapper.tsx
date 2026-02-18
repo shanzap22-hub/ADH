@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { PrePaymentModal } from "./PrePaymentModal";
 import { PostPaymentModal } from "./PostPaymentModal";
+import { PaymentProcessingOverlay } from "./PaymentProcessingOverlay";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 
@@ -22,6 +23,7 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
     const [whatsappNumber, setWhatsappNumber] = useState("");
     const [userEmail, setUserEmail] = useState("");
     const [paymentId, setPaymentId] = useState("");
+    const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
     // Fetch User Email on Mount
     useEffect(() => {
@@ -124,7 +126,7 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
                     const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = response;
 
                     try {
-                        const loadingToast = toast.loading("Verifying payment...");
+                        setIsProcessingPayment(true);
 
                         // STEP 1: Verify payment signature and store in payments_temp
                         const verifyResponse = await fetch("/api/razorpay/verify", {
@@ -141,9 +143,6 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
                         if (!verifyResponse.ok) {
                             throw new Error("Payment verification failed");
                         }
-
-                        toast.dismiss(loadingToast);
-                        const finalizeToast = toast.loading("Creating your account...");
 
                         // STEP 2: Finalize enrollment (create user, enroll in courses)
                         const finalizeRes = await fetch("/api/enrollment/finalize", {
@@ -162,9 +161,6 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
                             throw new Error(data.error || "Enrollment failed");
                         }
 
-                        toast.dismiss(finalizeToast);
-                        toast.success("Payment Successful! Logging you in...");
-
                         // Auto-Login if new user credentials returned
                         if (data.tempPassword && data.email) {
                             const { createClient } = await import("@/lib/supabase/client");
@@ -178,6 +174,8 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
                             if (signInError) {
                                 console.error("Auto-login failed:", signInError);
                                 toast.error("Account created but auto-login failed. Please login manually.");
+                                setIsProcessingPayment(false); // Hide overlay on this specific error? Or keep it and redirect? 
+                                // Actually better to redirect to login if auto-login fails
                                 window.location.href = "/login";
                             } else {
                                 // Redirect to dashboard -> middleware sends to onboarding
@@ -190,6 +188,7 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
 
                     } catch (error: any) {
                         console.error("Payment Error:", error);
+                        setIsProcessingPayment(false); // Hide overlay on error
                         toast.error(error.message || "Payment processing failed. Contact support.");
                     }
                 },
@@ -216,11 +215,19 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
                 {children}
             </div>
 
+
+
             <PrePaymentModal
                 isOpen={isPrePaymentOpen}
                 onClose={() => setIsPrePaymentOpen(false)}
                 onProceed={handleProceedToPayment}
             />
+            {/* Full Screen Payment Overlay */}
+            {isProcessingPayment && (
+                <PaymentProcessingOverlay
+                    isVisible={isProcessingPayment}
+                />
+            )}
         </>
     );
 }
