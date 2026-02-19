@@ -176,15 +176,8 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
     // Compute dynamic font size based on node dimensions AND text length
     // We want to fill the area roughly.
     // Base factor derived from area, scaled down by text length.
-    // Hybrid approach: Scale font, but cap it. If text is too long, scroll.
-    // Base factor derived from area, scaled down by text length.
-    const area = Math.max(0, (resolvedWidth ?? 120) - 24) * Math.max(0, (resolvedHeight ?? 50) - 24);
-    const lengthFactor = Math.max(1, (label?.length ?? 10) / 4);
-    // Heuristic: Font size correlates with sqrt(Area / Length)
-    const rawFontSize = Math.sqrt(area / lengthFactor) * 0.5;
-    const computedFontSize = hasExplicitSize
-        ? Math.max(10, Math.min(60, rawFontSize)) // Min 10px to keep readable, max 60px
-        : undefined;
+    // Use stored font size or default to 14px
+    const fontSize = (data.style as any)?.fontSize ?? 14;
 
     return (
         <div
@@ -363,6 +356,37 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                                 </Tabs>
                             </PopoverContent>
                         </Popover>
+
+                        {/* Font Size Controls */}
+                        <div className="flex items-center gap-0.5 bg-slate-100 rounded-full px-1.5 h-7">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5 rounded-full hover:bg-white text-slate-600"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newSize = Math.max(10, fontSize - 2);
+                                    updateNodeData(id, { style: { ...data.style, fontSize: newSize } });
+                                }}
+                                title="Decrease Font Size"
+                            >
+                                <span className="text-[10px] font-bold">A-</span>
+                            </Button>
+                            <span className="text-[10px] text-slate-500 w-4 text-center select-none">{fontSize}</span>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5 rounded-full hover:bg-white text-slate-600"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newSize = Math.min(60, fontSize + 2);
+                                    updateNodeData(id, { style: { ...data.style, fontSize: newSize } });
+                                }}
+                                title="Increase Font Size"
+                            >
+                                <span className="text-[10px] font-bold">A+</span>
+                            </Button>
+                        </div>
                     </div>
 
                     {data.image && (
@@ -397,7 +421,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                                 onKeyDown={onKeyDown}
                                 className="nodrag w-full resize-none bg-transparent text-slate-800 text-center focus:outline-none placeholder:text-slate-400 font-medium leading-relaxed"
                                 style={{
-                                    fontSize: computedFontSize ? `${computedFontSize}px` : '0.875rem',
+                                    fontSize: `${fontSize}px`,
                                     lineHeight: 1.4,
                                     overflow: 'hidden',
                                     height: '100%', // Fill the container
@@ -409,7 +433,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                             <div
                                 className="font-medium text-slate-800 text-center cursor-text w-full break-words whitespace-pre-wrap selection:bg-blue-100 flex flex-col items-center justify-center gap-0.5 max-h-full no-scrollbar"
                                 style={{
-                                    fontSize: computedFontSize ? `${computedFontSize}px` : '0.875rem',
+                                    fontSize: `${fontSize}px`,
                                     lineHeight: 1.4,
                                     overflowWrap: 'break-word',
                                     wordBreak: 'break-word',
@@ -429,7 +453,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-blue-500 hover:underline flex items-center gap-0.5 pointer-events-auto mt-1"
-                                        style={{ fontSize: computedFontSize ? `${Math.max(8, computedFontSize * 0.7)}px` : '0.625rem' }}
+                                        style={{ fontSize: `${Math.max(8, fontSize * 0.7)}px` }}
                                         onClick={(e) => e.stopPropagation()}
                                     >
                                         <LinkIcon className="w-[1em] h-[1em]" />

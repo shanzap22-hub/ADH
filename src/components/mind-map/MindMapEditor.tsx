@@ -410,7 +410,6 @@ function MindMapFlow({ initialData, id }: MindMapEditorProps) {
 
     return (
         <div className="fixed inset-0 z-50 w-full h-full bg-slate-50 overflow-hidden" ref={reactFlowWrapper}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '5px', backgroundColor: 'blue', zIndex: 9999 }}></div>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
