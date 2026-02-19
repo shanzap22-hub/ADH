@@ -140,11 +140,11 @@ export default function NoteEditor({ note }: NoteEditorProps) {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Editor Column */}
                     <div className="lg:col-span-2 space-y-4">
-                        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 min-h-[500px] backdrop-blur-sm">
+                        <div className="bg-white border border-slate-200 rounded-xl p-4 min-h-[500px] shadow-sm">
                             <Textarea
                                 value={content}
                                 onChange={(e) => setContent(e.target.value)}
-                                className="min-h-[500px] bg-slate-800 border-slate-700 resize-none text-white placeholder:text-slate-400 focus-visible:ring-0 text-lg leading-relaxed"
+                                className="min-h-[500px] bg-white border-slate-200 resize-none text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 text-lg leading-relaxed"
                                 placeholder="Type your master note content here... Students will see this as their starting template."
                             />
                         </div>

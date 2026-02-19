@@ -91,9 +91,9 @@ export default function StudentNoteView({ note }: { note: MasterNote }) {
             </nav>
 
             <main className="max-w-4xl mx-auto p-4 md:p-8">
-                <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden backdrop-blur-sm shadow-2xl">
-                    <div className="p-4 border-b border-slate-800 bg-slate-950/50 flex items-center justify-between">
-                        <h1 className="text-xl font-semibold text-slate-100">{note.title}</h1>
+                <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-2xl">
+                    <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                        <h1 className="text-xl font-semibold text-slate-900">{note.title}</h1>
                         <div className="text-xs text-slate-500 flex items-center gap-2">
                             {hasLocalEdits ? (
                                 <span className="flex items-center text-emerald-400">
@@ -109,7 +109,7 @@ export default function StudentNoteView({ note }: { note: MasterNote }) {
                     <Textarea
                         value={content}
                         onChange={handleContentChange}
-                        className="w-full min-h-[calc(100vh-250px)] bg-slate-950 border-none p-6 text-lg leading-relaxed resize-none focus-visible:ring-0 text-slate-200 placeholder:text-slate-500"
+                        className="w-full min-h-[calc(100vh-250px)] bg-white border-none p-6 text-lg leading-relaxed resize-none focus-visible:ring-0 text-slate-900 placeholder:text-slate-400"
                         placeholder="Start typing..."
                         spellCheck={false}
                     />
