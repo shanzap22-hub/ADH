@@ -77,7 +77,8 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
         if (!imageUrl) return;
         updateNodeData(id, {
             image: imageUrl,
-            style: { ...data.style, width: 300, height: 200 }
+            image: imageUrl,
+            style: { ...data.style } // Remove fixed width/height forcing
         });
         toast.success("Image updated from URL");
         setImageUrl('');
@@ -114,7 +115,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
             if (data.url) {
                 updateNodeData(id, {
                     image: data.url,
-                    style: { ...data.style, width: 300, height: 200 }
+                    style: { ...data.style }
                 });
                 toast.success("Image uploaded successfully");
             }
@@ -148,7 +149,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
             if (data.url) {
                 updateNodeData(id, {
                     image: data.url,
-                    style: { ...data.style, width: 300, height: 200 }
+                    style: { ...data.style }
                 });
                 toast.success("Image generated!");
                 setAiPrompt('');
@@ -172,6 +173,19 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
     const resolvedHeight = (data.style as any)?.height ?? (data.image ? 200 : undefined);
     const hasExplicitSize = resolvedWidth !== undefined || resolvedHeight !== undefined;
 
+    // Compute dynamic font size based on node dimensions AND text length
+    // We want to fill the area roughly.
+    // Base factor derived from area, scaled down by text length.
+    // Hybrid approach: Scale font, but cap it. If text is too long, scroll.
+    // Base factor derived from area, scaled down by text length.
+    const area = Math.max(0, (resolvedWidth ?? 120) - 24) * Math.max(0, (resolvedHeight ?? 50) - 24);
+    const lengthFactor = Math.max(1, (label?.length ?? 10) / 4);
+    // Heuristic: Font size correlates with sqrt(Area / Length)
+    const rawFontSize = Math.sqrt(area / lengthFactor) * 0.5;
+    const computedFontSize = hasExplicitSize
+        ? Math.max(10, Math.min(60, rawFontSize)) // Min 10px to keep readable, max 60px
+        : undefined;
+
     return (
         <div
             className={cn("relative group", !hasExplicitSize && "w-full h-full")}
@@ -185,8 +199,8 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                 minWidth={100}
                 minHeight={40}
                 keepAspectRatio={false}
-                handleStyle={{ width: 12, height: 12, borderRadius: '50%', border: '1px solid #ddd' }}
-                lineStyle={{ border: '1px solid transparent' }} // Hide the rectangular line
+                handleStyle={{ width: 12, height: 12, borderRadius: '50%', border: '1px solid pink' }}
+                lineStyle={{ border: '1px solid green' }} // Debug line color
                 onResize={(_, params) => {
                     const { width, height } = params;
                     // Directly update style to prevent desync
@@ -213,18 +227,18 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                     nodeGradient
                         ? {
                             background: `linear-gradient(to right, ${nodeGradient[0]}, ${nodeGradient[1]})`,
-                            padding: '2px', // This acts as the border width
+                            padding: '2px',
                         }
                         : {
-                            backgroundColor: nodeColor, // If no gradient, use solid color as background for wrapper (acts as border)
+                            backgroundColor: nodeColor,
                             padding: '2px',
                         }
                 }
             >
                 {/* Inner Content with White Background */}
                 <div className={cn(
-                    "w-full h-full bg-white flex flex-col items-center justify-center",
-                    data.image ? "rounded-2xl p-2" : "rounded-2xl px-4 py-2"
+                    "w-full h-full bg-white flex flex-col items-center justify-center overflow-hidden",
+                    data.image ? "rounded-2xl p-2" : "rounded-2xl px-4 py-3" // Increased vertical padding
                 )}>
 
                     {/* Node Toolbar for Quick Actions */}
@@ -373,7 +387,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                         </div>
                     )}
 
-                    <div className="w-full flex items-center justify-center relative z-10 px-2 flex-shrink-0">
+                    <div className="w-full flex-1 min-h-0 flex items-center justify-center relative z-10 px-2">
                         {isEditing ? (
                             <textarea
                                 ref={textareaRef}
@@ -381,13 +395,28 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                                 onChange={onLabelChange}
                                 onBlur={onBlur}
                                 onKeyDown={onKeyDown}
-                                className="nodrag w-full resize-none overflow-hidden bg-transparent text-sm text-slate-800 text-center focus:outline-none placeholder:text-slate-400 font-medium leading-relaxed"
+                                className="nodrag w-full resize-none bg-transparent text-slate-800 text-center focus:outline-none placeholder:text-slate-400 font-medium leading-relaxed"
+                                style={{
+                                    fontSize: computedFontSize ? `${computedFontSize}px` : '0.875rem',
+                                    lineHeight: 1.4,
+                                    overflow: 'hidden',
+                                    height: '100%', // Fill the container
+                                }}
                                 rows={1}
                                 autoFocus
                             />
                         ) : (
                             <div
-                                className="text-sm font-medium text-slate-800 text-center cursor-text min-h-[1.5em] w-full break-words leading-relaxed whitespace-pre-wrap selection:bg-blue-100 flex flex-col items-center justify-center gap-0.5"
+                                className="font-medium text-slate-800 text-center cursor-text w-full break-words whitespace-pre-wrap selection:bg-blue-100 flex flex-col items-center justify-center gap-0.5 max-h-full no-scrollbar"
+                                style={{
+                                    fontSize: computedFontSize ? `${computedFontSize}px` : '0.875rem',
+                                    lineHeight: 1.4,
+                                    overflowWrap: 'break-word',
+                                    wordBreak: 'break-word',
+                                    overflowY: 'auto', // Allow scrolling if text is too long even at min font size
+                                    scrollbarWidth: 'none', // Hide scrollbar for cleaner look (Firefox)
+                                    msOverflowStyle: 'none', // Hide scrollbar (IE/Edge)
+                                }}
                                 onDoubleClick={() => setIsEditing(true)}
                             >
                                 {label}
@@ -399,10 +428,11 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                                         })()}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-[10px] text-blue-500 hover:underline flex items-center gap-0.5 pointer-events-auto mt-1"
+                                        className="text-blue-500 hover:underline flex items-center gap-0.5 pointer-events-auto mt-1"
+                                        style={{ fontSize: computedFontSize ? `${Math.max(8, computedFontSize * 0.7)}px` : '0.625rem' }}
                                         onClick={(e) => e.stopPropagation()}
                                     >
-                                        <LinkIcon className="h-2.5 w-2.5" />
+                                        <LinkIcon className="w-[1em] h-[1em]" />
                                         <span className="max-w-[100px] truncate">Link</span>
                                     </a>
                                 )}

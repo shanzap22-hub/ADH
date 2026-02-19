@@ -45,6 +45,12 @@ const routes = [
         color: "text-indigo-600",
     },
     {
+        label: "Master Notes",
+        icon: FileText,
+        href: "/instructor/notes",
+        color: "text-emerald-600",
+    },
+    {
         label: "User Management",
         icon: Users,
         href: "/admin/users",
