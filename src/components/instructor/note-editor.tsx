@@ -213,9 +213,20 @@ export default function NoteEditor({ note }: NoteEditorProps) {
 
                                     <Textarea
                                         value={section.content}
-                                        onChange={(e) => updateSection(section.id, { content: e.target.value })}
-                                        className="min-h-[150px] bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-blue-500 text-base leading-relaxed"
+                                        onChange={(e) => {
+                                            updateSection(section.id, { content: e.target.value });
+                                            e.target.style.height = 'auto';
+                                            e.target.style.height = `${e.target.scrollHeight}px`;
+                                        }}
+                                        className="min-h-[100px] bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-blue-500 text-base leading-relaxed resize-none overflow-hidden"
                                         placeholder="Type content or prompt for this step..."
+                                        ref={(el) => {
+                                            if (el) {
+                                                // Initial auto-resize
+                                                el.style.height = 'auto';
+                                                el.style.height = `${el.scrollHeight}px`;
+                                            }
+                                        }}
                                     />
 
                                     <div className="flex items-center gap-2 text-sm text-slate-500 border-t border-slate-100 pt-3">
