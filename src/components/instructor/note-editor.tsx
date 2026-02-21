@@ -5,10 +5,17 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save, Globe, Eye, Copy, Check } from "lucide-react";
+import { ArrowLeft, Save, Globe, Eye, Copy, Check, Plus, Trash2, Link as LinkIcon } from "lucide-react";
 import Link from "next/link";
 import { updateMasterNote, deleteMasterNote, MasterNote } from "@/actions/master-notes";
 import { toast } from "react-hot-toast";
+
+export interface NoteSection {
+    id: string;
+    title: string;
+    content: string;
+    link?: string;
+}
 
 interface NoteEditorProps {
     note: MasterNote;
@@ -17,7 +24,26 @@ interface NoteEditorProps {
 export default function NoteEditor({ note }: NoteEditorProps) {
     const router = useRouter();
     const [title, setTitle] = useState(note.title);
-    const [content, setContent] = useState(note.content);
+
+    // Parse the existing content safely
+    const [sections, setSections] = useState<NoteSection[]>(() => {
+        try {
+            // Check if it's new JSON format
+            const parsed = JSON.parse(note.content);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                return parsed;
+            }
+        } catch (e) {
+            // Fallback for old simple string data
+        }
+        return [{
+            id: crypto.randomUUID(),
+            title: "Step 1",
+            content: note.content || "",
+            link: ""
+        }];
+    });
+
     const [isPublished, setIsPublished] = useState(note.is_published);
     const [isSaving, setIsSaving] = useState(false);
     const [copied, setCopied] = useState(false);
@@ -31,7 +57,7 @@ export default function NoteEditor({ note }: NoteEditorProps) {
         try {
             await updateMasterNote(note.id, {
                 title,
-                content,
+                content: JSON.stringify(sections),
                 is_published: newPublishedState
             });
             toast.success(newPublishedState ? "Note published" : "Note unpublished");
@@ -49,7 +75,7 @@ export default function NoteEditor({ note }: NoteEditorProps) {
         try {
             await updateMasterNote(note.id, {
                 title,
-                content,
+                content: JSON.stringify(sections),
                 is_published: isPublished
             });
             toast.success("Note saved successfully");
@@ -78,6 +104,28 @@ export default function NoteEditor({ note }: NoteEditorProps) {
         } catch (error) {
             toast.error("Failed to delete note");
         }
+    };
+
+    // Section Management
+    const addSection = () => {
+        setSections([...sections, {
+            id: crypto.randomUUID(),
+            title: `Step ${sections.length + 1}`,
+            content: "",
+            link: ""
+        }]);
+    };
+
+    const updateSection = (id: string, updates: Partial<NoteSection>) => {
+        setSections(sections.map(sec => sec.id === id ? { ...sec, ...updates } : sec));
+    };
+
+    const removeSection = (id: string) => {
+        if (sections.length === 1) {
+            toast.error("You must have at least one section");
+            return;
+        }
+        setSections(sections.filter(sec => sec.id !== id));
     };
 
     return (
@@ -139,15 +187,58 @@ export default function NoteEditor({ note }: NoteEditorProps) {
                 {/* Main Editor */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Editor Column */}
-                    <div className="lg:col-span-2 space-y-4">
-                        <div className="bg-white border border-slate-200 rounded-xl p-4 min-h-[500px] shadow-sm">
-                            <Textarea
-                                value={content}
-                                onChange={(e) => setContent(e.target.value)}
-                                className="min-h-[500px] bg-white border-slate-200 resize-none text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 text-lg leading-relaxed"
-                                placeholder="Type your master note content here... Students will see this as their starting template."
-                            />
+                    <div className="lg:col-span-2 space-y-6">
+
+                        <div className="space-y-4">
+                            {sections.map((section, index) => (
+                                <div key={section.id} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4 relative group">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex-1 space-y-1">
+                                            <Input
+                                                value={section.title}
+                                                onChange={(e) => updateSection(section.id, { title: e.target.value })}
+                                                className="text-lg font-bold border-none px-0 focus-visible:ring-0 shadow-none placeholder:text-slate-300 h-auto py-1"
+                                                placeholder={`Step ${index + 1} Title`}
+                                            />
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => removeSection(section.id)}
+                                            className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+
+                                    <Textarea
+                                        value={section.content}
+                                        onChange={(e) => updateSection(section.id, { content: e.target.value })}
+                                        className="min-h-[150px] bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-blue-500 text-base leading-relaxed"
+                                        placeholder="Type content or prompt for this step..."
+                                    />
+
+                                    <div className="flex items-center gap-2 text-sm text-slate-500 border-t border-slate-100 pt-3">
+                                        <LinkIcon className="h-4 w-4 shrink-0 text-slate-400" />
+                                        <Input
+                                            value={section.link || ""}
+                                            onChange={(e) => updateSection(section.id, { link: e.target.value })}
+                                            className="h-9 bg-transparent border-slate-200 shadow-none text-sm placeholder:text-slate-300"
+                                            placeholder="Optional Action URL (e.g. https://chatgpt.com/g/g-...)"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
+
+                        <Button
+                            variant="outline"
+                            className="w-full border-dashed border-2 border-slate-700 hover:border-slate-500 bg-transparent text-slate-400 hover:text-slate-300 py-8"
+                            onClick={addSection}
+                        >
+                            <Plus className="h-5 w-5 mr-2" />
+                            Add New Step
+                        </Button>
                     </div>
 
                     {/* Sidebar */}
@@ -187,10 +278,9 @@ export default function NoteEditor({ note }: NoteEditorProps) {
                         <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 backdrop-blur-sm">
                             <h3 className="font-semibold text-slate-200 mb-2">How it works</h3>
                             <ul className="text-sm text-slate-400 space-y-2 list-disc pl-4">
-                                <li>Create a template for your students.</li>
-                                <li>Use placeholders like <code>[Your Name]</code> to guide them.</li>
-                                <li>Share the public link.</li>
-                                <li>Students edits are saved locally to their device.</li>
+                                <li>Add steps/sections using the + button.</li>
+                                <li>Each section can have text and an optional action link.</li>
+                                <li>Students edits are saved locally to their device per section.</li>
                             </ul>
                         </div>
                     </div>
