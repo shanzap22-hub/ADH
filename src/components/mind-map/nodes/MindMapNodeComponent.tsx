@@ -452,8 +452,8 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                                         })()}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-blue-500 hover:underline flex items-center gap-0.5 pointer-events-auto mt-1"
-                                        style={{ fontSize: `${Math.max(8, fontSize * 0.7)}px` }}
+                                        className="text-red-600 bg-red-50 px-2.5 py-1 rounded-full border border-red-200 hover:bg-red-100 hover:text-red-700 flex items-center gap-1 mt-2 pointer-events-auto transition-colors font-semibold"
+                                        style={{ fontSize: `${Math.max(16, fontSize * 1.05)}px` }}
                                         onClick={(e) => e.stopPropagation()}
                                     >
                                         <LinkIcon className="w-[1em] h-[1em]" />

@@ -23,7 +23,7 @@ import GradientEdge from './edges/GradientEdge';
 import MindMapToolbar from './MindMapToolbar';
 import { updateMindMap } from '@/actions/mind-map';
 import { toast } from 'sonner';
-import { toPng } from 'html-to-image';
+import { toJpeg } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 
 const nodeTypes = {
@@ -196,21 +196,21 @@ function MindMapFlow({ initialData, id }: MindMapEditorProps) {
             return;
         }
 
-        // 2. Setup Page Metrics based on Screen/Container Size
-        // We use the container's client dimensions as the "Page" unit.
-        // This ensures the aspect ratio matches what the user sees on screen.
-        const screenW = reactFlowWrapper.current.clientWidth;
+        // 2. Setup Page Metrics based on Map Size
+        // The user requested that the PDF width fits entirely on one page,
+        // scaling only the exact width of the mind map nodes.
+        // The height can span multiple pages (rows) based on screen height.
         const screenH = reactFlowWrapper.current.clientHeight;
 
-        // Use these as the PDF page dimensions (in points, 1px = 1pt approx for PDF)
-        const pdfPageWidth = screenW;
+        // Use map width as the PDF page width to prevent horizontal splitting
+        const pdfPageWidth = mapWidth;
         const pdfPageHeight = screenH;
 
         const windowW = pdfPageWidth;
         const windowH = pdfPageHeight;
 
         // Columns and Rows needed to cover the map
-        const cols = Math.ceil(mapWidth / windowW);
+        const cols = 1; // 1 column to fit the whole width
         const rows = Math.ceil(mapHeight / windowH);
         const totalPages = cols * rows;
 
@@ -237,14 +237,15 @@ function MindMapFlow({ initialData, id }: MindMapEditorProps) {
 
         const loadingToast = toast.loading('Generating Mind Map PDF...');
 
-        toPng(viewportElem, imageOptions)
+        toJpeg(viewportElem, { ...imageOptions, quality: 1.0 })
             .then(async (dataUrl) => {
 
                 // Initialize PDF with custom size matching the screen/window
                 const pdf = new jsPDF({
                     orientation: windowW > windowH ? 'landscape' : 'portrait',
                     unit: 'pt',
-                    format: [windowW, windowH]
+                    format: [windowW, windowH],
+                    compress: true
                 });
 
                 const img = new Image();
@@ -270,7 +271,9 @@ function MindMapFlow({ initialData, id }: MindMapEditorProps) {
                         canvas.width = srcW * s;
                         canvas.height = srcH * s;
 
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        // Fill with background color to prevent black backgrounds on transparent areas when converting to JPEG
+                        ctx.fillStyle = '#f8fafc';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
                         ctx.drawImage(
                             img,
@@ -278,10 +281,11 @@ function MindMapFlow({ initialData, id }: MindMapEditorProps) {
                             0, 0, srcW * s, srcH * s
                         );
 
-                        const sliceData = canvas.toDataURL('image/png');
+                        // Use JPEG instead of PNG for massive size reduction
+                        const sliceData = canvas.toDataURL('image/jpeg', 1.0);
 
-                        // Add to PDF (scaled down to points: 1px = 1pt logic)
-                        pdf.addImage(sliceData, 'PNG', 0, 0, srcW, srcH);
+                        // Add to PDF (scaled down to points: 1px = 1pt logic, JPEG uses 'FAST' to optimize size/speed)
+                        pdf.addImage(sliceData, 'JPEG', 0, 0, srcW, srcH, undefined, 'FAST');
 
                         // 4. Overlay Data (Links & Selectable Text)
                         // We iterate all nodes to add:
