@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save, Globe, Eye, Copy, Check, Plus, Trash2, Link as LinkIcon } from "lucide-react";
+import { ArrowLeft, Save, Globe, Eye, Copy, Check, Plus, Trash2, Link as LinkIcon, GripVertical } from "lucide-react";
 import Link from "next/link";
 import { updateMasterNote, deleteMasterNote, MasterNote } from "@/actions/master-notes";
 import { toast } from "react-hot-toast";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 export interface NoteSection {
     id: string;
@@ -43,6 +44,12 @@ export default function NoteEditor({ note }: NoteEditorProps) {
             link: ""
         }];
     });
+
+    // Fix for hydration issue with @hello-pangea/dnd
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const [isPublished, setIsPublished] = useState(note.is_published);
     const [isSaving, setIsSaving] = useState(false);
@@ -128,6 +135,20 @@ export default function NoteEditor({ note }: NoteEditorProps) {
         setSections(sections.filter(sec => sec.id !== id));
     };
 
+    const onDragEnd = (result: DropResult) => {
+        if (!result.destination) return;
+
+        const items = Array.from(sections);
+        const [reorderedItem] = items.splice(result.source.index, 1);
+        items.splice(result.destination.index, 0, reorderedItem);
+
+        setSections(items);
+    };
+
+    if (!isMounted) {
+        return null;
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-6">
             <div className="max-w-5xl mx-auto space-y-6">
@@ -189,62 +210,90 @@ export default function NoteEditor({ note }: NoteEditorProps) {
                     {/* Editor Column */}
                     <div className="lg:col-span-2 space-y-6">
 
-                        <div className="space-y-4">
-                            {sections.map((section, index) => (
-                                <div key={section.id} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4 relative group">
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div className="flex-1 space-y-1">
-                                            <Input
-                                                value={section.title}
-                                                onChange={(e) => updateSection(section.id, { title: e.target.value })}
-                                                className="text-lg font-bold border-none px-0 focus-visible:ring-0 shadow-none placeholder:text-slate-300 h-auto py-1"
-                                                placeholder={`Step ${index + 1} Title`}
-                                            />
-                                        </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => removeSection(section.id)}
-                                            className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                        <DragDropContext onDragEnd={onDragEnd}>
+                            <Droppable droppableId="sections-list">
+                                {(provided) => (
+                                    <div
+                                        {...provided.droppableProps}
+                                        ref={provided.innerRef}
+                                        className="space-y-4"
+                                    >
+                                        {sections.map((section, index) => (
+                                            <Draggable key={section.id} draggableId={section.id} index={index}>
+                                                {(provided, snapshot) => (
+                                                    <div
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        className={`bg-white border ${snapshot.isDragging ? 'border-blue-500 shadow-xl scale-[1.02]' : 'border-slate-200 shadow-sm'} rounded-xl p-5 space-y-4 relative group transition-all`}
+                                                        style={provided.draggableProps.style}
+                                                    >
+                                                        <div className="flex items-start justify-between gap-4">
+                                                            <div className="flex items-center gap-2 flex-1">
+                                                                <div
+                                                                    {...provided.dragHandleProps}
+                                                                    className="cursor-grab hover:bg-slate-100 p-1 rounded text-slate-400 hover:text-slate-600"
+                                                                >
+                                                                    <GripVertical className="h-5 w-5" />
+                                                                </div>
+                                                                <Input
+                                                                    value={section.title}
+                                                                    onChange={(e) => updateSection(section.id, { title: e.target.value })}
+                                                                    className="text-lg font-bold border-none px-0 focus-visible:ring-0 shadow-none placeholder:text-slate-300 h-auto py-1 flex-1"
+                                                                    placeholder={`Step ${index + 1} Title`}
+                                                                />
+                                                            </div>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() => removeSection(section.id)}
+                                                                className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
 
-                                    <Textarea
-                                        value={section.content}
-                                        onChange={(e) => {
-                                            updateSection(section.id, { content: e.target.value });
-                                            e.target.style.height = 'auto';
-                                            e.target.style.height = `${e.target.scrollHeight}px`;
-                                        }}
-                                        className="min-h-[100px] bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-blue-500 text-base leading-relaxed resize-none overflow-hidden"
-                                        placeholder="Type content or prompt for this step..."
-                                        ref={(el) => {
-                                            if (el) {
-                                                // Initial auto-resize
-                                                el.style.height = 'auto';
-                                                el.style.height = `${el.scrollHeight}px`;
-                                            }
-                                        }}
-                                    />
+                                                        <div className="pl-9">
+                                                            <Textarea
+                                                                value={section.content}
+                                                                onChange={(e) => {
+                                                                    updateSection(section.id, { content: e.target.value });
+                                                                    e.target.style.height = 'auto';
+                                                                    e.target.style.height = `${e.target.scrollHeight}px`;
+                                                                }}
+                                                                className="min-h-[100px] bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-blue-500 text-base leading-relaxed resize-none overflow-hidden"
+                                                                placeholder="Type content or prompt for this step..."
+                                                                ref={(el) => {
+                                                                    if (el) {
+                                                                        // Initial auto-resize
+                                                                        el.style.height = 'auto';
+                                                                        el.style.height = `${el.scrollHeight}px`;
+                                                                    }
+                                                                }}
+                                                            />
 
-                                    <div className="flex items-center gap-2 text-sm text-slate-500 border-t border-slate-100 pt-3">
-                                        <LinkIcon className="h-4 w-4 shrink-0 text-slate-400" />
-                                        <Input
-                                            value={section.link || ""}
-                                            onChange={(e) => updateSection(section.id, { link: e.target.value })}
-                                            className="h-9 bg-transparent border-slate-200 shadow-none text-sm placeholder:text-slate-300"
-                                            placeholder="Optional Action URL (e.g. https://chatgpt.com/g/g-...)"
-                                        />
+                                                            <div className="flex items-center gap-2 text-sm text-slate-500 border-t border-slate-100 pt-3 mt-4">
+                                                                <LinkIcon className="h-4 w-4 shrink-0 text-slate-400" />
+                                                                <Input
+                                                                    value={section.link || ""}
+                                                                    onChange={(e) => updateSection(section.id, { link: e.target.value })}
+                                                                    className="h-9 bg-transparent border-slate-200 shadow-none text-sm placeholder:text-slate-300"
+                                                                    placeholder="Optional Action URL (e.g. https://chatgpt.com/g/g-...)"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        ))}
+                                        {provided.placeholder}
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                )}
+                            </Droppable>
+                        </DragDropContext>
 
                         <Button
                             variant="outline"
-                            className="w-full border-dashed border-2 border-slate-700 hover:border-slate-500 bg-transparent text-slate-400 hover:text-slate-300 py-8"
+                            className="w-full border-dashed border-2 border-slate-700 hover:border-slate-500 bg-transparent text-slate-400 hover:text-slate-300 py-8 mt-2"
                             onClick={addSection}
                         >
                             <Plus className="h-5 w-5 mr-2" />
@@ -290,6 +339,7 @@ export default function NoteEditor({ note }: NoteEditorProps) {
                             <h3 className="font-semibold text-slate-200 mb-2">How it works</h3>
                             <ul className="text-sm text-slate-400 space-y-2 list-disc pl-4">
                                 <li>Add steps/sections using the + button.</li>
+                                <li>Grab the handle on the left to reorder steps.</li>
                                 <li>Each section can have text and an optional action link.</li>
                                 <li>Students edits are saved locally to their device per section.</li>
                             </ul>
