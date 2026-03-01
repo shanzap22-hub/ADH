@@ -123,7 +123,13 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
 
             if (res.ok && data.url) {
                 setImageUrl(data.url);
-                toast.success("Image attached!");
+                toast.success("Image attached! You can now add a description.");
+                // Focus the textarea so the user knows they can type a text description
+                setTimeout(() => {
+                    if (textareaRef.current) {
+                        textareaRef.current.focus();
+                    }
+                }, 100);
             } else {
                 throw new Error(data.error || "Upload failed");
             }
@@ -378,7 +384,7 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
                                 ref={textareaRef}
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                                placeholder="Type your message..."
+                                placeholder={imageUrl || localImagePreview ? "Add a description about the issue..." : "Type your message..."}
                                 className="min-h-[40px] max-h-[120px] resize-none border-0 bg-transparent focus-visible:ring-0 px-0 shadow-none py-2.5 overflow-y-auto"
                                 disabled={isLoading}
                                 autoFocus

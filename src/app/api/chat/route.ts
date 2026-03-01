@@ -165,10 +165,14 @@ RESPONSE FORMAT:
         });
 
         // 6. Build conversation history in Gemini format
+        // 6. Build conversation history in Gemini format
         let chatHistory: any[] = [];
         // History is now fetched Newest -> Oldest. 
         // We need to reverse it to be Oldest -> Newest for the AI context window.
-        const rawHistory = history ? history.reverse() : [];
+
+        // Skip the first message (index 0) because that is the message we JUST inserted, 
+        // which we will append manually later as currentPromptText.
+        const rawHistory = history && history.length > 0 ? history.slice(1).reverse() : [];
 
         for (const msg of rawHistory) {
             const role = msg.role === 'user' ? 'user' : 'model';
@@ -192,6 +196,8 @@ RESPONSE FORMAT:
             currentPromptText = `[Context from Knowledge Base]:\n${retrievedContext}\n\n[User Question]:\n${currentPromptText}`;
         }
 
+        // We already skipped the current message in rawHistory, so if the history still 
+        // ends with a 'user' message, we merge it to ensure the latest prompt contains all trailing user context.
         if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === 'user') {
             const lastUserMsg = chatHistory.pop();
             currentPromptText = lastUserMsg.parts[0].text + "\n\n" + currentPromptText;
