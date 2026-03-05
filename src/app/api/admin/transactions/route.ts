@@ -324,9 +324,26 @@ export async function POST(req: Request) {
 
         // Admin Check
         const { data: { user } } = await supabase.auth.getUser();
-        // (Assuming checking done or middleware handles. Best to check again).
+        if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-        const { data, error } = await supabase.from('transactions').insert({
+        // Check Admin Role
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        if (profile?.role !== 'super_admin' && profile?.role !== 'admin') {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
+        const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
+        const supabaseAdmin = createSupabaseClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+
+        const { data, error } = await supabaseAdmin.from('transactions').insert({
             amount,
             student_name,
             phone_number,
@@ -394,11 +411,31 @@ export async function PUT(req: Request) {
 
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+        // Check Admin Role
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        if (profile?.role !== 'super_admin' && profile?.role !== 'admin') {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
+        const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
+        const supabaseAdmin = createSupabaseClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
 
         // Get Old Data
-        const { data: oldData } = await supabase.from('transactions').select('*').eq('id', id).single();
+        const { data: oldData } = await supabaseAdmin.from('transactions').select('*').eq('id', id).single();
 
-        const { data, error } = await supabase.from('transactions').update({
+        console.log(`[TXN_UPDATE] Updating transaction ${id} with amount ${amount}`);
+
+        const { data, error } = await supabaseAdmin.from('transactions').update({
             amount,
             notes,
             membership_plan,
@@ -407,6 +444,8 @@ export async function PUT(req: Request) {
             status, // Allow status update
             updated_at: new Date().toISOString()
         }).eq('id', id).select().single();
+
+        console.log(`[TXN_UPDATE] Result for ${id}:`, data, "Error:", error);
 
         if (error) throw error;
 
@@ -426,7 +465,7 @@ export async function PUT(req: Request) {
         // USER REQUEST: Sync changes to Profile (e.g. Expired/Cancelled/Platinum)
         if (oldData.user_id && membership_plan && membership_plan !== oldData.membership_plan) {
             console.log(`[TXN_UPDATE] Syncing profile tier for user ${oldData.user_id} to ${membership_plan}`);
-            const { error: profileError } = await supabase
+            const { error: profileError } = await supabaseAdmin
                 .from('profiles')
                 .update({
                     membership_tier: membership_plan,

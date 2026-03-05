@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, File, CheckCircle, Loader2 } from "lucide-react";
+import { BookOpen, File, CheckCircle, Loader2, Link2 } from "lucide-react";
 import { BunnyVideoPlayer } from "@/components/bunny/BunnyVideoPlayer";
 import { Button } from "@/components/ui/button";
 import { useState, useTransition, useRef, useCallback } from "react";
@@ -213,23 +213,40 @@ export const LessonViewer = ({
                     </div>
                 )}
 
+// ... keeping existing code up to line 216 ...
                 {attachments.length > 0 && (
                     <div>
                         <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
                             Attachments
                         </h2>
                         <div className="space-y-2">
-                            {attachments.map((attachment) => (
-                                <a
-                                    href={attachment.url}
-                                    target="_blank"
-                                    key={attachment.id}
-                                    className="flex items-center p-3 w-full bg-slate-100 dark:bg-slate-800 border text-slate-700 dark:text-slate-300 rounded-md hover:underline"
-                                >
-                                    <File className="h-4 w-4 mr-2 flex-shrink-0" />
-                                    <p className="line-clamp-1">{attachment.name}</p>
-                                </a>
-                            ))}
+                            {attachments.map((attachment) => {
+                                const isFile = attachment.url.includes('uploadthing.com') || attachment.url.includes('supabase.co');
+
+                                return (
+                                    <a
+                                        href={attachment.url}
+                                        target="_blank"
+                                        key={attachment.id}
+                                        rel="noreferrer"
+                                        className="flex items-center p-3 w-full bg-slate-100 dark:bg-slate-800 border text-slate-700 dark:text-slate-300 rounded-md hover:underline"
+                                    >
+                                        {isFile ? (
+                                            <File className="h-4 w-4 mr-2 flex-shrink-0 text-orange-500" />
+                                        ) : (
+                                            <Link2 className="h-4 w-4 mr-2 flex-shrink-0 text-blue-500" />
+                                        )}
+                                        <div className="flex flex-col flex-1 overflow-hidden mr-2">
+                                            <p className="font-medium line-clamp-1">{attachment.name}</p>
+                                            {!isFile && (
+                                                <span className="text-[10px] text-slate-500 no-underline line-clamp-1 truncate">
+                                                    {attachment.url}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </a>
+                                );
+                            })}
                         </div>
                     </div>
                 )}
