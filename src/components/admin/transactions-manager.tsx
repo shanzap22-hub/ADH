@@ -150,6 +150,8 @@ export default function TransactionsManager() {
                 ? { ...formData, id: selectedTxn.id, amount: Math.round(Number(formData.amount || 0) * 100) }
                 : { ...formData, status: 'verified', amount: Math.round(Number(formData.amount || 0) * 100) };
 
+            console.log("[handleSave] Sending payload:", payload);
+
             const res = await fetch(url, {
                 method,
                 headers: { "Content-Type": "application/json" },
@@ -157,6 +159,8 @@ export default function TransactionsManager() {
             });
 
             const data = await res.json();
+            console.log("[handleSave] Response from API:", data);
+
             if (data.error) throw new Error(data.error);
 
             toast.success(isEdit ? "Transaction Updated" : "Transaction Added");

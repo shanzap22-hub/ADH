@@ -197,7 +197,47 @@ export async function POST(request: Request) {
                     // We don't throw here to avoid blocking the user's onboarding completion
                 }
             } else {
-                console.log("[GOOGLE_SYNC] No verified transaction found for user:", user.id);
+                // No Razorpay transaction found — student was manually enrolled (e.g. via Google Pay / offline).
+                // Still sync their onboarding form data to the Google Sheet automatically.
+                console.log("[GOOGLE_SYNC] No verified transaction — manual enrollee detected for user:", user.id, "Syncing profile data...");
+
+                const manualPayload = {
+                    action: 'verify',
+                    order_id: 'MANUAL',
+                    payment_id: 'MANUAL',
+                    email: email,
+                    name: fullName,
+                    phone: contactNumber,
+                    whatsapp: whatsappNumber,
+                    plan: 'manual',
+                    amount: 0,
+                    status: 'manual',
+                    created_at: new Date().toISOString(),
+                };
+
+                const manualController = new AbortController();
+                const manualTimeoutId = setTimeout(() => manualController.abort(), 10000);
+                try {
+                    const manualResponse = await fetch(GOOGLE_SCRIPT_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(manualPayload),
+                        signal: manualController.signal,
+                    });
+                    clearTimeout(manualTimeoutId);
+                    if (!manualResponse.ok) {
+                        console.error("[SHEET_SYNC_ERROR] Manual enrollee sync HTTP Error:", manualResponse.status, await manualResponse.text());
+                    } else {
+                        console.log("[GOOGLE_SYNC] ✓ Manual enrollee data successfully synced to Google Sheet");
+                    }
+                } catch (manualFetchErr: any) {
+                    clearTimeout(manualTimeoutId);
+                    if (manualFetchErr.name === 'AbortError') {
+                        console.error("[SHEET_SYNC_ERROR] Manual sync timeout: Google Script did not respond within 10s");
+                    } else {
+                        console.error("[SHEET_SYNC_ERROR] Manual sync network error:", manualFetchErr.message);
+                    }
+                }
             }
         }
     } catch (sheetUpdateErr) {
