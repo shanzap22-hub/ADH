@@ -1,9 +1,9 @@
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import { getAllUsers } from "@/actions/admin/get-all-users";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Performance Optimization: Dynamic import for heavy client component
-const UserManagementClient = dynamic(
+const UserManagementClient = nextDynamic(
     () => import("@/components/admin/UserManagementClient"),
     {
         loading: () => (
