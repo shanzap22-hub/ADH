@@ -38,7 +38,7 @@ export async function POST(req: Request) {
             try {
                 // Determine Name/Email
                 // Determine Name/Email - Prioritize Profile (Real Data) over Transaction (Snapshot/Stale)
-                let name = txn.profiles?.full_name || txn.student_name || "Unknown";
+                const name = txn.profiles?.full_name || txn.student_name || "Unknown";
                 let email = txn.profiles?.email || txn.student_email || "";
 
                 // Fallback for legacy data

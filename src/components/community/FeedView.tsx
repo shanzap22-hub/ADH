@@ -2,6 +2,7 @@
 
 import { PostCard } from "./PostCard";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface FeedViewProps {
     posts: any[];
@@ -42,9 +43,9 @@ export function FeedView({ posts, isAdmin, currentUserId, limit }: FeedViewProps
             {hasMore && (
                 <div className="text-center pt-4">
                     <Button variant="outline" className="w-full py-6 text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700 transition-all font-semibold" asChild>
-                        <a href="/community">
+                        <Link href="/community">
                             View All Posts ({posts.length})
-                        </a>
+                        </Link>
                     </Button>
                 </div>
             )}

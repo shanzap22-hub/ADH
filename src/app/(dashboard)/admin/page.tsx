@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, BookOpen, GraduationCap, Shield } from "lucide-react";
-import { redirect } from "next/navigation";
+import Link from "next/link";
 
 // 2026 Performance: 2-minute cache for admin pages
 export const revalidate = 120;
@@ -101,9 +101,9 @@ export default async function AdminPage() {
                         <p className="text-sm text-gray-600">
                             View, edit, and delete all courses from all instructors
                         </p>
-                        <a href="/admin/courses" className="text-purple-600 text-sm font-medium mt-2 inline-block">
+                        <Link href="/admin/courses" className="text-purple-600 text-sm font-medium mt-2 inline-block">
                             Go to Courses →
-                        </a>
+                        </Link>
                     </CardContent>
                 </Card>
 
@@ -115,9 +115,9 @@ export default async function AdminPage() {
                         <p className="text-sm text-gray-600">
                             View all users and change their roles
                         </p>
-                        <a href="/admin/users" className="text-purple-600 text-sm font-medium mt-2 inline-block">
+                        <Link href="/admin/users" className="text-purple-600 text-sm font-medium mt-2 inline-block">
                             Go to Users →
-                        </a>
+                        </Link>
                     </CardContent>
                 </Card>
 
@@ -129,9 +129,9 @@ export default async function AdminPage() {
                         <p className="text-sm text-gray-600">
                             See platform-wide statistics and growth
                         </p>
-                        <a href="/admin/analytics" className="text-purple-600 text-sm font-medium mt-2 inline-block">
+                        <Link href="/admin/analytics" className="text-purple-600 text-sm font-medium mt-2 inline-block">
                             Go to Analytics →
-                        </a>
+                        </Link>
                     </CardContent>
                 </Card>
 
@@ -143,9 +143,9 @@ export default async function AdminPage() {
                         <p className="text-sm text-gray-600">
                             Create and track discount codes
                         </p>
-                        <a href="/admin/coupons" className="text-purple-600 text-sm font-medium mt-2 inline-block">
+                        <Link href="/admin/coupons" className="text-purple-600 text-sm font-medium mt-2 inline-block">
                             Go to Coupons →
-                        </a>
+                        </Link>
                     </CardContent>
                 </Card>
             </div>

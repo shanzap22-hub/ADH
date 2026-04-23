@@ -9,11 +9,12 @@ export const BackButtonHandler = () => {
     const router = useRouter();
     const pathname = usePathname();
     const [isLoading, setIsLoading] = useState(false);
+    const [prevPathname, setPrevPathname] = useState(pathname);
 
-    // Reset loading state on path change or popstate (e.g. closing modals)
-    useEffect(() => {
+    if (pathname !== prevPathname) {
+        setPrevPathname(pathname);
         setIsLoading(false);
-    }, [pathname]);
+    }
 
     useEffect(() => {
         const handlePopState = () => {

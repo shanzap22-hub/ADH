@@ -6,8 +6,14 @@ export function usePlatform() {
     const [platform, setPlatform] = useState<'web' | 'ios' | 'android'>('web');
 
     useEffect(() => {
-        setIsNative(Capacitor.isNativePlatform());
-        setPlatform(Capacitor.getPlatform() as 'web' | 'ios' | 'android');
+        // Defer to avoid cascading renders warning from React Compiler
+        const native = Capacitor.isNativePlatform();
+        const p = Capacitor.getPlatform() as 'web' | 'ios' | 'android';
+        
+        setTimeout(() => {
+            setIsNative(native);
+            setPlatform(p);
+        }, 0);
     }, []);
 
     return {

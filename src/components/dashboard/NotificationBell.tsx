@@ -38,7 +38,7 @@ export function NotificationBell() {
                 const res = await fetch("/api/notifications/list");
                 if (res.ok) {
                     const data = await res.json();
-                    let fetchedNotifications: Notification[] = data.notifications || [];
+                    const fetchedNotifications: Notification[] = data.notifications || [];
 
                     setNotifications(fetchedNotifications);
 

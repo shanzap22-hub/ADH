@@ -3,9 +3,12 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardCourses } from "@/actions/get-dashboard-courses";
-import { CoursesList } from "@/components/courses-list";
 import nextDynamic from "next/dynamic";
 import { MetaballLoader } from "@/components/ui/metaball-loader";
+
+const CoursesList = nextDynamic(() => import("@/components/courses-list").then(mod => mod.CoursesList), {
+    loading: () => <div className="space-y-4"><div className="h-40 w-full bg-slate-100 animate-pulse rounded-xl" /><div className="h-40 w-full bg-slate-100 animate-pulse rounded-xl" /></div>
+});
 
 const FeedView = nextDynamic(() => import("@/components/community/FeedView").then(mod => mod.FeedView), {
     loading: () => <div className="h-[400px] w-full flex items-center justify-center bg-white/50 rounded-xl"><MetaballLoader /></div>
@@ -87,7 +90,9 @@ export default async function Dashboard() {
     console.log(`[DASHBOARD] Feed: User is '${userTier}'. Access: ${hasFeedAccess}. Fetched ${posts?.length} posts. Showing ${filteredPosts.length}.`);
 
     // Fetch Live Sessions (buffer -24h)
-    const yesterday = new Date(Date.now() - 86400000).toISOString();
+    const yesterdayDate = new Date();
+    yesterdayDate.setHours(yesterdayDate.getHours() - 24);
+    const yesterday = yesterdayDate.toISOString();
 
     const { data: weeklySessions } = await (supabase as any)
         .from('weekly_live_sessions')
@@ -189,7 +194,7 @@ export default async function Dashboard() {
                         </div>
 
                         {coursesInProgress.length > 0 ? (
-                            <CoursesList items={coursesInProgress.slice(0, 3)} />
+                            <CoursesList items={coursesInProgress.slice(0, 3) as any[]} />
                         ) : (
                             <div className="text-center p-8 border border-dashed border-slate-200 rounded-2xl bg-white">
                                 <p className="text-sm text-slate-500 font-medium">No courses in progress</p>

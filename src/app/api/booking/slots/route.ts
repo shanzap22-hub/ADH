@@ -96,7 +96,7 @@ export async function GET(req: Request) {
             const endTimeStr = `${dateStr}T${endHM}:00+05:30`;
 
             let current = new Date(startTimeStr);
-            let end = new Date(endTimeStr);
+            const end = new Date(endTimeStr);
 
             // Safety Check
             if (isNaN(current.getTime())) {

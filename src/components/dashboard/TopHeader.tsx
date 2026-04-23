@@ -37,7 +37,7 @@ export const TopHeader = () => {
     const supabase = createClient();
 
     useEffect(() => {
-        setIsMounted(true);
+        setTimeout(() => setIsMounted(true), 0);
         const getUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             setUser(user);

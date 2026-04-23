@@ -1,5 +1,23 @@
+import dynamic from "next/dynamic";
 import { getAllUsers } from "@/actions/admin/get-all-users";
-import UserManagementClient from "@/components/admin/UserManagementClient";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Performance Optimization: Dynamic import for heavy client component
+const UserManagementClient = dynamic(
+    () => import("@/components/admin/UserManagementClient"),
+    {
+        loading: () => (
+            <div className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-3">
+                    {[1, 2, 3].map((i) => (
+                        <Skeleton key={i} className="h-24 w-full" />
+                    ))}
+                </div>
+                <div className="h-[600px] w-full bg-slate-100/50 rounded-xl animate-pulse" />
+            </div>
+        )
+    }
+);
 
 // 2026 Performance: 2-minute cache for admin pages
 export const revalidate = 120;

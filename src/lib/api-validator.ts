@@ -97,7 +97,7 @@ export async function validateRequest<T>(
                     {
                         error: 'Validation failed',
                         message: 'The request data is invalid. Please check the fields and try again.',
-                        issues: error.errors.map((err) => ({
+                        issues: error.issues.map((err: any) => ({
                             field: err.path.join('.'),
                             message: err.message,
                             code: err.code,
@@ -186,7 +186,7 @@ export async function validateQueryParams<T>(
                     {
                         error: 'Invalid query parameters',
                         message: 'The query parameters are invalid',
-                        issues: error.errors.map((err) => ({
+                        issues: error.issues.map((err: any) => ({
                             field: err.path.join('.'),
                             message: err.message,
                         })),
@@ -215,8 +215,8 @@ export async function validateQueryParams<T>(
 export const CommonSchemas = {
     /** Pagination parameters */
     pagination: z.object({
-        page: z.string().regex(/^\d+$/).transform(Number).default('1'),
-        limit: z.string().regex(/^\d+$/).transform(Number).default('20'),
+        page: z.string().regex(/^\d+$/).default('1').transform(Number),
+        limit: z.string().regex(/^\d+$/).default('20').transform(Number),
     }),
 
     /** MongoDB/UUID ID */

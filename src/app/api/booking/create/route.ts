@@ -59,7 +59,7 @@ export async function POST(req: Request) {
 
         // 5. Google Calendar Sync via OAuth (Instructor's Token)
         let meetLink = `https://meet.google.com/new?booking_id=${Date.now()}`; // Initial Fallback
-        let googleError = null;
+        const googleError = null;
         let googleEventId = null;
 
         try {

@@ -16,7 +16,7 @@ export const CourseSidebar = async ({
     const { data: { user } } = await supabase.auth.getUser();
 
     // Optimized progress fetching
-    let completedChapters = new Set<string>();
+    const completedChapters = new Set<string>();
 
     if (user && course?.chapters) {
         // Get all chapter IDs for this course

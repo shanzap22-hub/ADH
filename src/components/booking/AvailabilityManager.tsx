@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar";
+import { Calendar, dateFnsLocalizer, Views, View } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { enUS } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -56,10 +56,9 @@ export function AvailabilityManager() {
     // 1. All State Definitions
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
-    const [processing, setProcessing] = useState(false); // For action buttons
 
     // Calendar Control State (Persist View)
-    const [view, setView] = useState(Views.WEEK);
+    const [view, setView] = useState<View>(Views.WEEK);
     const [date, setDate] = useState(new Date());
 
     // Settings
@@ -112,7 +111,7 @@ export function AvailabilityManager() {
                 setBufferTime(data.buffer_time);
                 setMinRequestTime(data.min_notice_time || 60);
             }
-        } catch (e) { console.error("Settings fetch error", e); }
+        } catch (_e) { console.error("Settings fetch error", _e); }
     };
 
     const fetchData = async (background = false) => {
@@ -187,8 +186,8 @@ export function AvailabilityManager() {
             }
 
             setEvents(allEvents);
-        } catch (e) {
-            console.error(e);
+        } catch (_e) {
+            console.error(_e);
             toast.error("Failed to sync calendar");
         } finally {
             setLoading(false);
@@ -214,7 +213,7 @@ export function AvailabilityManager() {
             });
             toast.success("Settings saved");
             setIsSettingsOpen(false);
-        } catch (e) {
+        } catch (_e) {
             toast.error("Failed to save settings");
         }
     };
@@ -314,7 +313,7 @@ export function AvailabilityManager() {
             }
             toast.success("Slot removed");
             handleSuccess();
-        } catch (e) {
+        } catch (_e) {
             toast.error("Failed to delete");
         }
     };
@@ -344,7 +343,7 @@ export function AvailabilityManager() {
             }
             toast.success("Slot updated successfully");
             handleSuccess();
-        } catch (e) {
+        } catch (_e) {
             toast.error("Failed to update slot");
         }
     };
@@ -374,7 +373,7 @@ export function AvailabilityManager() {
             }
             toast.success("Slot added");
             handleSuccess();
-        } catch (e) {
+        } catch (_e) {
             toast.error("Failed to save slot");
         }
     };
@@ -630,14 +629,14 @@ export function AvailabilityManager() {
 
                         formats={{
                             timeGutterFormat: 'h:mm a',
-                            eventTimeRangeFormat: ({ start, end }: any, culture: any, local) =>
+                            eventTimeRangeFormat: ({ start, end }: any, culture: any, local: any) =>
                                 `${local.format(start, 'h:mm a', culture)} - ${local.format(end, 'h:mm a', culture)}`,
                         }}
 
                         selectable
                         onSelectSlot={handleSlotSelect}
                         onSelectEvent={handleSelectEvent}
-                        eventPropGetter={(event) => {
+                        eventPropGetter={(event: Event) => {
                             let backgroundColor = '#8b5cf6';
                             if (event.resource.type === 'booked') backgroundColor = '#ef4444';
                             else if (event.resource.type === 'override' || event.resource.type === 'weekly') backgroundColor = '#10b981';

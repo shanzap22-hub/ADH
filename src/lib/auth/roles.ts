@@ -13,7 +13,7 @@ export type UserRole = 'student' | 'instructor' | 'super_admin';
  */
 export async function getUserRole(): Promise<UserRole | null> {
     try {
-        const supabase = createClient();
+        const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) return null;
@@ -64,7 +64,7 @@ export async function isStudent(): Promise<boolean> {
  */
 export async function getUserProfile() {
     try {
-        const supabase = createClient();
+        const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) return null;
@@ -89,7 +89,7 @@ export async function getUserProfile() {
  */
 export async function canEditCourse(courseId: string): Promise<boolean> {
     try {
-        const supabase = createClient();
+        const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) return false;
@@ -126,7 +126,7 @@ export async function logAdminAction(
     details?: Record<string, any>
 ) {
     try {
-        const supabase = createClient();
+        const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) return;

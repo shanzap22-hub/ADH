@@ -67,6 +67,11 @@ export async function middleware(request: NextRequest) {
     // Check if user is authenticated
     const { data: { user } } = await supabase.auth.getUser()
 
+    // Extract Role and Membership Tier from JWT Metadata for speed
+    // IMPORTANT: Make sure to sync these from public.profiles to auth.users metadata
+    const userRole = user?.app_metadata?.role || 'student';
+    const userTier = user?.app_metadata?.membership_tier || 'free';
+
     // Enforce Mandatory Setup & Password Reset
     if (user) {
         const passwordResetRequired = user.user_metadata?.password_reset_required;
@@ -78,26 +83,16 @@ export async function middleware(request: NextRequest) {
             '/api/auth/verify-otp'
         ];
 
-        // Allow logout/auth paths
+        // 0. Priority: Membership & Role Check via JWT Metadata
         const isAuthRelated = pathname.startsWith('/auth') || pathname === '/signout';
 
-        // 0. Priority: Membership Cancelled Check
-        // Fetch profile to check tier
-        if (!isAuthRelated && !pathname.startsWith('/api/user') && !pathname.startsWith('/api/auth')) { // Allow critical APIs
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('membership_tier, role')
-                .eq('id', user.id)
-                .single();
-
-            if (profile?.membership_tier === 'cancelled' && profile?.role !== 'super_admin') {
+        if (!isAuthRelated && !pathname.startsWith('/api/user') && !pathname.startsWith('/api/auth')) {
+            if (userTier === 'cancelled' && userRole !== 'super_admin') {
                 console.log('[MIDDLEWARE] BLOCKING CANCELLED USER:', user.email);
-                // Sign out logic is complex in middleware, so we force redirect to a specific error page or login
-                // We will append a query param to login to show a specific message
-                const url = request.nextUrl.clone()
-                url.pathname = '/login'
-                url.searchParams.set('error', 'Membership Cancelled')
-                return NextResponse.redirect(url)
+                const url = request.nextUrl.clone();
+                url.pathname = '/login';
+                url.searchParams.set('error', 'Membership Cancelled');
+                return NextResponse.redirect(url);
             }
         }
 
@@ -142,27 +137,13 @@ export async function middleware(request: NextRequest) {
     // Check if it's a protected API route (Starts with /api AND NOT in publicApiRoutes)
     const isProtectedApi = pathname.startsWith('/api') && !publicApiRoutes.some(route => pathname.startsWith(route));
 
-    // Handle Auth Redirects (If user is logged in, keep them away from login/signup)
+    // Handle Auth Redirects
     if (user && ['/login', '/forgot-password'].includes(pathname)) {
-        try {
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', user.id)
-                .single();
+        let redirectPath = '/dashboard';
+        if (userRole === 'instructor') redirectPath = '/instructor/courses';
+        if (userRole === 'admin' || userRole === 'super_admin') redirectPath = '/admin';
 
-            let redirectPath = '/dashboard';
-            if (profile?.role === 'instructor') redirectPath = '/instructor/courses';
-
-            // If strictly cancelled, they will be caught by the check above next time or now
-            // But if we are here, we redirect to dashboard, which will then trigger the cancelled check on next nav
-            // Ideally we check here too but the top check handles it for protected routes.
-            // For login page, we let them go to dashboard and get blocked.
-
-            return NextResponse.redirect(new URL(redirectPath, request.url));
-        } catch (e) {
-            // Ignore error
-        }
+        return NextResponse.redirect(new URL(redirectPath, request.url));
     }
 
     // BLOCK ACCESS if not authenticated and trying to access protected route

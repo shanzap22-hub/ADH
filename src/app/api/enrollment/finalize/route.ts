@@ -50,7 +50,7 @@ export async function POST(req: Request) {
         }
 
         // Create Razorpay instance to fetch details
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
+         
         const Razorpay = require("razorpay");
         const instance = new Razorpay({
             key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_StqvqJ8w5pW5kK",

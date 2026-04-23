@@ -85,7 +85,7 @@ export const ChapterAttachmentsForm = ({
             // Validate link
             const result = linkSchema.safeParse({ url: linkUrl, name: linkName });
             if (!result.success) {
-                toast.error(result.error.errors[0].message);
+                toast.error((result.error as any).errors[0].message);
                 return;
             }
 
