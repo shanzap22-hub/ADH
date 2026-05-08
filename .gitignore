@@ -45,3 +45,8 @@ dist
 !node_modules/@capacitor/app/android/build.gradle
 !node_modules/@capacitor/splash-screen/android/build.gradle
 !node_modules/@capacitor/network/android/build.gradle
+
+android/
+.next/
+.vercel/
+node_modules/
