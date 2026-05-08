@@ -1,4 +1,4 @@
-@tailwind base;
+ï»¿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -179,38 +179,32 @@
   animation-delay: 0.4s;
 }
 /* ============================================
-   ?? PERFORMANCE & FEEL OPTIMIZATIONS
-   React-??????? instant feel ??????????
+   PERFORMANCE & FEEL OPTIMIZATIONS
+   Instant click feel - like React SPA apps
    ============================================ */
 
-/* Mobile-? 300ms tap delay ??????????? ?????? ?????????? */
+/* Remove 300ms tap delay on mobile globally */
 * {
   touch-action: manipulation;
 }
 
-/* GPU-Accelerated transitions — smooth & instant feel */
+/* GPU-Accelerated transitions - smooth & instant */
 a, button, [role="button"] {
   transition: all 150ms ease-out;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
 
-/* Links-? active press effect (BottomNav, Sidebar links) */
+/* Active press effect on links */
 a:active {
   opacity: 0.75;
   transform: scale(0.98);
 }
 
-/* Page transition fade — React SPA-??????? feel */
+/* Page transition fade - React SPA-like feel */
 @keyframes page-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 main, [data-page] {
@@ -222,7 +216,7 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Input/Textarea focus — instant feel */
+/* Input focus - instant feel */
 input, textarea, select {
   transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
 }
