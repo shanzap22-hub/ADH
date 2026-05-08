@@ -59,12 +59,13 @@ export const LessonViewer = ({
 
         startTransition(async () => {
             try {
-                await updateChapterProgress(courseId, chapterId, { isCompleted: !isCompleted });
+                // unitId ഉള്ളപ്പോൾ unit-level progress update ചെയ്യുക
+                await updateChapterProgress(courseId, chapterId, { isCompleted: !isCompleted, unitId });
                 if (!isCompleted) {
                     toast.success("Lesson marked as complete");
                 }
                 if (onComplete) onComplete();
-                router.refresh(); // Refresh to update sidebar tick
+                router.refresh();
             } catch (error) {
                 toast.error("Something went wrong");
             }
