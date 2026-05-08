@@ -14,19 +14,20 @@ export default function SettingsPage() {
     const [emailNotifs, setEmailNotifs] = useState(true);
     const [pushNotifs, setPushNotifs] = useState(true);
 
-    // Initialize Theme
+    // Initialize Theme & Notification Preferences from localStorage
     useEffect(() => {
-        const isDark = document.documentElement.classList.contains("dark");
         const storedTheme = localStorage.getItem("theme");
+        const storedEmail = localStorage.getItem("pref_email_notifs");
+        const storedPush = localStorage.getItem("pref_push_notifs");
 
-        // Defer to avoid cascading renders warning
         setTimeout(() => {
             if (storedTheme === "dark") {
                 document.documentElement.classList.add("dark");
                 setIsDarkMode(true);
-            } else {
-                setIsDarkMode(isDark);
             }
+            // Only override defaults if user has explicitly set a preference
+            if (storedEmail !== null) setEmailNotifs(storedEmail === "true");
+            if (storedPush !== null) setPushNotifs(storedPush === "true");
         }, 0);
     }, []);
 
@@ -102,7 +103,8 @@ export default function SettingsPage() {
                             checked={emailNotifs}
                             onCheckedChange={(c) => {
                                 setEmailNotifs(c);
-                                toast.success("Preference saved");
+                                localStorage.setItem("pref_email_notifs", String(c));
+                                toast.success(c ? "Email notifications enabled" : "Email notifications disabled");
                             }}
                         />
                     </div>
@@ -118,7 +120,8 @@ export default function SettingsPage() {
                             checked={pushNotifs}
                             onCheckedChange={(c) => {
                                 setPushNotifs(c);
-                                toast.success("Preference saved");
+                                localStorage.setItem("pref_push_notifs", String(c));
+                                toast.success(c ? "Push notifications enabled" : "Push notifications disabled");
                             }}
                         />
                     </div>

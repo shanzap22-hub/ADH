@@ -155,8 +155,6 @@ export async function middleware(request: NextRequest) {
 
     // Allow everything else (Landing, Redirects, Public Pages)
     return response;
-
-    return NextResponse.next()
 }
 
 export const config = {

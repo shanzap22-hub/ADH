@@ -28,8 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-// 2026 Performance: ISR with 5-minute cache for dashboard
-export const revalidate = 300;
+// force-dynamic: user-specific data (auth, courses, feed) must always be fresh
 export const dynamic = 'force-dynamic';
 
 export default async function Dashboard() {
@@ -71,8 +70,7 @@ export default async function Dashboard() {
 
     const hasFeedAccess = tierSettings?.has_community_feed_access !== false; // Default true if missing
 
-    // Filter Posts based on Tier Access
-    // Explicitly filter posts:
+    // Filter Posts based on Tier Access:
     // 1. If post has NO tier restrictions (public) -> Show it.
     // 2. If post HAS restrictions -> User must have one of the allowed tiers.
     let filteredPosts: any[] = [];
@@ -80,14 +78,10 @@ export default async function Dashboard() {
     if (hasFeedAccess) {
         filteredPosts = (posts || []).filter((post: any) => {
             const accesslist = post.post_tier_access || [];
-            if (accesslist.length === 0) return true; // Public
+            if (accesslist.length === 0) return true;
             return accesslist.some((a: any) => a.tier === userTier);
         });
-    } else {
-        console.log(`[DASHBOARD] Feed Access DISABLED for tier '${userTier}'`);
     }
-
-    console.log(`[DASHBOARD] Feed: User is '${userTier}'. Access: ${hasFeedAccess}. Fetched ${posts?.length} posts. Showing ${filteredPosts.length}.`);
 
     // Fetch Live Sessions (buffer -24h)
     const yesterdayDate = new Date();
