@@ -40,16 +40,13 @@ export const LessonViewer = ({
     const lastSaveTimeRef = useRef<number>(0);
 
     const handleProgress = useCallback((seconds: number) => {
-        // Save progress every 5 seconds
         const now = Date.now();
         if (now - lastSaveTimeRef.current > 5000) {
             lastSaveTimeRef.current = now;
             if (courseId && chapterId) {
-                // Ensure integer and log
                 const sec = Math.floor(seconds);
-                console.log("Saving progress:", sec);
                 updateChapterProgress(courseId, chapterId, { lastPlayedSecond: sec })
-                    .catch(e => console.error("Progress save failed", e));
+                    .catch(() => {}); // Silent fail — non-critical
             }
         }
     }, [courseId, chapterId]);
@@ -71,26 +68,12 @@ export const LessonViewer = ({
         });
     };
 
-    // Debug logging
-    console.log('🎥 [LessonViewer] Processing URL:', {
-        raw: videoUrl,
-        clean: cleanUrl,
-        length: videoUrl?.length,
-        firstChar: videoUrl?.charCodeAt(0)
-    });
-
     // Detect video type using clean URL
     const isBunnyVideo = cleanUrl?.startsWith('bunny://');
     const bunnyVideoId = isBunnyVideo ? cleanUrl?.replace('bunny://', '') : null;
     const isYouTube = cleanUrl?.includes('youtube.com') || cleanUrl?.includes('youtu.be');
     const isVimeo = cleanUrl?.includes('vimeo.com');
     const isExternalEmbed = isYouTube || isVimeo;
-
-    console.log('🔍 [LessonViewer] Video Type Status:', {
-        isBunnyVideo,
-        bunnyVideoId,
-        willRenderBunnyPlayer: !!(isBunnyVideo && bunnyVideoId)
-    });
 
     // Convert YouTube/Vimeo URLs to embed format
     const getEmbedUrl = (url: string) => {

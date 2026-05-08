@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { ChevronLeft, ChevronRight, BookOpen, CheckCircle, Sparkles, Layout, PlayCircle } from "lucide-react";
-import { VideoPlayer } from "@/components/video-player";
+import { ChevronLeft, ChevronRight, BookOpen, CheckCircle, Layout, PlayCircle } from "lucide-react";
+import { LessonViewer } from "@/components/course/LessonViewer";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -65,6 +64,8 @@ export default async function UnitPlayerPage({
         .single();
 
     const isCompleted = progress?.is_completed || false;
+    // Resume position — restored from DB for "continue where you left off" feature
+    const lastPlayedSecond = progress?.last_played_second || 0;
 
     // Get all units in this chapter for navigation
     const { data: allUnits } = await supabase
@@ -89,15 +90,17 @@ export default async function UnitPlayerPage({
                 <div className="absolute inset-0 bg-gradient-to-b from-purple-500/10 via-transparent to-transparent opacity-50 pointer-events-none" />
 
                 <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-8 md:py-12">
+                    {/* Video Player with Resume Feature */}
                     <div className="relative aspect-video w-full max-w-6xl mx-auto rounded-xl overflow-hidden shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] bg-slate-900 border border-slate-800/50">
-                        <VideoPlayer
+                        <LessonViewer
+                            courseId={courseId}
                             chapterId={chapterId}
                             title={unit.title}
-                            courseId={courseId}
-                            nextChapterId={nextUnit?.id}
-                            isLocked={false}
-                            completeOnEnd={true}
-                            videoUrl={unit.video_url || unit.bunny_video_id || ""}
+                            description={unit.description || null}
+                            videoUrl={unit.video_url || unit.bunny_video_id || null}
+                            lessonNumber={currentIndex + 1}
+                            isCompleted={isCompleted}
+                            lastPlayedSecond={lastPlayedSecond}
                         />
                     </div>
                 </div>
