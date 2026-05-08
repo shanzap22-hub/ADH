@@ -33,7 +33,6 @@ export async function middleware(request: NextRequest) {
 
     // Allow public pages without authentication
     if (publicPages.includes(pathname)) {
-        console.log('[MIDDLEWARE] Allowing public page access:', pathname);
         return NextResponse.next();
     }
 
@@ -44,7 +43,6 @@ export async function middleware(request: NextRequest) {
 
     // Allow public API routes
     if (publicApiRoutes.some(route => pathname.startsWith(route))) {
-        console.log('[MIDDLEWARE] Allowing public API access:', pathname);
         return NextResponse.next();
     }
 
@@ -88,7 +86,6 @@ export async function middleware(request: NextRequest) {
 
         if (!isAuthRelated && !pathname.startsWith('/api/user') && !pathname.startsWith('/api/auth')) {
             if (userTier === 'cancelled' && userRole !== 'super_admin') {
-                console.log('[MIDDLEWARE] BLOCKING CANCELLED USER:', user.email);
                 const url = request.nextUrl.clone();
                 url.pathname = '/login';
                 url.searchParams.set('error', 'Membership Cancelled');
@@ -99,13 +96,11 @@ export async function middleware(request: NextRequest) {
         // 1. Priority: Password Reset Lockdown
         // Prevent access to ANY page except update-password until reset is done
         if (passwordResetRequired && pathname !== '/update-password' && !isAuthRelated) {
-            console.log('[MIDDLEWARE] Lockdown: Redirecting to update-password:', pathname);
             return NextResponse.redirect(new URL('/update-password', request.url));
         }
 
         // 2. Priority: Setup Required
         if (setupRequired && !allowedSetupPaths.includes(pathname) && !isAuthRelated) {
-            console.log('[MIDDLEWARE] Redirecting to setup:', pathname);
             return NextResponse.redirect(new URL('/onboarding/complete', request.url));
         }
     }
