@@ -27,7 +27,8 @@ export function useWebSpeech() {
             const BrowserSpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
 
             if (BrowserSpeechRecognition && window.speechSynthesis) {
-                setIsSupported(true);
+                // Defer to avoid cascading renders warning
+                setTimeout(() => setIsSupported(true), 0);
 
                 // Initialize Recognition
                 const recognition = new BrowserSpeechRecognition();

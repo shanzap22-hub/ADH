@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { PrePaymentModal } from "./PrePaymentModal";
-import { PostPaymentModal } from "./PostPaymentModal";
+
 import { PaymentProcessingOverlay } from "./PaymentProcessingOverlay";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";

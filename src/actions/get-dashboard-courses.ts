@@ -81,24 +81,25 @@ export const getDashboardCourses = cache(async (userId: string): Promise<Dashboa
         }
 
         // 6. Calculate Progress & Map
-        const coursesWithProgress = await Promise.all(
-            (courses || []).map(async (course: any) => {
-                const progress = await getCourseProgress(userId, course.id);
-                const publishedChapters = course.chapters?.filter((ch: any) => ch.is_published) || [];
+        const courseIds = (courses || []).map(c => c.id);
+        const { getBatchCourseProgress } = await import("./get-batch-course-progress");
+        const progressMap = await getBatchCourseProgress(userId, courseIds);
 
-                return {
-                    id: course.id,
-                    title: course.title,
-                    description: course.description,
-                    price: course.price,
-                    image_url: course.image_url,
-                    category: null,
-                    chaptersCount: publishedChapters.length,
-                    chapters: publishedChapters,
-                    progress,
-                };
-            })
-        );
+        const coursesWithProgress = (courses || []).map((course: any) => {
+            const publishedChapters = course.chapters?.filter((ch: any) => ch.is_published) || [];
+
+            return {
+                id: course.id,
+                title: course.title,
+                description: course.description,
+                price: course.price,
+                image_url: course.image_url,
+                category: null,
+                chaptersCount: publishedChapters.length,
+                chapters: publishedChapters,
+                progress: progressMap[course.id] || 0,
+            };
+        });
 
         return coursesWithProgress;
 

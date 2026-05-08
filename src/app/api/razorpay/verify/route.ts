@@ -95,7 +95,7 @@ export async function POST(req: Request) {
 
 
         // UPDATE TRANSACTIONS TABLE (Super Admin Features)
-        const { count: txnUpdateCount } = await supabaseAdmin.from('transactions')
+        const { data: txnUpdateData } = await supabaseAdmin.from('transactions')
             .update({
                 status: 'verified',
                 razorpay_payment_id: razorpay_payment_id,
@@ -103,7 +103,9 @@ export async function POST(req: Request) {
                 updated_at: new Date().toISOString()
             })
             .eq('razorpay_order_id', razorpay_order_id)
-            .select('id', { count: 'exact' });
+            .select('id');
+            
+        const txnUpdateCount = txnUpdateData?.length || 0;
 
         if (txnUpdateCount === 0) {
             console.log("[RAZORPAY_VERIFY] Transaction not found, inserting new Verified record.");

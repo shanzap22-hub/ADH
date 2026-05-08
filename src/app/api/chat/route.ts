@@ -165,8 +165,7 @@ RESPONSE FORMAT:
         });
 
         // 6. Build conversation history in Gemini format
-        // 6. Build conversation history in Gemini format
-        let chatHistory: any[] = [];
+        const chatHistory: any[] = [];
         // History is now fetched Newest -> Oldest. 
         // We need to reverse it to be Oldest -> Newest for the AI context window.
 

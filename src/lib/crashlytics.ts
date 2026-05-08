@@ -53,8 +53,7 @@ export const crashlytics = {
 
             // Record the error
             await FirebaseCrashlytics.recordException({
-                message: error.message,
-                stacktrace: error.stack || '',
+                message: error.stack ? `${error.message}\n${error.stack}` : error.message,
             });
         } catch (err) {
             console.error('Failed to log error to crashlytics:', err);

@@ -30,18 +30,6 @@ export const BunnyVideoPlayer = ({
 }: BunnyVideoPlayerProps) => {
     const libraryId = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID;
 
-    if (!libraryId) {
-        console.error("[BunnyPlayer] Missing NEXT_PUBLIC_BUNNY_LIBRARY_ID");
-        return (
-            <div className={cn("relative aspect-video bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center text-red-500 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900", className)}>
-                <div className="text-center p-4">
-                    <p className="font-bold">Configuration Error</p>
-                    <p className="text-sm">Video Library ID is missing.</p>
-                </div>
-            </div>
-        );
-    }
-
     // Memoize the embed URL to prevent iframe reloading on prop changes (like initialTime updates)
     // We only update this when videoId changes.
     const [embedUrl, setEmbedUrl] = useState(`https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&context=adh-player`);
@@ -77,14 +65,19 @@ export const BunnyVideoPlayer = ({
     }, [onProgress]);
 
     // Reset state when VIDEO ID changes
+    const [prevVideoId, setPrevVideoId] = useState(videoId);
+    if (videoId !== prevVideoId) {
+        setPrevVideoId(videoId);
+        setIsReady(false);
+        if (libraryId) {
+            setEmbedUrl(`https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&context=adh-player`);
+        }
+    }
+
     useEffect(() => {
         hasEndedRef.current = false;
-        isInitialTimeSetRef.current = false; // Reset the seek flag for the new video
-        setIsReady(false);
-        setEmbedUrl(`https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true&context=adh-player`);
-
-        // Note: we don't reset playerRef here, handled in cleanup of init effect or by re-init logic
-    }, [videoId, libraryId]);
+        isInitialTimeSetRef.current = false;
+    }, [videoId]);
 
     const handleCompletion = useCallback(() => {
         if (!hasEndedRef.current) {
@@ -102,6 +95,7 @@ export const BunnyVideoPlayer = ({
 
     // Load player.js script and initialize player
     useEffect(() => {
+        if (!libraryId) return;
         const scriptId = "bunny-player-sdk";
         let script = document.getElementById(scriptId) as HTMLScriptElement;
 
@@ -185,7 +179,19 @@ export const BunnyVideoPlayer = ({
                 playerRef.current = null;
             }
         };
-    }, [videoId, handleCompletion]);
+    }, [videoId, handleCompletion, libraryId]);
+
+    if (!libraryId) {
+        console.error("[BunnyPlayer] Missing NEXT_PUBLIC_BUNNY_LIBRARY_ID");
+        return (
+            <div className={cn("relative aspect-video bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center text-red-500 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900", className)}>
+                <div className="text-center p-4">
+                    <p className="font-bold">Configuration Error</p>
+                    <p className="text-sm">Video Library ID is missing.</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={cn("relative aspect-video bg-slate-900 rounded-lg overflow-hidden", className)}>

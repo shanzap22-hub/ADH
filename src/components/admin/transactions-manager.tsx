@@ -41,10 +41,46 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
+interface Transaction {
+    id: string;
+    user_id?: string;
+    created_at: string;
+    amount: number;
+    student_name?: string;
+    student_email?: string;
+    email?: string;
+    student_phone?: string;
+    phone_number?: string;
+    whatsapp_number?: string;
+    membership_plan?: string;
+    source: string;
+    status: string;
+    razorpay_payment_id?: string;
+    notes?: string;
+    profiles?: {
+        full_name: string;
+        email: string;
+        phone_number?: string;
+        whatsapp_number?: string;
+    };
+    student_progress?: {
+        courses_enrolled: number;
+        completed_chapters: number;
+        total_chapters: number;
+        completion_percentage: number;
+        course_details: Array<{
+            title: string;
+            completed_chapters: number;
+            total_chapters: number;
+            percentage: number;
+        }>;
+    };
+}
+
 export default function TransactionsManager() {
-    const [transactions, setTransactions] = useState<any[]>([]);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState("verified"); // 'verified' | 'pending' | 'all'
+    const [activeTab, setActiveTab] = useState("verified"); 
 
     // Filters
     const [startDate, setStartDate] = useState("");
@@ -55,13 +91,13 @@ export default function TransactionsManager() {
     const [searchQuery, setSearchQuery] = useState("");
 
     // Modal States
-    const [selectedProgress, setSelectedProgress] = useState<any>(null);
+    const [selectedProgress, setSelectedProgress] = useState<{ student: string, progress: NonNullable<Transaction['student_progress']> } | null>(null);
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isRefundOpen, setIsRefundOpen] = useState(false);
 
     // Selection for Edit/Refund
-    const [selectedTxn, setSelectedTxn] = useState<any>(null);
+    const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
 
     // Form Data
     const [formData, setFormData] = useState({
@@ -72,7 +108,8 @@ export default function TransactionsManager() {
         email: "",
         membership_plan: "silver",
         notes: "",
-        source: "manual"
+        source: "manual",
+        status: "verified"
     });
 
     // ... (lines 78-151 are mostly fine, check handleSave payload construction if generic)
@@ -134,8 +171,8 @@ export default function TransactionsManager() {
 
             if (data.error) throw new Error(data.error);
             setTransactions(data || []);
-        } catch (error) {
-            console.error(error);
+        } catch (_e) {
+            console.error(_e);
             toast.error("Failed to load transactions");
         } finally {
             setLoading(false);
@@ -173,10 +210,11 @@ export default function TransactionsManager() {
                 student_name: "",
                 phone_number: "",
                 whatsapp_number: "",
-                student_email: "",
+                email: "",
                 membership_plan: "silver",
                 notes: "",
-                source: "manual"
+                source: "manual",
+                status: "verified"
             });
         } catch (error: any) {
             toast.error(error.message);
@@ -265,7 +303,7 @@ export default function TransactionsManager() {
                         <RefreshCcw className="mr-2 h-4 w-4" /> Sync Legacy Data
                     </Button>
                     <Button onClick={() => {
-                        setEditingTxn(null);
+                        setSelectedTxn(null);
                         setFormData({
                             email: "",
                             student_name: "",
@@ -274,7 +312,8 @@ export default function TransactionsManager() {
                             amount: "",
                             membership_plan: "silver",
                             notes: "",
-                            source: "manual"
+                            source: "manual",
+                            status: "verified"
                         });
                         setIsAddOpen(true);
                     }} className="bg-primary">
@@ -302,7 +341,7 @@ export default function TransactionsManager() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Count</CardTitle>
-                        <UserIcon className="h-4 w-4 text-muted-foreground" />
+                        <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{totalCount}</div>
@@ -433,7 +472,7 @@ export default function TransactionsManager() {
                                     ) : (
                                         (() => {
                                             // Group Transactions
-                                            const grouped: Record<string, any[]> = {};
+                                            const grouped: Record<string, Transaction[]> = {};
                                             transactions.forEach(txn => {
                                                 const key = txn.user_id || txn.student_email?.toLowerCase() || txn.student_phone || txn.id;
                                                 if (!grouped[key]) grouped[key] = [];
@@ -494,8 +533,8 @@ export default function TransactionsManager() {
                                                                 {isMain && txn.student_progress ? (
                                                                     <div
                                                                         className="text-xs space-y-1 cursor-pointer hover:bg-white hover:shadow-sm p-1.5 rounded-md transition-all border border-transparent hover:border-slate-200"
-                                                                        onClick={() => setSelectedProgress({
-                                                                            student: txn.student_name || txn.email,
+                                                                        onClick={() => txn.student_progress && setSelectedProgress({
+                                                                            student: txn.student_name || txn.email || "Unknown",
                                                                             progress: txn.student_progress
                                                                         })}
                                                                         title="Click to view detailed progress"
@@ -534,11 +573,10 @@ export default function TransactionsManager() {
                                                                             student_name: txn.student_name || "",
                                                                             phone_number: txn.phone_number || "",
                                                                             whatsapp_number: txn.whatsapp_number || "",
-                                                                            student_email: txn.student_email || txn.email || "", // Handle both just in case, but prefer student_email for edit
+                                                                            email: txn.student_email || txn.email || "", // Handle both just in case, but prefer student_email for edit
                                                                             membership_plan: txn.membership_plan || "silver",
                                                                             notes: txn.notes || "",
                                                                             source: txn.source || "manual",
-                                                                            // @ts-ignore
                                                                             status: txn.status || "verified"
                                                                         });
                                                                         setIsEditOpen(true);
@@ -591,7 +629,7 @@ export default function TransactionsManager() {
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label className="text-right">Email</Label>
-                            <Input type="email" className="col-span-3" value={formData.student_email} onChange={e => setFormData({ ...formData, student_email: e.target.value })} />
+                            <Input type="email" className="col-span-3" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label className="text-right">Amount (₹)</Label>
@@ -659,7 +697,7 @@ export default function TransactionsManager() {
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label className="text-right">Status</Label>
-                            <Select value={(formData as any).status || "verified"} onValueChange={e => setFormData({ ...formData, status: e } as any)}>
+                            <Select value={formData.status || "verified"} onValueChange={e => setFormData({ ...formData, status: e })}>
                                 <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="verified">Verified</SelectItem>
@@ -692,7 +730,7 @@ export default function TransactionsManager() {
 
                     <div className="py-4 space-y-4">
                         {selectedProgress?.progress?.course_details?.length > 0 ? (
-                            selectedProgress.progress.course_details.map((course: any, idx: number) => (
+                            selectedProgress.progress.course_details.map((course, idx: number) => (
                                 <div key={idx} className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                                     <h4 className="font-medium text-sm text-slate-800 mb-1 line-clamp-2">{course.title}</h4>
                                     <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
@@ -763,8 +801,3 @@ export default function TransactionsManager() {
     );
 }
 
-function UserIcon(props: any) {
-    return (
-        <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-    )
-}

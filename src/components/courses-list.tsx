@@ -31,18 +31,9 @@ export const CoursesList = ({
 }: CoursesListProps) => {
     const [activeFilter, setActiveFilter] = useState("all");
 
-    // Defensive check
-    if (!items || !Array.isArray(items)) {
-        console.error("[COURSES_LIST] Invalid items prop:", items);
-        return (
-            <div className="text-center text-sm text-red-600 mt-10 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                Error loading courses. Please refresh the page.
-            </div>
-        );
-    }
-
     // Memoize filtered items to avoid recalculating on every render
     const filteredItems = useMemo(() => {
+        if (!items || !Array.isArray(items)) return [];
         return items.filter((item) => {
             const progress = item.progress || 0;
 
@@ -64,6 +55,16 @@ export const CoursesList = ({
             return true;
         });
     }, [items, activeFilter]);
+
+    // Defensive check
+    if (!items || !Array.isArray(items)) {
+        console.error("[COURSES_LIST] Invalid items prop:", items);
+        return (
+            <div className="text-center text-sm text-red-600 mt-10 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                Error loading courses. Please refresh the page.
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">

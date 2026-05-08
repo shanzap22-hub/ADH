@@ -24,17 +24,13 @@ export default function InstructorCalendarPage() {
     const [loading, setLoading] = useState(true);
     const supabase = createClient();
 
-    useEffect(() => {
-        fetchBookings();
-    }, []);
-
-    const fetchBookings = async () => {
+    const fetchBookings = useCallback(async () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
         // Fetch bookings assigned to me or all if admin
         // Assuming current user is instructor.
-        const { data, error } = await supabase
+        const { data } = await supabase
             .from("bookings")
             .select(`
                 *,
@@ -44,9 +40,15 @@ export default function InstructorCalendarPage() {
             .gte("start_time", new Date().toISOString()) // Only upcoming? Or all. Let's show all descending.
             .order("start_time", { ascending: true });
 
-        if (data) setBookings(data);
-        setLoading(false);
-    };
+        if (data) {
+            setTimeout(() => setBookings(data), 0);
+        }
+        setTimeout(() => setLoading(false), 0);
+    }, [supabase]);
+
+    useEffect(() => {
+        fetchBookings();
+    }, [fetchBookings]);
 
     const handleCancel = async (bookingId: string) => {
         if (!confirm("Cancel this session?")) return;

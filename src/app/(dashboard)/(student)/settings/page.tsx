@@ -17,14 +17,17 @@ export default function SettingsPage() {
     // Initialize Theme
     useEffect(() => {
         const isDark = document.documentElement.classList.contains("dark");
-        setIsDarkMode(isDark);
-
-        // Also check localStorage if not already set
         const storedTheme = localStorage.getItem("theme");
-        if (storedTheme === "dark") {
-            document.documentElement.classList.add("dark");
-            setIsDarkMode(true);
-        }
+
+        // Defer to avoid cascading renders warning
+        setTimeout(() => {
+            if (storedTheme === "dark") {
+                document.documentElement.classList.add("dark");
+                setIsDarkMode(true);
+            } else {
+                setIsDarkMode(isDark);
+            }
+        }, 0);
     }, []);
 
     const toggleTheme = (checked: boolean) => {

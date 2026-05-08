@@ -14,7 +14,8 @@ import {
     Panel,
     useReactFlow,
     ConnectionMode,
-    getNodesBounds
+    getNodesBounds,
+    BackgroundVariant
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import useMindMapStore from './store';
@@ -24,7 +25,7 @@ import MindMapToolbar from './MindMapToolbar';
 import { updateMindMap } from '@/actions/mind-map';
 import { toast } from 'sonner';
 import { toJpeg } from 'html-to-image';
-import { jsPDF } from 'jspdf';
+import jsPDF from 'jspdf';
 
 const nodeTypes = {
     mindMap: MindMapNode,
@@ -87,7 +88,7 @@ function MindMapFlow({ initialData, id }: MindMapEditorProps) {
         stateRef.current = { nodes, edges, title };
     }, [nodes, edges, title]);
 
-    const reactFlowWrapper = useRef(null);
+    const reactFlowWrapper = useRef<HTMLDivElement>(null);
     const { getViewport, getNodes } = useReactFlow();
 
     const initializedRef = useRef(false);
@@ -241,7 +242,7 @@ function MindMapFlow({ initialData, id }: MindMapEditorProps) {
             .then(async (dataUrl) => {
 
                 // Initialize PDF with custom size matching the screen/window
-                const pdf = new jsPDF({
+                const pdf = new (jsPDF as any)({
                     orientation: windowW > windowH ? 'landscape' : 'portrait',
                     unit: 'pt',
                     format: [windowW, windowH],
@@ -435,7 +436,7 @@ function MindMapFlow({ initialData, id }: MindMapEditorProps) {
                 }}
                 connectionMode={ConnectionMode.Loose}
             >
-                <Background color="#cbd5e1" gap={16} size={1} variant="dots" />
+                <Background color="#cbd5e1" gap={16} size={1} variant={BackgroundVariant.Dots} />
                 <Controls />
                 <MindMapToolbar
                     onSave={onSave}

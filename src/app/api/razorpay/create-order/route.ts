@@ -88,8 +88,8 @@ export async function POST(req: Request) {
             // Try to get user info if logged in
             const { data: { user: currentUser } } = await supabase.auth.getUser();
 
-            let userId = currentUser?.id || null;
-            let userEmail = currentUser?.email || null;
+            const userId = currentUser?.id || null;
+            const userEmail = currentUser?.email || null;
             let userName = currentUser?.user_metadata?.full_name || null;
             let userPhone = currentUser?.phone || null;
 

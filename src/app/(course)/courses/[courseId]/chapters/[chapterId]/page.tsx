@@ -12,8 +12,8 @@ export default async function ChapterDetailPage({
 }: {
     params: Promise<{ courseId: string; chapterId: string }>
 }) {
+    const { courseId, chapterId } = await params;
     try {
-        const { courseId, chapterId } = await params;
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 

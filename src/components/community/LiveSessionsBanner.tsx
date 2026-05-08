@@ -15,7 +15,8 @@ export function LiveSessionsBanner({ weeklySessions, bookings }: LiveSessionsBan
     const [now, setNow] = useState<Date | null>(null);
 
     useEffect(() => {
-        setNow(new Date());
+        // Defer to avoid cascading renders warning
+        setTimeout(() => setNow(new Date()), 0);
         const timer = setInterval(() => setNow(new Date()), 1000);
         return () => clearInterval(timer);
     }, []);

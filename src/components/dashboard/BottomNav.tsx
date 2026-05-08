@@ -43,13 +43,15 @@ interface BottomNavProps {
 
 export const BottomNav = ({ permissions }: BottomNavProps) => {
     const pathname = usePathname();
+    const [prevPathname, setPrevPathname] = useState(pathname);
     const [optimisticPath, setOptimisticPath] = useState(pathname);
     const [isNavigating, setIsNavigating] = useState(false);
 
-    useEffect(() => {
+    if (pathname !== prevPathname) {
+        setPrevPathname(pathname);
         setOptimisticPath(pathname);
         setIsNavigating(false);
-    }, [pathname]);
+    }
 
     const handleNavClick = (href: string) => {
         if (href !== pathname) {

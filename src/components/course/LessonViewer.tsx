@@ -213,7 +213,6 @@ export const LessonViewer = ({
                     </div>
                 )}
 
-// ... keeping existing code up to line 216 ...
                 {attachments.length > 0 && (
                     <div>
                         <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">

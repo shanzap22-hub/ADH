@@ -1,24 +1,43 @@
-// @ts-nocheck
 "use client";
 
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { MetaballLoader } from "@/components/ui/metaball-loader";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Video, Calendar, ArrowRight, Loader2, Lock, Sparkles, Clock, Users } from "lucide-react";
+import { Video, Sparkles, Clock } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { LiveCountDown } from "@/components/live/LiveCountDown";
 import { ReschedulePicker } from "@/components/booking/ReschedulePicker";
 import { LiveSessionCardSkeleton } from "@/components/skeletons/live-page-skeleton";
 
+interface LiveSession {
+    id: string;
+    title: string;
+    scheduled_at: string;
+    end_time: string;
+    banner_url?: string;
+    join_url: string;
+}
+
+interface Booking {
+    id: string;
+    start_time: string;
+    end_time: string;
+    meet_link: string;
+    purpose?: string;
+    profiles?: {
+        full_name: string;
+        avatar_url: string;
+    };
+}
+
 export default function LivePage() {
     const [hasBookingAccess, setHasBookingAccess] = useState(false);
     const [hasLiveAccess, setHasLiveAccess] = useState(false);
-    const [latestSession, setLatestSession] = useState<any>(null);
-    const [bookings, setBookings] = useState<any[]>([]);
-    const [oneOnOneSettings, setOneOnOneSettings] = useState<any>(null); // New State
+    const [latestSession, setLatestSession] = useState<LiveSession | null>(null);
+    const [bookings, setBookings] = useState<Booking[]>([]);
+    const [oneOnOneSettings, setOneOnOneSettings] = useState<any>(null); 
     const [isLoading, setIsLoading] = useState(true);
     const supabase = createClient();
 
@@ -81,8 +100,8 @@ export default function LivePage() {
 
                 if (myBookings) setBookings(myBookings);
 
-            } catch (error) {
-                console.error("Error checking access:", error);
+            } catch (err) {
+                console.error("Error checking access:", err);
             } finally {
                 setIsLoading(false);
             }
@@ -92,7 +111,7 @@ export default function LivePage() {
     }, [supabase]);
 
     // Reschedule Logic
-    const [rescheduleBooking, setRescheduleBooking] = useState<any>(null);
+    const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
 
     // Cancel Logic
     const handleCancel = async (bookingId: string) => {
@@ -110,8 +129,8 @@ export default function LivePage() {
             } else {
                 alert("Failed to cancel");
             }
-        } catch (e) {
-            console.error(e);
+        } catch (_e) {
+            console.error(_e);
             alert("Error cancelling");
         }
     };

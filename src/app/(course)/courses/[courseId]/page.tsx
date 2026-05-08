@@ -89,7 +89,7 @@ export default async function CourseIdPage({
     }
 
     // Strict Access Control: Redirect if not enrolled/authorized
-    if (!isEnrolled) {
+    if (!isEnrolled || !user) {
         return redirect("/courses");
     }
 

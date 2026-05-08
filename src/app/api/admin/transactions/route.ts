@@ -1,6 +1,6 @@
-
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { logAudit } from "@/lib/audit";
 
 export async function GET(req: Request) {
@@ -18,7 +18,6 @@ export async function GET(req: Request) {
         if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         // 2. data fetching client (Service Role to bypass RLS)
-        const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
         const supabase = createSupabaseClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -92,7 +91,7 @@ export async function GET(req: Request) {
             // Order
             query = query.order('created_at', { ascending: false });
 
-            let { data: realData, error: realError } = await query;
+            const { data: realData, error: realError } = await query;
             if (realError) throw realError;
             transactions = realData || [];
         }
@@ -102,7 +101,7 @@ export async function GET(req: Request) {
         // MANUAL PROFILE FETCH (Robust against missing FKs)
         if (transactions && transactions.length > 0) {
             try {
-                let userIds = transactions
+                const userIds = transactions
                     .map((t: any) => t.user_id)
                     .filter((id: any) => id); // Filter nulls
 
@@ -111,7 +110,7 @@ export async function GET(req: Request) {
                     .filter((t: any) => !t.user_id && t.student_email)
                     .map((t: any) => t.student_email);
 
-                let emailMap = new Map(); // email -> profile
+                const emailMap = new Map(); // email -> profile
 
                 if (manualEmails.length > 0) {
                     const { data: emailProfiles } = await supabase
@@ -168,7 +167,7 @@ export async function GET(req: Request) {
 
                     const uniquePlans = Array.from(new Set(plans));
 
-                    let tierCoursesMap = new Map<string, string[]>(); // tier -> [course_id, ...]
+                    const tierCoursesMap = new Map<string, string[]>(); // tier -> [course_id, ...]
 
                     if (uniquePlans.length > 0) {
                         // Also fetch course titles for later mapping inside loop
@@ -190,8 +189,8 @@ export async function GET(req: Request) {
                     const allCourseIds = new Set<string>();
                     tierCoursesMap.forEach((ids) => ids.forEach(id => allCourseIds.add(id)));
 
-                    let courseInfoMap = new Map<string, { title: string, totalChapters: number }>();
-                    let chapterToCourseMap = new Map<string, string>(); // chapter_id -> course_id (for progress mapping)
+                    const courseInfoMap = new Map<string, { title: string, totalChapters: number }>();
+                    const chapterToCourseMap = new Map<string, string>(); // chapter_id -> course_id (for progress mapping)
 
                     if (allCourseIds.size > 0) {
                         // Fetch Titles

@@ -65,8 +65,7 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
         }
 
         // Get tier hierarchy (e.g., silver user can access bronze + silver)
-        const tierHierarchy = getTierHierarchy(userTier);
-        console.log("[getUserAccessibleCourses] Tier hierarchy:", tierHierarchy);
+        console.log("[getUserAccessibleCourses] User Tier:", userTier);
 
         // Get all published courses
         const { data: courses, error: coursesError } = await supabase
@@ -118,39 +117,29 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
 
         console.log("[getUserAccessibleCourses] Course access map:", Object.fromEntries(courseAccessMap));
 
-        // Filter and mark courses
-        const accessibleCourses = await Promise.all(
-            courses.map(async (course) => {
-                const allowedTiers = courseAccessMap.get(course.id);
+        // Filter based on tier access
+        const tierFilteredCourses = courses.filter((course) => {
+            const allowedTiers = courseAccessMap.get(course.id);
+            // If no tier restrictions, HIDE the course
+            if (!allowedTiers || allowedTiers.length === 0) return false;
+            // Check access
+            return allowedTiers.includes(userTier);
+        });
 
-                // If no tier restrictions, HIDE the course
-                if (!allowedTiers || allowedTiers.length === 0) {
-                    return null;
-                }
+        if (tierFilteredCourses.length === 0) return [];
 
-                // Check access
-                const hasAccess = allowedTiers.includes(userTier);
+        // Fetch progress in batch for all tier-filtered courses
+        const { getBatchCourseProgress } = await import("@/actions/get-batch-course-progress");
+        const progressMap = await getBatchCourseProgress(userId, tierFilteredCourses.map(c => c.id));
 
-                if (hasAccess) {
-                    // Fetch progress
-                    const { getCourseProgress } = await import("@/actions/get-course-progress");
-                    const progress = await getCourseProgress(userId, course.id);
+        const finalCourses = tierFilteredCourses.map(course => ({
+            ...transformCourse(course),
+            progress: progressMap[course.id] || 0,
+            isLocked: false,
+        }));
 
-                    return {
-                        ...transformCourse(course),
-                        progress,
-                        isLocked: false,
-                    };
-                }
-
-                return null;
-            })
-        );
-
-        const filteredCourses = accessibleCourses.filter((c): c is Course => c !== null);
-
-        console.log("[getUserAccessibleCourses] Final accessible courses:", filteredCourses.length);
-        return filteredCourses;
+        console.log("[getUserAccessibleCourses] Final accessible courses:", finalCourses.length);
+        return finalCourses;
     } catch (error) {
         console.error("[getUserAccessibleCourses] Exception:", error);
         return [];
@@ -161,25 +150,11 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
  * Get exact tier match (NO HIERARCHY)
  * Users only see courses assigned to their specific tier
  */
-function getTierHierarchy(tier: string): string[] {
+function getTierHierarchy(_tier: string): string[] {
     // Return only the user's exact tier - NO hierarchy
-    return [tier];
+    return [_tier];
 }
 
-/**
- * Get the minimum required tier from a list of allowed tiers
- */
-function getMinimumRequiredTier(allowedTiers: string[]): string {
-    const tierOrder = ["bronze", "silver", "gold", "diamond"];
-
-    for (const tier of tierOrder) {
-        if (allowedTiers.includes(tier)) {
-            return tier;
-        }
-    }
-
-    return "bronze";
-}
 
 /**
  * Transform a single course

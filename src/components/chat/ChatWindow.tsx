@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -18,21 +18,46 @@ import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
+interface ChatMessage {
+    id: string;
+    content: string;
+    type: string;
+    media_url?: string | null;
+    sender_id: string;
+    created_at: string;
+    reply_to_id?: string | null;
+    sender: {
+        full_name: string;
+        avatar_url?: string;
+        email?: string;
+    } | null;
+    reply_to: {
+        id: string;
+        content: string;
+        type: string;
+        sender: {
+            full_name: string;
+        } | null;
+    } | null;
+}
+
 interface ChatWindowProps {
     conversationId: string;
-    chatInfo: any;
+    chatInfo: {
+        is_group: boolean;
+        full_name: string;
+        avatar_url?: string;
+    };
     currentUserId: string;
     currentUserRole?: string;
     onBack: () => void;
 }
 
 export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUserRole, onBack }: ChatWindowProps) {
-    console.log('[ChatWindow] 🔥 Component rendering!', { conversationId, currentUserId });
-
-    const [messages, setMessages] = useState<any[]>([]);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
-    const [replyingTo, setReplyingTo] = useState<any>(null);
+    const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
     const [inputText, setInputText] = useState("");
     const [uploading, setUploading] = useState(false);
     const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -326,7 +351,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                             replyInfo = replyData;
                         }
 
-                        const newMessage = { ...payload.new, sender: senderProfile, reply_to: replyInfo };
+                        const newMessage = { ...payload.new, sender: senderProfile, reply_to: replyInfo } as ChatMessage;
 
                         if (isMounted) {
                             setMessages((prev) => {
@@ -477,11 +502,11 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
         console.log('[SEND] 🚀 Starting send...', { tempId, hasMedia: !!mediaFile, text: inputText.slice(0, 20) });
 
         let finalType = "text";
-        let finalContent = inputText;
-        let finalMediaUrl = null;
+        const finalContent = inputText;
+        let finalMediaUrl: string | null = null;
 
         // Optimistic Update
-        const optimisticMessage = {
+        const optimisticMessage: ChatMessage = {
             id: tempId,
             content: finalContent,
             type: mediaFile ? (mediaFile.type.startsWith("image/") ? "image" : mediaFile.type.startsWith("audio/") ? "audio" : "file") : "text",

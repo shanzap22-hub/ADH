@@ -77,8 +77,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
         if (!imageUrl) return;
         updateNodeData(id, {
             image: imageUrl,
-            image: imageUrl,
-            style: { ...data.style } // Remove fixed width/height forcing
+            style: { ...(data.style as object || {}) } // Remove fixed width/height forcing
         });
         toast.success("Image updated from URL");
         setImageUrl('');
@@ -115,7 +114,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
             if (data.url) {
                 updateNodeData(id, {
                     image: data.url,
-                    style: { ...data.style }
+                    style: { ...(data.style as object || {}) }
                 });
                 toast.success("Image uploaded successfully");
             }
@@ -149,7 +148,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
             if (data.url) {
                 updateNodeData(id, {
                     image: data.url,
-                    style: { ...data.style }
+                    style: { ...(data.style as object || {}) }
                 });
                 toast.success("Image generated!");
                 setAiPrompt('');
@@ -197,7 +196,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                 onResize={(_, params) => {
                     const { width, height } = params;
                     // Directly update style to prevent desync
-                    updateNodeData(id, { style: { ...data.style, width, height } });
+                    updateNodeData(id, { style: { ...(data.style as object || {}), width, height } });
                 }}
             />
 
@@ -366,7 +365,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     const newSize = Math.max(10, fontSize - 2);
-                                    updateNodeData(id, { style: { ...data.style, fontSize: newSize } });
+                                    updateNodeData(id, { style: { ...(data.style as object || {}), fontSize: newSize } });
                                 }}
                                 title="Decrease Font Size"
                             >
@@ -380,7 +379,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     const newSize = Math.min(60, fontSize + 2);
-                                    updateNodeData(id, { style: { ...data.style, fontSize: newSize } });
+                                    updateNodeData(id, { style: { ...(data.style as object || {}), fontSize: newSize } });
                                 }}
                                 title="Increase Font Size"
                             >
@@ -389,7 +388,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                         </div>
                     </div>
 
-                    {data.image && (
+                    {!!data.image && (
                         <div className="mb-2 rounded-lg overflow-hidden shadow-sm w-full relative group/image bg-slate-100/50 flex-1 min-h-0">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
@@ -444,7 +443,7 @@ const MindMapNode = ({ id, data, isConnectable, selected }: NodeProps) => {
                                 onDoubleClick={() => setIsEditing(true)}
                             >
                                 {label}
-                                {data.link && (
+                                {!!data.link && (
                                     <a
                                         href={(() => {
                                             const link = data.link as string;

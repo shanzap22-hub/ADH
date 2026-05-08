@@ -67,24 +67,26 @@ export async function GET(req: Request) {
                 const link = booking.meet_link || "https://meet.google.com";
 
                 // Resolve Student Details
-                const s = booking.student;
+                const s: any = booking.student;
+                const i: any = booking.instructor;
+                
                 const sPhone = s ? (s.phone || s.mobile || s.contact_number || s.whatsapp_number || "N/A") : "N/A";
                 const studentDetails = s ? { name: s.full_name, email: s.email, phone: sPhone } : undefined;
 
                 // Send to Student
-                if (booking.student) {
+                if (s) {
                     await sendBookingReminder(
-                        booking.student.email,
-                        booking.student.full_name,
+                        s.email,
+                        s.full_name,
                         dateStr, timeStr, link, timeLeftText,
                         studentDetails
                     );
                 }
                 // Send to Instructor
-                if (booking.instructor) {
+                if (i) {
                     await sendBookingReminder(
-                        booking.instructor.email,
-                        booking.instructor.full_name,
+                        i.email,
+                        i.full_name,
                         dateStr, timeStr, link, timeLeftText,
                         studentDetails
                     );

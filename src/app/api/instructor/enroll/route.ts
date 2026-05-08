@@ -56,7 +56,7 @@ export async function POST(req: Request) {
             .maybeSingle();
 
         let studentId = studentWrapper?.id;
-        let finalStudentName = studentWrapper?.full_name;
+        const finalStudentName = studentWrapper?.full_name;
 
         // If student not found, create them!
         if (!studentId) {
