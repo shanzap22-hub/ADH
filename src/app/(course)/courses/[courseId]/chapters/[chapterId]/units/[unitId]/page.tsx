@@ -95,6 +95,7 @@ export default async function UnitPlayerPage({
                         <LessonViewer
                             courseId={courseId}
                             chapterId={chapterId}
+                            unitId={unitId}
                             title={unit.title}
                             description={unit.description || null}
                             videoUrl={unit.video_url || unit.bunny_video_id || null}

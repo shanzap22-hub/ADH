@@ -9,6 +9,7 @@ export async function updateChapterProgress(
     data: {
         isCompleted?: boolean;
         lastPlayedSecond?: number;
+        unitId?: string; // Unit-level progress — save separately
     }
 ) {
     try {
@@ -19,38 +20,70 @@ export async function updateChapterProgress(
             throw new Error("Unauthorized");
         }
 
-        const { isCompleted, lastPlayedSecond } = data;
+        const { isCompleted, lastPlayedSecond, unitId } = data;
 
-        const upsertData: any = {
-            user_id: user.id,
-            chapter_id: chapterId,
-            updated_at: new Date().toISOString(),
-        };
+        // -------------------------------------------------------
+        // Unit-level progress (upsert by user_id + unit_id)
+        // Unit page-ൽ resume ചെയ്യാൻ unit_id ഉപയോഗിക്കണം
+        // -------------------------------------------------------
+        if (unitId) {
+            const unitUpsertData: Record<string, unknown> = {
+                user_id: user.id,
+                chapter_id: chapterId,
+                unit_id: unitId,
+                updated_at: new Date().toISOString(),
+            };
 
-        if (isCompleted !== undefined) {
-            upsertData.is_completed = isCompleted;
-        }
+            if (isCompleted !== undefined) {
+                unitUpsertData.is_completed = isCompleted;
+            }
 
-        if (lastPlayedSecond !== undefined) {
-            upsertData.last_played_second = lastPlayedSecond;
-        }
+            if (lastPlayedSecond !== undefined) {
+                unitUpsertData.last_played_second = lastPlayedSecond;
+            }
 
-        const { error } = await supabase
-            .from("user_progress")
-            .upsert(upsertData, {
-                onConflict: "user_id, chapter_id"
-            });
+            const { error } = await supabase
+                .from("user_progress")
+                .upsert(unitUpsertData, {
+                    onConflict: "user_id, unit_id" // Unit-level unique constraint
+                });
 
-        if (error) {
-            console.error("[UPDATE_PROGRESS_ERROR]", error);
-            throw new Error("Failed to update progress");
+            if (error) {
+                throw new Error("Failed to update unit progress");
+            }
+        } else {
+            // -------------------------------------------------------
+            // Chapter-level progress (old flow — upsert by user_id + chapter_id)
+            // -------------------------------------------------------
+            const chapterUpsertData: Record<string, unknown> = {
+                user_id: user.id,
+                chapter_id: chapterId,
+                updated_at: new Date().toISOString(),
+            };
+
+            if (isCompleted !== undefined) {
+                chapterUpsertData.is_completed = isCompleted;
+            }
+
+            if (lastPlayedSecond !== undefined) {
+                chapterUpsertData.last_played_second = lastPlayedSecond;
+            }
+
+            const { error } = await supabase
+                .from("user_progress")
+                .upsert(chapterUpsertData, {
+                    onConflict: "user_id, chapter_id"
+                });
+
+            if (error) {
+                throw new Error("Failed to update chapter progress");
+            }
         }
 
         revalidatePath(`/courses/${courseId}`, "layout");
 
         return { success: true };
     } catch (error) {
-        console.error("[UPDATE_PROGRESS]", error);
         return { success: false, error: "Something went wrong" };
     }
 }

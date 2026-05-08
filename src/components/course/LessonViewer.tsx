@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 interface LessonViewerProps {
     courseId?: string;
     chapterId?: string;
+    unitId?: string;          // Unit ID — needed for accurate resume per unit
     title: string;
     description: string | null;
     videoUrl: string | null;
@@ -24,6 +25,7 @@ interface LessonViewerProps {
 export const LessonViewer = ({
     courseId,
     chapterId,
+    unitId,
     title,
     description,
     videoUrl,
@@ -45,11 +47,12 @@ export const LessonViewer = ({
             lastSaveTimeRef.current = now;
             if (courseId && chapterId) {
                 const sec = Math.floor(seconds);
-                updateChapterProgress(courseId, chapterId, { lastPlayedSecond: sec })
-                    .catch(() => {}); // Silent fail — non-critical
+                // unitId ഉണ്ടെങ്കിൽ unit-level upsert, ഇല്ലെങ്കിൽ chapter-level
+                updateChapterProgress(courseId, chapterId, { lastPlayedSecond: sec, unitId })
+                    .catch(() => {});
             }
         }
-    }, [courseId, chapterId]);
+    }, [courseId, chapterId, unitId]);
 
     const handleMarkAsComplete = () => {
         if (!courseId || !chapterId) return;
@@ -141,12 +144,12 @@ export const LessonViewer = ({
                                     onEnd={async () => {
                                         if (courseId && chapterId && !isCompleted) {
                                             try {
-                                                await updateChapterProgress(courseId, chapterId, { isCompleted: true });
+                                                // unitId ഉണ്ടെങ്കിൽ unit-level completion save ചെയ്യുക
+                                                await updateChapterProgress(courseId, chapterId, { isCompleted: true, unitId });
                                                 toast.success("Lesson completed!");
                                                 if (onComplete) onComplete();
-                                                router.refresh(); // Refresh ONLY after DB update is confirmed
+                                                router.refresh();
                                             } catch (error) {
-                                                console.error("Failed to update progress:", error);
                                                 toast.error("Could not mark as complete");
                                             }
                                         }
