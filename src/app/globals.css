@@ -1,82 +1,337 @@
-﻿@tailwind base;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   DESIGN SYSTEM — ADH LMS Premium Theme
+   Lovable-style: Purple/Violet accent
+   ============================================ */
+
 @layer base {
   :root {
+    /* Background & Surface */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 224 71% 4%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 224 71% 4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 224 71% 4%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary — Lovable Purple */
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary */
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 6% 10%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted */
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent — Violet */
+    --accent: 262 83% 96%;
+    --accent-foreground: 262 83% 38%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Border & Input */
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 262 83% 58%;
 
-    --radius: 0.5rem;
+    /* Border Radius — rounder = more premium */
+    --radius: 0.75rem;
+
+    /* Custom Brand Tokens */
+    --brand: 262 83% 58%;
+    --brand-light: 262 83% 96%;
+    --brand-dark: 262 83% 38%;
+    --gradient-start: 262 83% 58%;
+    --gradient-end: 291 64% 62%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    /* Dark Background — rich deep slate, not pure black */
+    --background: 224 71% 4%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    /* Card — slightly lifted above background */
+    --card: 222 47% 7%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 47% 7%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Primary — Lovable Purple (same in dark) */
+    --primary: 262 83% 68%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    /* Secondary */
+    --secondary: 217 33% 13%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    /* Muted */
+    --muted: 217 33% 13%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    /* Accent */
+    --accent: 262 50% 18%;
+    --accent-foreground: 262 83% 80%;
 
-    --destructive: 0 62.8% 30.6%;
+    /* Destructive */
+    --destructive: 0 63% 40%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    /* Border & Input */
+    --border: 217 33% 14%;
+    --input: 217 33% 14%;
+    --ring: 262 83% 68%;
+
+    /* Custom Brand Tokens Dark */
+    --brand: 262 83% 68%;
+    --brand-light: 262 50% 18%;
+    --brand-dark: 262 83% 80%;
   }
 }
 
 @layer base {
   * {
     @apply border-border;
+    /* Remove 300ms tap delay globally */
+    touch-action: manipulation;
+  }
+
+  html {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
-/* React Flow Customization for Miro-like feel */
+/* ============================================
+   PREMIUM SCROLLBAR
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* ============================================
+   MICRO-INTERACTIONS & PERFORMANCE
+   Instant-feel like native apps
+   ============================================ */
+
+/* GPU-Accelerated transitions */
+a, button, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Active press — tactile feedback */
+a:active {
+  opacity: 0.8;
+  transform: scale(0.98);
+}
+
+/* Input transitions */
+input, textarea, select {
+  transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0;  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.3); }
+  50%       { box-shadow: 0 0 0 8px hsl(var(--primary) / 0); }
+}
+
+/* Page entry animation */
+main, [data-page] {
+  animation: page-fade-in 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Animation delay utilities */
+.animation-delay-200  { animation-delay: 0.2s;  }
+.animation-delay-400  { animation-delay: 0.4s;  }
+.animation-delay-2000 { animation-delay: 2s;    }
+.animation-delay-4000 { animation-delay: 4s;    }
+
+/* ============================================
+   GLASSMORPHISM UTILITIES
+   ============================================ */
+
+.glass {
+  background: hsl(var(--background) / 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--border) / 0.6);
+}
+
+.glass-card {
+  background: hsl(var(--card) / 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--border) / 0.5);
+  box-shadow:
+    0 1px 3px hsl(0 0% 0% / 0.05),
+    0 4px 16px hsl(0 0% 0% / 0.04),
+    inset 0 1px 0 hsl(0 0% 100% / 0.06);
+}
+
+.dark .glass-card {
+  box-shadow:
+    0 1px 3px hsl(0 0% 0% / 0.3),
+    0 8px 32px hsl(0 0% 0% / 0.2),
+    inset 0 1px 0 hsl(0 0% 100% / 0.04);
+}
+
+/* ============================================
+   GRADIENT UTILITIES
+   ============================================ */
+
+.gradient-brand {
+  background: linear-gradient(135deg,
+    hsl(var(--gradient-start)),
+    hsl(var(--gradient-end))
+  );
+}
+
+.gradient-text {
+  background: linear-gradient(135deg,
+    hsl(262 83% 58%),
+    hsl(291 64% 62%)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-border {
+  position: relative;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    hsl(262 83% 58% / 0.5),
+    hsl(291 64% 62% / 0.3)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box,
+                linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ============================================
+   SKELETON LOADING — Premium shimmer
+   ============================================ */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: var(--radius);
+}
+
+/* ============================================
+   HOVER CARD LIFT EFFECT
+   ============================================ */
+
+.hover-lift {
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 24px hsl(0 0% 0% / 0.08),
+    0 2px 8px hsl(0 0% 0% / 0.04);
+}
+
+.dark .hover-lift:hover {
+  box-shadow:
+    0 8px 32px hsl(0 0% 0% / 0.4),
+    0 2px 8px hsl(0 0% 0% / 0.2);
+}
+
+/* ============================================
+   FOCUS RING — Premium style
+   ============================================ */
+
+.focus-ring:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: calc(var(--radius) - 2px);
+}
+
+/* ============================================
+   REACT FLOW — Mind Map customization
+   ============================================ */
+
 .react-flow__pane {
   cursor: grab !important;
 }
@@ -85,7 +340,6 @@
   cursor: grabbing !important;
 }
 
-/* Hide attribution and its container */
 .react-flow__attribution {
   display: none !important;
   visibility: hidden !important;
@@ -95,17 +349,16 @@
   pointer-events: none !important;
 }
 
-/* Ensure controls don't have a white bar background if that's the issue */
 .react-flow__controls {
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 0.5rem !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 0.75rem !important;
   overflow: hidden !important;
 }
 
 .react-flow__controls-button {
-  background-color: white !important;
-  border-bottom: 1px solid #e2e8f0 !important;
+  background-color: hsl(var(--card)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
   border-radius: 0 !important;
   width: 32px !important;
   height: 32px !important;
@@ -116,28 +369,24 @@
 }
 
 .react-flow__controls-button svg {
-  fill: #64748b !important;
+  fill: hsl(var(--muted-foreground)) !important;
 }
 
-/* Hide any potential bottom bar */
 .react-flow__panel.bottom {
   display: none !important;
 }
 
-/* Ensure cursors and text carets are visible on white backgrounds */
 .react-flow__pane,
 .react-flow__node,
 .react-flow__edge {
   cursor: auto;
 }
 
-/* Force black caret in inputs within the mind map to avoid white-on-white issues */
 .react-flow input,
 .react-flow textarea {
-  caret-color: black !important;
+  caret-color: hsl(var(--foreground)) !important;
 }
 
-/* Ensure hand cursor is visible if used */
 .react-flow__pane {
   cursor: grab;
 }
@@ -146,7 +395,6 @@
   cursor: grabbing;
 }
 
-/* Remove all borders from ReactFlow wrapper and canvas */
 .react-flow,
 .react-flow__renderer,
 .react-flow__pane,
@@ -156,67 +404,8 @@
   outline: none !important;
 }
 
-/* Remove focus outlines that might create borders */
 .react-flow:focus,
 .react-flow__pane:focus {
   outline: none !important;
   border: none !important;
-}
-
-.animation-delay-2000 {
-  animation-delay: 2s;
-}
-
-.animation-delay-4000 {
-  animation-delay: 4s;
-}
-
-.animation-delay-200 {
-  animation-delay: 0.2s;
-}
-
-.animation-delay-400 {
-  animation-delay: 0.4s;
-}
-/* ============================================
-   PERFORMANCE & FEEL OPTIMIZATIONS
-   Instant click feel - like React SPA apps
-   ============================================ */
-
-/* Remove 300ms tap delay on mobile globally */
-* {
-  touch-action: manipulation;
-}
-
-/* GPU-Accelerated transitions - smooth & instant */
-a, button, [role="button"] {
-  transition: all 150ms ease-out;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-}
-
-/* Active press effect on links */
-a:active {
-  opacity: 0.75;
-  transform: scale(0.98);
-}
-
-/* Page transition fade - React SPA-like feel */
-@keyframes page-fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-main, [data-page] {
-  animation: page-fade-in 200ms ease-out;
-}
-
-/* Smooth scroll globally */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Input focus - instant feel */
-input, textarea, select {
-  transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
 }

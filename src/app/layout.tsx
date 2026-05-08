@@ -1,10 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Outfit } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import Script from "next/script";
 
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-sans" });
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://adh.today'),
@@ -71,12 +75,15 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "white",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)",  color: "#060d1f" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  userScalable: false, // Prevent zooming in app
-  viewportFit: "cover", // Allows app to extend behind notch (handled by CSS padding)
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 import { Toaster } from "@/components/ui/sonner";
@@ -94,7 +101,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn("min-h-screen bg-background font-sans antialiased flex flex-col overflow-x-hidden", outfit.variable)} suppressHydrationWarning>
+      <body className={cn(
+        "min-h-screen bg-background font-sans antialiased flex flex-col overflow-x-hidden",
+        inter.variable
+      )} suppressHydrationWarning>
         <div className="flex-1">
           <ThemeProvider
             attribute="class"
