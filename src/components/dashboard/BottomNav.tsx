@@ -5,32 +5,14 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Home, BookOpen, Video, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
 import { MetaballLoader } from "@/components/ui/metaball-loader";
 
 const navItems = [
-    {
-        label: "Home",
-        icon: Home,
-        href: "/dashboard",
-    },
-    {
-        label: "Courses",
-        icon: BookOpen,
-        href: "/courses",
-    },
-    {
-        label: "Live",
-        icon: Video,
-        href: "/live",
-    },
-    {
-        label: "Chat",
-        icon: MessageCircle,
-        href: "/chat",
-    },
+    { label: "Home",    icon: Home,          href: "/dashboard" },
+    { label: "Courses", icon: BookOpen,       href: "/courses"   },
+    { label: "Live",    icon: Video,          href: "/live"      },
+    { label: "Chat",    icon: MessageCircle,  href: "/chat"      },
 ];
-
 
 interface BottomNavProps {
     permissions?: {
@@ -60,12 +42,8 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
         }
     };
 
-    // Hide on Course Player (Chapters) pages if requested (default to false to avoid breaking other layouts)
+    // Hide on Course Player pages
     const isChapterPage = pathname.includes("/chapters/");
-
-    // Also check for "learn" if that's used, but based on file structure it's chapters.
-    // However, if the user mentioned "learn/page.tsx" in history, I should double check. 
-    // The previous history mentions learn/page.tsx. Let's cover that too just in case.
     const isPlayerPage = isChapterPage || pathname.includes("/learn");
 
     if (permissions?.hideOnPlayer && isPlayerPage) {
@@ -80,12 +58,14 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
 
     if (visibleNavItems.length === 0) return null;
 
-    // Use optimistic path for active state to give instant feedback
-    const activeIndex = visibleNavItems.findIndex(item => optimisticPath === item.href || (item.href !== '/dashboard' && optimisticPath.startsWith(item.href + "/")));
+    const activeIndex = visibleNavItems.findIndex(item =>
+        optimisticPath === item.href ||
+        (item.href !== "/dashboard" && optimisticPath.startsWith(item.href + "/"))
+    );
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 md:hidden z-50 select-none pb-[env(safe-area-inset-bottom)]">
-            {/* Premium Minimal Metaball Loading Animation */}
+        <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden select-none pb-[env(safe-area-inset-bottom)]">
+            {/* Loading overlay */}
             <MetaballLoader
                 fullscreen
                 className={cn(
@@ -94,54 +74,63 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
                 )}
             />
 
-            <div
-                className="grid h-16"
-                style={{ gridTemplateColumns: `repeat(${visibleNavItems.length}, minmax(0, 1fr))` }}
-            >
-                {visibleNavItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = optimisticPath === item.href || (item.href !== '/dashboard' && optimisticPath.startsWith(item.href + "/"));
+            {/* Glass nav bar */}
+            <div className="mx-3 mb-3 rounded-2xl bg-white/90 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/50 shadow-xl shadow-black/10 dark:shadow-black/40 overflow-hidden">
 
-                    return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={() => handleNavClick(item.href)}
-                            className={cn(
-                                "flex flex-col items-center justify-center gap-1 transition-all duration-200 active:scale-95 touch-manipulation",
-                                isActive
-                                    ? "text-orange-500"
-                                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-                            )}
-                            style={{ WebkitTapHighlightColor: 'transparent' }}
-                        >
-                            <Icon
+                {/* Active pill indicator */}
+                <div
+                    className="absolute top-2 h-[calc(100%-16px)] transition-all duration-300 ease-out pointer-events-none z-0"
+                    style={{
+                        width: `calc(${100 / visibleNavItems.length}% - 12px)`,
+                        transform: `translateX(calc(${Math.max(0, activeIndex) * 100}% + ${Math.max(0, activeIndex) * 0}px + 6px))`,
+                        opacity: activeIndex === -1 ? 0 : 1,
+                    }}
+                >
+                    <div className="h-full w-full rounded-xl bg-violet-50 dark:bg-violet-950/50" />
+                </div>
+
+                <div
+                    className="relative grid h-16"
+                    style={{ gridTemplateColumns: `repeat(${visibleNavItems.length}, minmax(0, 1fr))` }}
+                >
+                    {visibleNavItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = optimisticPath === item.href ||
+                            (item.href !== "/dashboard" && optimisticPath.startsWith(item.href + "/"));
+
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                onClick={() => handleNavClick(item.href)}
                                 className={cn(
-                                    "h-5 w-5 transition-transform duration-200",
-                                    isActive && "scale-110"
+                                    "relative z-10 flex flex-col items-center justify-center gap-1 transition-all duration-200 active:scale-95 touch-manipulation",
+                                    isActive
+                                        ? "text-violet-600 dark:text-violet-400"
+                                        : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                                 )}
-                            />
-                            <span
-                                className={cn(
-                                    "text-xs font-medium transition-all duration-200",
-                                    isActive && "font-semibold"
-                                )}
+                                style={{ WebkitTapHighlightColor: "transparent" }}
                             >
-                                {item.label}
-                            </span>
-                        </Link>
-                    );
-                })}
+                                <Icon className={cn(
+                                    "h-5 w-5 transition-all duration-200",
+                                    isActive && "scale-110"
+                                )} />
+                                <span className={cn(
+                                    "text-[10px] font-medium transition-all duration-200",
+                                    isActive && "font-semibold"
+                                )}>
+                                    {item.label}
+                                </span>
+                            </Link>
+                        );
+                    })}
+                </div>
             </div>
 
-            {/* Active indicator line (Bottom) */}
+            {/* Active indicator line at top of nav */}
             <div
-                className="absolute top-0 left-0 h-0.5 bg-gradient-to-r from-orange-500 to-pink-500 transition-all duration-300 ease-out"
-                style={{
-                    width: `${100 / visibleNavItems.length}%`,
-                    transform: `translateX(${Math.max(0, activeIndex) * 100}%)`,
-                    opacity: activeIndex === -1 ? 0 : 1
-                }}
+                className="absolute top-0 left-3 right-3 h-0.5 pointer-events-none overflow-hidden rounded-full"
+                style={{ display: "none" }}
             />
         </nav>
     );
