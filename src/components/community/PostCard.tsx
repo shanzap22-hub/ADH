@@ -105,7 +105,7 @@ export function PostCard({ post, isAdmin, currentUserId }: PostCardProps) {
                 <div className="flex items-start gap-4">
                     <Avatar className="h-10 w-10 border-2 border-white dark:border-slate-700 shadow-sm">
                         <AvatarImage src={post.author.avatar_url || ""} />
-                        <AvatarFallback className="bg-gradient-to-br from-orange-500 to-pink-600 text-white">
+                        <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-white">
                             {post.author.full_name?.[0]?.toUpperCase() || "A"}
                         </AvatarFallback>
                     </Avatar>
