@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { Bell, Search, Home, BookOpen, Video, MessageCircle } from "lucide-react";
+import { Bell, Search, Home, BookOpen, Video, MessageCircle, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -20,10 +20,11 @@ import { NotificationBell } from "./NotificationBell";
 import { SearchModal } from "./SearchModal";
 
 const navItems = [
-    { label: "Community", icon: Home,          href: "/community" },
-    { label: "Courses",   icon: BookOpen,       href: "/courses"   },
-    { label: "Live",      icon: Video,          href: "/live"      },
-    { label: "Chat",      icon: MessageCircle,  href: "/chat"      },
+    { label: "Home",       icon: Home,          href: "/dashboard" },
+    { label: "Live",       icon: Video,         href: "/live"      },
+    { label: "Courses",    icon: BookOpen,      href: "/courses"   },
+    { label: "Chat",       icon: MessageCircle, href: "/chat"      },
+    { label: "My Journey", icon: GraduationCap, href: "/profile"   },
 ];
 
 export const TopHeader = () => {
