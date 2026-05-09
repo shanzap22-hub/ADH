@@ -47,45 +47,50 @@ export default async function CoursesPage() {
         requiredTier: course.requiredTier,
     }));
 
-    // Render (NO MobileLayout - already in student layout!)
-    // Render (NO MobileLayout - already in student layout!)
     return (
-        <div className="p-6 md:p-8 space-y-8 bg-slate-50 min-h-screen">
+        <div className="min-h-screen bg-[#f7f6ff] dark:bg-slate-950 pb-28 md:pb-8">
+            {/* Page Header */}
+            <div className="px-4 md:px-8 pt-5 md:pt-8 pb-4">
+                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-violet-700 via-purple-600 to-fuchsia-500 bg-clip-text text-transparent">
+                    My Courses
+                </h1>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
+                    {courses.length > 0 ? `${courses.length} course${courses.length === 1 ? '' : 's'} available` : 'Explore your learning journey'}
+                </p>
+            </div>
 
-
-
-            {/* Error State */}
-            {fetchError && (
-                <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 shadow-sm">
-                    <div className="flex items-start gap-3">
-                        <AlertCircle className="h-6 w-6 text-red-600 flex-shrink-0" />
-                        <div>
-                            <p className="font-bold text-red-900">Unable to load courses</p>
-                            <p className="text-sm text-red-700 mt-1">
-                                {fetchError}
-                            </p>
+            <div className="px-4 md:px-8 space-y-4">
+                {/* Error State */}
+                {fetchError && (
+                    <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/50 rounded-2xl p-5">
+                        <div className="flex items-start gap-3">
+                            <AlertCircle className="h-5 w-5 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <p className="font-semibold text-rose-900 dark:text-rose-200 text-sm">Unable to load courses</p>
+                                <p className="text-xs text-rose-700 dark:text-rose-400 mt-0.5">{fetchError}</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* Courses List */}
-            {!fetchError && courses.length > 0 && (
-                <CoursesList items={coursesWithData} />
-            )}
+                {/* Courses List */}
+                {!fetchError && courses.length > 0 && (
+                    <CoursesList items={coursesWithData} />
+                )}
 
-            {/* Empty State */}
-            {!fetchError && courses.length === 0 && (
-                <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
-                    <div className="w-20 h-20 mx-auto rounded-2xl bg-slate-50 flex items-center justify-center mb-6">
-                        <BookOpen className="h-10 w-10 text-slate-300" />
+                {/* Empty State */}
+                {!fetchError && courses.length === 0 && (
+                    <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-violet-200 dark:border-violet-800/50">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-violet-50 dark:bg-violet-950/50 flex items-center justify-center mb-4">
+                            <BookOpen className="h-8 w-8 text-violet-300 dark:text-violet-600" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">No Courses Yet</h3>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto">
+                            We are updating our course catalog. Check back soon!
+                        </p>
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">No Courses Available</h3>
-                    <p className="text-slate-500 max-w-sm mx-auto">
-                        We are currently updating our course catalog. Please check back later for new content.
-                    </p>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 }

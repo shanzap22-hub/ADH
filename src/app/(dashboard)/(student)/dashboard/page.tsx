@@ -1,21 +1,52 @@
 
-
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardCourses } from "@/actions/get-dashboard-courses";
 import nextDynamic from "next/dynamic";
-import { MetaballLoader } from "@/components/ui/metaball-loader";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Skeleton fallback for dynamic imports — shimmer effect
+const FeedSkeleton = () => (
+    <div className="space-y-4">
+        {[1,2,3].map(i => (
+            <div key={i} className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/30 p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="space-y-1.5 flex-1">
+                        <Skeleton className="h-3.5 w-32" />
+                        <Skeleton className="h-3 w-20" />
+                    </div>
+                </div>
+                <Skeleton className="h-3.5 w-full" />
+                <Skeleton className="h-3.5 w-5/6" />
+                <Skeleton className="h-44 w-full rounded-xl" />
+            </div>
+        ))}
+    </div>
+);
 
 const CoursesList = nextDynamic(() => import("@/components/courses-list").then(mod => mod.CoursesList), {
-    loading: () => <div className="space-y-4"><div className="h-40 w-full bg-slate-100 animate-pulse rounded-xl" /><div className="h-40 w-full bg-slate-100 animate-pulse rounded-xl" /></div>
+    loading: () => (
+        <div className="space-y-3">
+            {[1,2].map(i => (
+                <div key={i} className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/60 overflow-hidden">
+                    <Skeleton className="aspect-video w-full rounded-none" />
+                    <div className="p-3 space-y-2">
+                        <Skeleton className="h-3.5 w-full" />
+                        <Skeleton className="h-3 w-1/2" />
+                    </div>
+                </div>
+            ))}
+        </div>
+    )
 });
 
 const FeedView = nextDynamic(() => import("@/components/community/FeedView").then(mod => mod.FeedView), {
-    loading: () => <div className="h-[400px] w-full flex items-center justify-center bg-white/50 rounded-xl"><MetaballLoader /></div>
+    loading: () => <FeedSkeleton />,
 });
 
 const LiveSessionsBanner = nextDynamic(() => import("@/components/community/LiveSessionsBanner").then(mod => mod.LiveSessionsBanner), {
-    loading: () => <div className="flex items-center justify-center h-[200px] w-full bg-white/50 rounded-xl mb-8"><MetaballLoader /></div>
+    loading: () => <Skeleton className="h-36 w-full rounded-2xl" />,
 });
 import {
     Clock,
@@ -115,15 +146,14 @@ export default async function Dashboard() {
     }, 0);
 
     return (
-        <div className="p-6 md:p-8 space-y-8 bg-slate-50 min-h-screen">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                {/* Main Feed Column (Left) */}
-                <div className="lg:col-span-8 space-y-8">
-                    <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 bg-clip-text text-transparent tracking-tight">Community Feed</h1>
-                            <p className="text-slate-500">See what's happening in ADH Connect</p>
-                        </div>
+        <div className="min-h-screen bg-[#f7f6ff] dark:bg-slate-950 pb-28 md:pb-8">
+            <div className="p-4 md:p-8">
+                <div className="flex flex-col-reverse lg:grid lg:grid-cols-12 gap-6 lg:gap-8">
+                {/* Main Feed Column — shown second on mobile (flex-col-reverse puts this at bottom) */}
+                <div className="lg:col-span-8 space-y-5">
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-violet-700 via-purple-600 to-fuchsia-500 bg-clip-text text-transparent tracking-tight">Community Feed</h1>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">See what's happening in ADH Connect</p>
                     </div>
 
                     <LiveSessionsBanner
@@ -133,8 +163,8 @@ export default async function Dashboard() {
                     <FeedView posts={filteredPosts} isAdmin={false} currentUserId={user.id} limit={3} />
                 </div>
 
-                {/* Sidebar Column (Right) - Stats & Learning */}
-                <div className="lg:col-span-4 space-y-8">
+                {/* Sidebar Column — shown FIRST on mobile (flex-col-reverse reverses order) */}
+                <div className="lg:col-span-4 space-y-5">
                     {/* Welcome / Stats Card */}
                     <Card className="overflow-hidden border-none shadow-lg bg-gradient-to-br from-[#2e1065] via-[#4c1d95] to-[#581c87] text-white relative">
                         {/* Decorative Background Circles */}
@@ -177,27 +207,28 @@ export default async function Dashboard() {
 
                     {/* Continue Learning */}
                     <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                <Clock className="w-5 h-5 text-orange-500" />
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2 text-sm">
+                                <Clock className="w-4 h-4 text-violet-500" />
                                 Continue Learning
                             </h3>
                             <Link href="/courses">
-                                <Button variant="ghost" size="sm" className="text-slate-500 hover:text-indigo-600">View All</Button>
+                                <Button variant="ghost" size="sm" className="text-violet-600 dark:text-violet-400 hover:text-violet-700 h-8 text-xs px-2">View All</Button>
                             </Link>
                         </div>
 
                         {coursesInProgress.length > 0 ? (
                             <CoursesList items={coursesInProgress.slice(0, 3) as any[]} />
                         ) : (
-                            <div className="text-center p-8 border border-dashed border-slate-200 rounded-2xl bg-white">
-                                <p className="text-sm text-slate-500 font-medium">No courses in progress</p>
-                                <Link href="/courses" className="text-sm font-bold text-indigo-600 hover:underline mt-2 inline-block">Browse Courses</Link>
+                            <div className="text-center p-8 border border-dashed border-violet-200 dark:border-violet-800/50 rounded-2xl bg-violet-50/50 dark:bg-violet-950/20">
+                                <BookOpen className="w-8 h-8 text-violet-300 dark:text-violet-700 mx-auto mb-2" />
+                                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No courses in progress</p>
+                                <Link href="/courses" className="text-sm font-bold text-violet-600 dark:text-violet-400 hover:underline mt-2 inline-block">Browse Courses →</Link>
                             </div>
                         )}
                     </div>
                 </div>
             </div>
-        </div >
+        </div>
     );
 }
