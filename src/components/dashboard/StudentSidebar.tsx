@@ -13,7 +13,7 @@ import { useRouter, usePathname } from "next/navigation";
 
 const routes = [
     { label: "Home",        icon: LayoutDashboard, href: "/dashboard", color: "text-violet-500" },
-    { label: "My Journey",  icon: GraduationCap,  href: "/profile",   color: "text-indigo-500" },
+    { label: "My Journey",  icon: GraduationCap,  href: "/my-journey", color: "text-indigo-500" },
     { label: "Courses",     icon: BookOpen,        href: "/courses",   color: "text-emerald-500" },
     { label: "Live",        icon: Video,           href: "/live",      color: "text-rose-500"   },
     { label: "Chat",        icon: MessageSquare,   href: "/chat",      color: "text-amber-500"  },
@@ -68,7 +68,7 @@ export const StudentSidebar = ({
 
             <div className="flex flex-col flex-1 px-4 py-6 gap-2">
                 {visibleRoutes.map((route) => {
-                    const isActive = optimisticPath === route.href || (route.href !== "/dashboard" && route.href !== "/profile" && optimisticPath?.startsWith(route.href + "/"));
+                    const isActive = optimisticPath === route.href || (route.href !== "/dashboard" && route.href !== "/my-journey" && optimisticPath?.startsWith(route.href + "/"));
                     const Icon = route.icon;
 
                     return (

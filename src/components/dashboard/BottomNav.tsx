@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 const ALL_NAV_ITEMS = [
     { label: "Home",       icon: Home,           href: "/dashboard", perm: null          },
-    { label: "My Journey", icon: GraduationCap,  href: "/profile",   perm: null          },
+    { label: "My Journey", icon: GraduationCap,  href: "/my-journey", perm: null          },
     { label: "Courses",    icon: BookOpen,       href: "/courses",   perm: null,  isCenter: true },
     { label: "Live",       icon: Video,          href: "/live",      perm: "canViewLive" },
     { label: "Chat",       icon: MessageCircle,  href: "/chat",      perm: "canViewChat" },
@@ -60,7 +60,7 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
                 {(() => {
                     const activeIndex = visibleItems.findIndex(item =>
                         optimisticPath === item.href ||
-                        (item.href !== "/dashboard" && item.href !== "/profile" && optimisticPath.startsWith(item.href + "/"))
+                        (item.href !== "/dashboard" && item.href !== "/my-journey" && optimisticPath.startsWith(item.href + "/"))
                     );
                     const isActiveCenter = activeIndex === centerIndex;
                     const itemWidth = 100 / visibleItems.length;
@@ -86,7 +86,7 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
                     {visibleItems.map((item, index) => {
                         const Icon = item.icon;
                         const isActive = optimisticPath === item.href ||
-                            (item.href !== "/dashboard" && item.href !== "/profile" && optimisticPath.startsWith(item.href + "/"));
+                            (item.href !== "/dashboard" && item.href !== "/my-journey" && optimisticPath.startsWith(item.href + "/"));
                         const isCenter = item.isCenter;
 
                         if (isCenter) {

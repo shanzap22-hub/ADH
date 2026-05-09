@@ -120,7 +120,8 @@ export async function middleware(request: NextRequest) {
         '/search',
         '/book-session',
         '/reschedule',
-        '/courses'
+        '/courses',
+        '/my-journey'
     ];
 
     // Check if current path is protected
