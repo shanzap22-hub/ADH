@@ -136,8 +136,8 @@ module.exports = {
           to:   { opacity: "1", transform: "scale(1)"    },
         },
         "shimmer": {
-          from: { backgroundPosition: "-200% 0" },
-          to:   { backgroundPosition: "200% 0"  },
+          from: { transform: "translateX(-200%)" },
+          to:   { transform: "translateX(200%)" },
         },
         "pulse-glow": {
           "0%, 100%": { boxShadow: "0 0 0 0 hsl(262 83% 58% / 0.3)" },
