@@ -20,11 +20,11 @@ import { NotificationBell } from "./NotificationBell";
 import { SearchModal } from "./SearchModal";
 
 const navItems = [
-    { label: "Home",       icon: Home,          href: "/dashboard" },
-    { label: "Live",       icon: Video,         href: "/live"      },
-    { label: "Courses",    icon: BookOpen,      href: "/courses"   },
-    { label: "Chat",       icon: MessageCircle, href: "/chat"      },
-    { label: "My Journey", icon: GraduationCap, href: "/profile"   },
+    { label: "Home",       icon: Home,           href: "/dashboard" },
+    { label: "My Journey", icon: GraduationCap,  href: "/profile"   },
+    { label: "Courses",    icon: BookOpen,       href: "/courses"   },
+    { label: "Live",       icon: Video,          href: "/live"      },
+    { label: "Chat",       icon: MessageCircle,  href: "/chat"      },
 ];
 
 export const TopHeader = () => {
@@ -61,92 +61,94 @@ export const TopHeader = () => {
 
     return (
         <>
-            <header className="fixed top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top)] bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800/50">
-                <div className="flex items-center justify-between h-14 px-4">
+            <header className="fixed top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top)] bg-white/70 dark:bg-slate-950/70 backdrop-blur-2xl border-b border-slate-200/40 dark:border-slate-800/40">
+                <div className="flex items-center justify-between h-16 px-6 max-w-[1400px] mx-auto">
 
-                    {/* Logo */}
-                    <div className="flex items-center gap-6">
-                        <Link href="/dashboard" className="flex items-center">
-                            <Image
-                                src="/logo.png"
-                                alt="ADH Connect"
-                                width={120}
-                                height={36}
-                                className="h-9 w-auto object-contain"
-                                priority
-                            />
+                    <div className="flex items-center gap-10">
+                        <Link href="/dashboard" className="flex items-center group">
+                            <div className="relative">
+                                <Image
+                                    src="/logo.png"
+                                    alt="ADH Connect"
+                                    width={120}
+                                    height={36}
+                                    className="h-9 w-auto object-contain transition-transform group-hover:scale-105 duration-300"
+                                    priority
+                                />
+                            </div>
                         </Link>
 
-                        {/* Desktop Nav */}
-                        <nav className="hidden md:flex items-center gap-0.5">
+                        <nav className="hidden lg:flex items-center gap-1">
                             {navItems.map((item) => {
                                 const Icon = item.icon;
-                                const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                                const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
                                 return (
                                     <Link
                                         key={item.href}
                                         href={item.href}
                                         className={cn(
-                                            "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200",
+                                            "flex items-center gap-2.5 px-4 py-2 rounded-2xl text-sm font-bold transition-all duration-300 relative group",
                                             isActive
-                                                ? "bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300"
-                                                : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200"
+                                                ? "text-violet-600 dark:text-violet-400 bg-violet-500/5 dark:bg-violet-500/10"
+                                                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-500/5"
                                         )}
                                     >
-                                        <Icon className="h-4 w-4" />
+                                        <Icon className={cn(
+                                            "h-4 w-4 transition-transform group-hover:scale-110",
+                                            isActive ? "stroke-[2.5]" : "stroke-[2]"
+                                        )} />
                                         <span>{item.label}</span>
+                                        {isActive && (
+                                            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-violet-500 dark:bg-violet-400 -mb-1" />
+                                        )}
                                     </Link>
                                 );
                             })}
                         </nav>
                     </div>
 
-                    {/* Right actions */}
-                    <div className="flex items-center gap-1.5">
-                        {/* Search button */}
+                    <div className="flex items-center gap-3">
                         <button
                             onClick={() => setIsSearchOpen(true)}
-                            className="flex items-center justify-center w-9 h-9 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors outline-none text-slate-500 dark:text-slate-400"
+                            className="hidden sm:flex items-center justify-center w-10 h-10 rounded-2xl bg-slate-500/5 hover:bg-slate-500/10 transition-colors text-slate-500 dark:text-slate-400 group"
                             aria-label="Search"
                         >
-                            <Search className="h-[18px] w-[18px]" />
+                            <Search className="h-5 w-5 group-hover:scale-110 transition-transform" />
                         </button>
 
-                        {/* Notifications */}
                         <NotificationBell />
 
-                        {/* User Avatar */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button
-                                    className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white text-sm font-bold hover:scale-105 transition-transform shadow-sm shadow-violet-500/30 outline-none"
+                                    className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-700 text-white text-sm font-black hover:scale-105 active:scale-95 transition-all shadow-lg shadow-violet-500/20"
                                     aria-label="User menu"
                                 >
                                     {user?.email ? getInitials(user.email) : "U"}
                                 </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56 rounded-2xl border-slate-200/60 shadow-xl shadow-black/10 p-1">
-                                <DropdownMenuLabel className="px-3 py-2">
-                                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">My Account</p>
-                                    <p className="text-xs text-slate-500 truncate mt-0.5">{user?.email}</p>
+                            <DropdownMenuContent align="end" className="w-64 rounded-3xl border-slate-200/40 dark:border-slate-800/40 backdrop-blur-2xl bg-white/90 dark:bg-slate-950/90 shadow-2xl p-2 mt-2">
+                                <DropdownMenuLabel className="px-4 py-3">
+                                    <p className="text-sm font-black text-slate-900 dark:text-slate-100">My Account</p>
+                                    <p className="text-xs font-medium text-slate-500 truncate mt-0.5">{user?.email}</p>
                                 </DropdownMenuLabel>
-                                <DropdownMenuSeparator className="my-1" />
+                                <DropdownMenuSeparator className="bg-slate-200/40 dark:bg-slate-800/40 mx-2" />
                                 <DropdownMenuItem
                                     onClick={() => router.push("/profile")}
-                                    className="rounded-xl cursor-pointer"
+                                    className="rounded-2xl cursor-pointer py-3 px-4 font-bold text-sm hover:bg-violet-500/5 focus:bg-violet-500/5 transition-colors"
                                 >
                                     Profile
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     onClick={() => router.push("/settings")}
-                                    className="rounded-xl cursor-pointer"
+                                    className="rounded-2xl cursor-pointer py-3 px-4 font-bold text-sm hover:bg-violet-500/5 focus:bg-violet-500/5 transition-colors"
                                 >
                                     Settings
                                 </DropdownMenuItem>
-                                <DropdownMenuSeparator className="my-1" />
+                                <DropdownMenuSeparator className="bg-slate-200/40 dark:bg-slate-800/40 mx-2" />
                                 <DropdownMenuItem
                                     onClick={handleSignOut}
-                                    className="rounded-xl cursor-pointer text-rose-600 dark:text-rose-400 focus:text-rose-600 focus:bg-rose-50 dark:focus:bg-rose-950/30"
+                                    className="rounded-2xl cursor-pointer py-3 px-4 font-bold text-sm text-rose-600 dark:text-rose-400 focus:text-rose-600 focus:bg-rose-50 dark:focus:bg-rose-500/10 transition-colors"
                                 >
                                     Sign Out
                                 </DropdownMenuItem>
@@ -156,7 +158,6 @@ export const TopHeader = () => {
                 </div>
             </header>
 
-            {/* Search Modal */}
             <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
         </>
     );

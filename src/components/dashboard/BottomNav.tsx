@@ -6,13 +6,12 @@ import Link from "next/link";
 import { Home, BookOpen, Video, MessageCircle, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// ── Nav item definitions — Courses is always index 2 (center) ──────
 const ALL_NAV_ITEMS = [
     { label: "Home",       icon: Home,           href: "/dashboard", perm: null          },
-    { label: "Live",       icon: Video,          href: "/live",      perm: "canViewLive" },
-    { label: "Courses",    icon: BookOpen,       href: "/courses",   perm: null,  isCenter: true },
-    { label: "Chat",       icon: MessageCircle,  href: "/chat",      perm: "canViewChat" },
     { label: "My Journey", icon: GraduationCap,  href: "/profile",   perm: null          },
+    { label: "Courses",    icon: BookOpen,       href: "/courses",   perm: null,  isCenter: true },
+    { label: "Live",       icon: Video,          href: "/live",      perm: "canViewLive" },
+    { label: "Chat",       icon: MessageCircle,  href: "/chat",      perm: "canViewChat" },
 ];
 
 interface BottomNavProps {
@@ -29,7 +28,6 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
     const [prevPathname, setPrevPathname] = useState(pathname);
     const [optimisticPath, setOptimisticPath] = useState(pathname);
 
-    // Sync optimistic path with real path when navigation completes
     if (pathname !== prevPathname) {
         setPrevPathname(pathname);
         setOptimisticPath(pathname);
@@ -39,11 +37,9 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
         if (href !== pathname) setOptimisticPath(href);
     };
 
-    // Hide on chapter/player pages
     const isPlayerPage = pathname.includes("/chapters/") || pathname.includes("/learn");
     if (permissions?.hideOnPlayer && isPlayerPage) return null;
 
-    // Filter based on permissions
     const visibleItems = ALL_NAV_ITEMS.filter(item => {
         if (item.perm === "canViewLive" && permissions && !permissions.canViewLive) return false;
         if (item.perm === "canViewChat" && permissions && !permissions.canViewChat) return false;
@@ -52,7 +48,6 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
 
     if (visibleItems.length === 0) return null;
 
-    // Find center item index (Courses)
     const centerIndex = visibleItems.findIndex(item => item.isCenter);
 
     return (
@@ -60,10 +55,8 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
             className="fixed bottom-0 left-0 right-0 z-50 md:hidden select-none"
             style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
-            {/* Floating glass pill */}
-            <div className="mx-3 mb-3 relative rounded-2xl bg-white/95 dark:bg-slate-900/98 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/50 shadow-2xl shadow-black/10 dark:shadow-black/50">
+            <div className="mx-4 mb-4 relative rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-white/20 dark:border-slate-700/30 shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
 
-                {/* Sliding background pill for non-center active tabs */}
                 {(() => {
                     const activeIndex = visibleItems.findIndex(item =>
                         optimisticPath === item.href ||
@@ -75,10 +68,10 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
                     if (activeIndex !== -1 && !isActiveCenter) {
                         return (
                             <div
-                                className="absolute top-1.5 bottom-1.5 rounded-xl bg-violet-50 dark:bg-violet-950/60 transition-all duration-300 ease-out pointer-events-none"
+                                className="absolute top-2 bottom-2 rounded-2xl bg-violet-500/10 dark:bg-violet-500/20 transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) pointer-events-none"
                                 style={{
-                                    width: `calc(${itemWidth}% - 8px)`,
-                                    left:  `calc(${activeIndex * itemWidth}% + 4px)`,
+                                    width: `calc(${itemWidth}% - 12px)`,
+                                    left:  `calc(${activeIndex * itemWidth}% + 6px)`,
                                 }}
                             />
                         );
@@ -86,9 +79,8 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
                     return null;
                 })()}
 
-                {/* Nav items grid */}
                 <div
-                    className="relative grid h-[60px]"
+                    className="relative grid h-[68px]"
                     style={{ gridTemplateColumns: `repeat(${visibleItems.length}, minmax(0, 1fr))` }}
                 >
                     {visibleItems.map((item, index) => {
@@ -97,31 +89,29 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
                             (item.href !== "/dashboard" && item.href !== "/profile" && optimisticPath.startsWith(item.href + "/"));
                         const isCenter = item.isCenter;
 
-                        // ── Center tab (Courses) — elevated circular style ──
                         if (isCenter) {
                             return (
                                 <Link
                                     key={item.href}
                                     href={item.href}
                                     onClick={() => handleNavClick(item.href)}
-                                    className="relative z-10 flex flex-col items-center justify-center gap-0.5 active:scale-90 touch-manipulation"
+                                    className="relative z-10 flex flex-col items-center justify-center active:scale-95 transition-transform"
                                     style={{ WebkitTapHighlightColor: "transparent" }}
                                 >
-                                    {/* Elevated circle — always visible, active = filled */}
                                     <div className={cn(
-                                        "w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 -mt-5",
+                                        "w-14 h-14 rounded-[22px] flex items-center justify-center shadow-2xl transition-all duration-500 -mt-8 border-4 border-[#f7f6ff] dark:border-slate-950",
                                         isActive
-                                            ? "bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-400/40 scale-110"
-                                            : "bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/60 dark:to-purple-900/60 shadow-violet-200/50 dark:shadow-violet-900/50"
+                                            ? "bg-gradient-to-br from-violet-600 to-purple-700 scale-110 rotate-3"
+                                            : "bg-white dark:bg-slate-800"
                                     )}>
                                         <Icon className={cn(
-                                            "h-5 w-5 transition-colors duration-300",
-                                            isActive ? "text-white" : "text-violet-500 dark:text-violet-400"
+                                            "h-6 w-6 transition-colors duration-300",
+                                            isActive ? "text-white" : "text-slate-600 dark:text-slate-400"
                                         )} />
                                     </div>
                                     <span className={cn(
-                                        "text-[10px] font-semibold leading-none transition-colors duration-200 -mt-0.5",
-                                        isActive ? "text-violet-600 dark:text-violet-400" : "text-slate-400 dark:text-slate-500"
+                                        "text-[11px] font-bold mt-1 tracking-tight transition-colors duration-300",
+                                        isActive ? "text-violet-600 dark:text-violet-400" : "text-slate-500 dark:text-slate-500"
                                     )}>
                                         {item.label}
                                     </span>
@@ -129,27 +119,26 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
                             );
                         }
 
-                        // ── Regular tabs ──
                         return (
                             <Link
                                 key={item.href}
                                 href={item.href}
                                 onClick={() => handleNavClick(item.href)}
                                 className={cn(
-                                    "relative z-10 flex flex-col items-center justify-center gap-0.5 transition-all duration-200 active:scale-90 touch-manipulation rounded-xl",
+                                    "relative z-10 flex flex-col items-center justify-center gap-1 active:scale-95 transition-all duration-300",
                                     isActive
                                         ? "text-violet-600 dark:text-violet-400"
-                                        : "text-slate-400 dark:text-slate-500"
+                                        : "text-slate-500 dark:text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
                                 )}
                                 style={{ WebkitTapHighlightColor: "transparent" }}
                             >
                                 <Icon className={cn(
-                                    "transition-all duration-200",
-                                    isActive ? "h-[22px] w-[22px]" : "h-5 w-5"
+                                    "transition-all duration-500",
+                                    isActive ? "h-[24px] w-[24px] stroke-[2.5]" : "h-5 w-5 stroke-[2]"
                                 )} />
                                 <span className={cn(
-                                    "text-[10px] font-medium leading-none transition-all duration-200",
-                                    isActive && "font-semibold"
+                                    "text-[11px] font-bold tracking-tight",
+                                    isActive ? "opacity-100" : "opacity-80"
                                 )}>
                                     {item.label}
                                 </span>

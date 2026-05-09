@@ -12,12 +12,11 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter, usePathname } from "next/navigation";
 
 const routes = [
-    { label: "Dashboard",   icon: LayoutDashboard, href: "/dashboard", color: "text-violet-400" },
-    { label: "My Learning", icon: BookOpen,         href: "/courses",   color: "text-indigo-400" },
-    { label: "Live Class",  icon: Video,            href: "/live",      color: "text-rose-400"   },
-    { label: "AI Mentor",   icon: MessageSquare,    href: "/chat",      color: "text-emerald-400"},
-    { label: "Community",   icon: Users,            href: "/community", color: "text-amber-400"  },
-    { label: "Profile",     icon: User,             href: "/profile",   color: "text-sky-400"    },
+    { label: "Home",        icon: LayoutDashboard, href: "/dashboard", color: "text-violet-500" },
+    { label: "My Journey",  icon: GraduationCap,  href: "/profile",   color: "text-indigo-500" },
+    { label: "Courses",     icon: BookOpen,        href: "/courses",   color: "text-emerald-500" },
+    { label: "Live",        icon: Video,           href: "/live",      color: "text-rose-500"   },
+    { label: "Chat",        icon: MessageSquare,   href: "/chat",      color: "text-amber-500"  },
 ];
 
 interface StudentSidebarProps {
@@ -53,26 +52,23 @@ export const StudentSidebar = ({
     };
 
     const visibleRoutes = routes.filter(route => {
-        if (route.href === "/community") return permissions.canViewCommunity;
         if (route.href === "/live")      return permissions.canViewLive;
         if (route.href === "/chat")      return permissions.canViewChat;
         return true;
     });
 
     return (
-        <div className="h-full flex flex-col overflow-y-auto bg-white dark:bg-slate-950 border-r border-slate-200/60 dark:border-slate-800/60">
+        <div className="h-full flex flex-col overflow-y-auto bg-white/50 dark:bg-slate-950/50 backdrop-blur-3xl border-r border-slate-200/40 dark:border-slate-800/40">
 
-            {/* Section label */}
-            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800/60">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                    Student Portal
+            <div className="px-8 py-8 border-b border-slate-200/40 dark:border-slate-800/40">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                    ADH Connect
                 </p>
             </div>
 
-            {/* Nav links */}
-            <div className="flex flex-col flex-1 px-3 py-3 gap-0.5">
+            <div className="flex flex-col flex-1 px-4 py-6 gap-2">
                 {visibleRoutes.map((route) => {
-                    const isActive = optimisticPath === route.href || optimisticPath?.startsWith(route.href + "/");
+                    const isActive = optimisticPath === route.href || (route.href !== "/dashboard" && route.href !== "/profile" && optimisticPath?.startsWith(route.href + "/"));
                     const Icon = route.icon;
 
                     return (
@@ -81,63 +77,54 @@ export const StudentSidebar = ({
                             href={route.href}
                             onClick={() => handleNavClick(route.href)}
                             className={cn(
-                                "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 select-none",
+                                "group relative flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-black transition-all duration-300 select-none",
                                 isActive
-                                    ? "bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300"
-                                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200"
+                                    ? "bg-violet-600 text-white shadow-xl shadow-violet-500/30 scale-[1.02]"
+                                    : "text-slate-500 dark:text-slate-400 hover:bg-violet-500/5 hover:text-slate-900 dark:hover:text-slate-100"
                             )}
                             style={{ WebkitTapHighlightColor: "transparent" }}
                         >
-                            {/* Active pill */}
-                            {isActive && (
-                                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-violet-600 dark:bg-violet-400 rounded-full" />
-                            )}
-
                             <Icon className={cn(
-                                "h-[18px] w-[18px] shrink-0 transition-colors",
-                                isActive ? "text-violet-600 dark:text-violet-400" : route.color
+                                "h-5 w-5 shrink-0 transition-all duration-300 group-hover:scale-110",
+                                isActive ? "text-white" : route.color
                             )} />
 
                             <span className="truncate">{route.label}</span>
 
                             {isActive && (
-                                <ChevronRight className="ml-auto h-3.5 w-3.5 text-violet-400 opacity-60" />
+                                <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-white/50 animate-pulse" />
                             )}
                         </Link>
                     );
                 })}
             </div>
 
-            {/* Bottom actions */}
-            <div className="mt-auto px-3 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800/60 space-y-1.5">
-                {/* Admin Mode */}
+            <div className="mt-auto px-4 pb-8 pt-4 border-t border-slate-200/40 dark:border-slate-800/40 space-y-2">
                 {is_super_admin && (
-                    <Link href="/admin">
-                        <Button variant="outline" size="sm" className="w-full justify-start gap-2 h-9 text-xs hover:border-violet-300 hover:text-violet-700">
-                            <Shield className="h-3.5 w-3.5" />
-                            Admin Mode
+                    <Link href="/admin" className="block">
+                        <Button variant="outline" size="sm" className="w-full justify-start gap-3 h-12 rounded-2xl text-xs font-bold hover:bg-violet-500/5 hover:border-violet-500/30 transition-all">
+                            <Shield className="h-4 w-4 text-violet-500" />
+                            Admin Center
                         </Button>
                     </Link>
                 )}
 
-                {/* Instructor Mode */}
                 {is_instructor && (
-                    <Link href="/instructor/courses">
-                        <Button variant="outline" size="sm" className="w-full justify-start gap-2 h-9 text-xs hover:border-violet-300 hover:text-violet-700">
-                            <GraduationCap className="h-3.5 w-3.5" />
+                    <Link href="/instructor/courses" className="block">
+                        <Button variant="outline" size="sm" className="w-full justify-start gap-3 h-12 rounded-2xl text-xs font-bold hover:bg-violet-500/5 hover:border-violet-500/30 transition-all">
+                            <GraduationCap className="h-4 w-4 text-emerald-500" />
                             Instructor Mode
                         </Button>
                     </Link>
                 )}
 
-                {/* Logout */}
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-start gap-2 h-9 text-xs text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                    className="w-full justify-start gap-3 h-12 rounded-2xl text-xs font-bold text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
                     onClick={handleLogout}
                 >
-                    <LogOut className="h-3.5 w-3.5" />
+                    <LogOut className="h-4 w-4" />
                     Logout
                 </Button>
             </div>

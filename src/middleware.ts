@@ -31,39 +31,36 @@ export async function middleware(request: NextRequest) {
         '/api/cron',      // Automated tasks (Reminders)
     ];
 
-    // Allow public pages without authentication
-    if (publicPages.includes(pathname)) {
-        return NextResponse.next();
-    }
-
-    // Allow SEO files and Blog
-    if (pathname === '/sitemap.xml' || pathname === '/robots.txt' || pathname.startsWith('/blog')) {
-        return NextResponse.next();
-    }
-
-    // Allow public API routes
-    if (publicApiRoutes.some(route => pathname.startsWith(route))) {
-        return NextResponse.next();
-    }
-
     // 2026 Security: Rate Limiting for Auth & API Routes
-    // Protect against brute force attacks and DDoS
     if (pathname.startsWith('/api/auth') || pathname === '/login') {
-        // Strict rate limit for authentication endpoints (5 requests per minute)
         const rateLimitResponse = await rateLimit(request, RateLimitPresets.STRICT);
         if (rateLimitResponse) return rateLimitResponse;
     } else if (pathname.startsWith('/api/')) {
-        // Moderate rate limit for general API endpoints (20 requests per minute)
         const rateLimitResponse = await rateLimit(request, RateLimitPresets.MODERATE);
         if (rateLimitResponse) return rateLimitResponse;
     }
 
-    // Create Supabase Client for Middleware
-    const { createClient } = await import('@/lib/supabase/middleware');
-    const { supabase, response } = await createClient(request);
+    // ── SUPABASE SESSION REFRESH (CRITICAL) ──
+    // We must run this on every request to keep cookies in sync
+    const { createClient: createSupabaseClient } = await import('@/lib/supabase/middleware');
+    const { supabase, response } = await createSupabaseClient(request);
 
-    // Check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser()
+    // Refresh session if it exists
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    // ── PUBLIC PAGE HANDLING ──
+    // Allow public pages - but we use the 'response' from Supabase to keep cookies
+    if (publicPages.includes(pathname)) {
+        return response;
+    }
+
+    if (pathname === '/sitemap.xml' || pathname === '/robots.txt' || pathname.startsWith('/blog')) {
+        return response;
+    }
+
+    if (publicApiRoutes.some(route => pathname.startsWith(route))) {
+        return response;
+    }
 
     // Extract Role and Membership Tier from JWT Metadata for speed
     // IMPORTANT: Make sure to sync these from public.profiles to auth.users metadata

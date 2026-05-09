@@ -40,11 +40,18 @@ export function createClient() {
             }
         );
     } else {
-        // Browser: Keep default behavior (cookies-based, zero changes)
+        // Browser: Keep default behavior (cookies-based)
         console.log('[Supabase] ⚠️ Initializing with default storage (BROWSER)');
         supabaseClient = createBrowserClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://example.com',
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-key'
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-key',
+            {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true,
+                }
+            }
         );
     }
 
