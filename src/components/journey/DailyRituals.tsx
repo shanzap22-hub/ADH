@@ -134,48 +134,50 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
             try {
                 // ഗൂഗിൾ ട്രാൻസ്ലേറ്റിന് 200 അക്ഷരങ്ങളുടെ ലിമിറ്റ് ഉള്ളതിനാൽ നമ്മൾ ടെക്സ്റ്റ് മുറിക്കുന്നു
                 const chunks = affirmations.match(/.{1,150}(?:\s|$)|.{1,150}/g) || [affirmations];
-                const audioArrays: Uint8Array[] = [];
+                
+                // ഓരോ ഭാഗത്തിനും Google Translate URL ഉണ്ടാക്കുന്നു (CORS / Rate Limit പ്രശ്നങ്ങളില്ല)
+                const urls = chunks
+                    .filter(chunk => chunk.trim().length > 0)
+                    .map(chunk => `https://translate.googleapis.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunk.trim())}&tl=ml&client=gtx`);
 
-                // ഓരോ ഭാഗമായി API-ലേക്ക് അയച്ച് ഓഡിയോ എടുക്കുന്നു
-                for (const chunk of chunks) {
-                    if (!chunk.trim()) continue;
-                    const response = await fetch(`https://lingva.ml/api/v1/audio/ml/${encodeURIComponent(chunk.trim())}`);
-                    if (!response.ok) throw new Error("TTS API failed");
-                    const data = await response.json();
-                    if (data.audio && data.audio.length > 0) {
-                        audioArrays.push(new Uint8Array(data.audio));
-                    }
-                }
-
-                if (audioArrays.length === 0) throw new Error("No audio generated");
-
-                // എല്ലാ ഓഡിയോ ഭാഗങ്ങളും ഒന്നിച്ച് ചേർക്കുന്നു (MP3 കൺകാറ്റിനേഷൻ)
-                const totalLength = audioArrays.reduce((acc, arr) => acc + arr.length, 0);
-                const combinedAudio = new Uint8Array(totalLength);
-                let offset = 0;
-                for (const arr of audioArrays) {
-                    combinedAudio.set(arr, offset);
-                    offset += arr.length;
-                }
-
-                // ബ്രൗസറിന് പ്ലേ ചെയ്യാൻ കഴിയുന്ന Blob URL ആക്കി മാറ്റുന്നു
-                const blob = new Blob([combinedAudio], { type: 'audio/mpeg' });
-                const audioUrl = URL.createObjectURL(blob);
+                if (urls.length === 0) throw new Error("No text to play");
 
                 if (audioRef.current) {
-                    audioRef.current.src = audioUrl;
-                    audioRef.current.onended = () => {
-                        setIsAudioPlaying(false);
-                        URL.revokeObjectURL(audioUrl); // മെമ്മറി ഫ്രീ ആക്കുന്നു
+                    let currentChunkIndex = 0;
+                    
+                    const playNextChunk = async () => {
+                        if (!audioRef.current) return;
+                        
+                        if (currentChunkIndex < urls.length) {
+                            audioRef.current.src = urls[currentChunkIndex];
+                            // Android Webview-ലും ബ്രൗസറുകളിലും ഗൂഗിൾ ബ്ലോക്ക് ചെയ്യാതിരിക്കാൻ
+                            audioRef.current.setAttribute("referrerPolicy", "no-referrer");
+                            
+                            try {
+                                await audioRef.current.play();
+                                setIsAudioPlaying(true);
+                                currentChunkIndex++;
+                            } catch (e) {
+                                console.error("Chunk play error", e);
+                                toast.error("ഓഡിയോ പ്ലേ ചെയ്യാൻ കഴിഞ്ഞില്ല.");
+                                setIsAudioPlaying(false);
+                            }
+                        } else {
+                            setIsAudioPlaying(false);
+                            audioRef.current.onended = null;
+                        }
                     };
-                    await audioRef.current.play();
-                    setIsAudioPlaying(true);
+
+                    // ഒരു വരി കഴിയുമ്പോൾ അടുത്തത് പ്ലേ ചെയ്യാൻ സെറ്റ് ചെയ്യുന്നു
+                    audioRef.current.onended = playNextChunk;
+                    
                     toast.success("മലയാളം അഫിർമേഷൻസ് പ്ലേ ചെയ്യുന്നു...", { id: toastId });
+                    setIsGeneratingTTS(false);
+                    playNextChunk();
                 }
             } catch (error) {
                 console.error("TTS Error:", error);
-                toast.error("ഓഡിയോ പ്ലേ ചെയ്യാൻ കഴിഞ്ഞില്ല. ഇൻ്റർനെറ്റ് കണക്ഷൻ പരിശോധിക്കുക.", { id: toastId });
-            } finally {
+                toast.error("ഓഡിയോ പ്ലേ ചെയ്യാൻ കഴിഞ്ഞില്ല.", { id: toastId });
                 setIsGeneratingTTS(false);
             }
             return;
