@@ -51,7 +51,7 @@ export async function POST(req: Request) {
         const base64Image = result.result.image;
         const buffer = Buffer.from(base64Image, 'base64');
 
-        // Convert to FormData for uploadToBunny
+        // Convert to FormData for uploadToR2
         const formData = new FormData();
         const blob = new Blob([buffer], { type: 'image/jpeg' });
         formData.append('file', blob, `ai-generated-${Date.now()}.jpg`);

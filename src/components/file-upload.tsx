@@ -3,10 +3,8 @@
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
-import { UploadCloud, X, File } from "lucide-react";
+import { UploadCloud, X, File, Loader2, Video, FileText } from "lucide-react";
 import Image from "next/image";
-
-import { createClient } from "@/lib/supabase/client";
 
 interface FileUploadProps {
     endpoint: "course-thumbnails" | "chapter-videos" | "course-attachments" | "blog-images";
@@ -22,15 +20,15 @@ export const FileUpload = ({
     disabled
 }: FileUploadProps) => {
     const [isUploading, setIsUploading] = useState(false);
-    const supabase = createClient();
+    const [uploadProgress, setUploadProgress] = useState(0);
 
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
         const file = acceptedFiles?.[0];
         if (!file) return;
 
-        // File size limits
         const isVideo = endpoint === "chapter-videos";
         const isAttachment = endpoint === "course-attachments";
+        const isImage = endpoint === "course-thumbnails" || endpoint === "blog-images";
 
         // Limits: 4GB for Video, 500MB for Attachment, 10MB for Image
         const limitAPI = isVideo ? 4 * 1024 * 1024 * 1024 : isAttachment ? 500 * 1024 * 1024 : 10 * 1024 * 1024;
@@ -43,61 +41,82 @@ export const FileUpload = ({
 
         try {
             setIsUploading(true);
+            setUploadProgress(0);
 
-            // Check if we should use Bunny Storage
-            if (endpoint === "course-thumbnails" || endpoint === "course-attachments" || endpoint === "blog-images") {
+            // CASE 1: VIDEOS -> Bunny Stream
+            if (isVideo) {
+                const { getBunnySignature } = await import("@/actions/bunny");
+                const { videoId, libraryId, authorizationSignature, authorizationExpire } = await getBunnySignature(file.name, file.type);
 
-                // For Attachments: Use Direct Client-Side Upload (to support large files > 4.5MB and bypass Vercel limits)
-                if (endpoint === "course-attachments") {
-                    try {
-                        const { getBunnyCredentials } = await import("@/actions/bunny");
-                        const creds = await getBunnyCredentials();
+                // Manual XHR for progress tracking
+                const xhr = new XMLHttpRequest();
+                xhr.open('PUT', `https://video.bunnycdn.com/library/${libraryId}/videos/${videoId}`, true);
+                xhr.setRequestHeader('AuthorizationSignature', authorizationSignature);
+                xhr.setRequestHeader('AuthorizationExpire', authorizationExpire);
+                xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
 
-                        const fileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-                        const uniqueFileName = `${Date.now()}-${fileName}`;
-
-                        // Determine Hostname
-                        let regionCode = creds.region.toLowerCase().trim();
-                        if (regionCode === "singapore" || regionCode === "asia") regionCode = "sg";
-                        if (regionCode === "stockholm" || regionCode === "europe") regionCode = "se";
-                        if (regionCode === "germany") regionCode = "de";
-
-                        const hostname = regionCode === 'de' ? 'storage.bunnycdn.com' : `${regionCode}.storage.bunnycdn.com`;
-
-                        const uploadPath = `${endpoint}/${uniqueFileName}`;
-                        const uploadUrl = `https://${hostname}/${creds.zoneName}/${uploadPath}`;
-
-                        // Direct PUT
-                        const response = await fetch(uploadUrl, {
-                            method: 'PUT',
-                            headers: {
-                                'AccessKey': creds.apiKey,
-                                'Content-Type': file.type || 'application/octet-stream'
-                            },
-                            body: file
-                        });
-
-                        if (!response.ok) {
-                            throw new Error(`Bunny Upload Failed: ${response.statusText}`);
-                        }
-
-                        // Construct Public URL
-                        const finalUrl = `https://${creds.pullZone}/${uploadPath}`;
-
-                        onChange(finalUrl);
-                        toast.success("File uploaded to Bunny");
-                        setIsUploading(false);
-                        return;
-
-                    } catch (e: any) {
-                        console.error(e);
-                        toast.error("Upload failed: " + (e.message || "Unknown error"));
-                        setIsUploading(false);
-                        return;
+                xhr.upload.onprogress = (event) => {
+                    if (event.lengthComputable) {
+                        const percent = Math.round((event.loaded / event.total) * 100);
+                        setUploadProgress(percent);
                     }
-                }
+                };
 
-                // For Images (Thumbnails/Blog): Use Cloudflare R2
+                xhr.onload = () => {
+                    if (xhr.status === 200) {
+                        onChange(videoId); // Store the Video ID
+                        toast.success("Video uploaded to Bunny Stream. Encoding started.");
+                        setIsUploading(false);
+                    } else {
+                        toast.error("Bunny Stream upload failed");
+                        setIsUploading(false);
+                    }
+                };
+
+                xhr.onerror = () => {
+                    toast.error("Upload error");
+                    setIsUploading(false);
+                };
+
+                xhr.send(file);
+                return;
+            }
+
+            // CASE 2: ATTACHMENTS -> Cloudflare R2 (Large files via Presigned URL)
+            if (isAttachment) {
+                const { getPresignedUrl } = await import("@/actions/r2");
+                const { signedUrl, publicUrl, error } = await getPresignedUrl(file.name, file.type, endpoint);
+
+                if (error || !signedUrl) throw new Error(error || "Failed to get upload URL");
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('PUT', signedUrl, true);
+                xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+
+                xhr.upload.onprogress = (event) => {
+                    if (event.lengthComputable) {
+                        const percent = Math.round((event.loaded / event.total) * 100);
+                        setUploadProgress(percent);
+                    }
+                };
+
+                xhr.onload = () => {
+                    if (xhr.status === 200 || xhr.status === 201) {
+                        onChange(publicUrl);
+                        toast.success("Attachment uploaded to R2");
+                        setIsUploading(false);
+                    } else {
+                        toast.error("R2 upload failed");
+                        setIsUploading(false);
+                    }
+                };
+
+                xhr.send(file);
+                return;
+            }
+
+            // CASE 3: IMAGES -> Cloudflare R2 (Smaller files via Server Action)
+            if (isImage) {
                 const formData = new FormData();
                 formData.append("file", file);
 
@@ -107,40 +126,20 @@ export const FileUpload = ({
                 if (result.error) throw new Error(result.error);
 
                 onChange(result.url);
-                toast.success("File uploaded to R2");
+                toast.success("Image uploaded to R2");
                 setIsUploading(false);
                 return;
             }
 
-            // Fallback to Supabase for other endpoints (e.g. chapter-videos)
-            const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
-            const { error: uploadError } = await supabase.storage
-                .from(endpoint)
-                .upload(fileName, file);
-
-            if (uploadError) {
-                throw uploadError;
-            }
-
-            const { data: { publicUrl } } = supabase.storage
-                .from(endpoint)
-                .getPublicUrl(fileName);
-
-            onChange(publicUrl);
-            toast.success("File uploaded");
         } catch (error: any) {
-            if (error.message) {
-                toast.error(error.message);
-            } else {
-                toast.error("Something went wrong");
-            }
+            toast.error(error.message || "Something went wrong");
             console.error(error);
         } finally {
-            setIsUploading(false);
+            if (!isVideo && !isAttachment) setIsUploading(false);
         }
-    }, [endpoint, onChange, supabase.storage]);
+    }, [endpoint, onChange]);
 
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    const { getRootProps, getInputProps } = useDropzone({
         onDrop,
         maxFiles: 1,
         disabled: disabled || isUploading,
@@ -148,21 +147,22 @@ export const FileUpload = ({
             ? { 'image/*': [] }
             : endpoint === "chapter-videos"
                 ? { 'video/*': [] }
-                : undefined // Accept all files for attachments
+                : undefined 
     });
 
+    // DISPLAY: Image Preview
     if (value && (endpoint === "course-thumbnails" || endpoint === "blog-images")) {
         return (
-            <div className="relative aspect-video w-full h-full">
+            <div className="relative aspect-video w-full">
                 <Image
                     fill
                     src={value}
                     alt="Upload"
-                    className="object-cover rounded-md"
+                    className="object-cover rounded-xl border border-slate-200"
                 />
                 <button
                     onClick={() => onChange("")}
-                    className="bg-rose-500 text-white p-1 rounded-full absolute top-1 right-1 shadow-sm"
+                    className="bg-rose-500 text-white p-1.5 rounded-full absolute -top-2 -right-2 shadow-lg hover:scale-110 transition"
                     type="button"
                     disabled={disabled}
                 >
@@ -172,39 +172,76 @@ export const FileUpload = ({
         )
     }
 
-    if (value && endpoint === "chapter-videos") {
+    // DISPLAY: Video / Attachment Indicator
+    if (value) {
         return (
-            <div className="relative aspect-video mt-2">
-                Video uploaded:
-                <a href={value} target="_blank" className="text-sky-500 underline ml-2 text-sm break-all">
-                    {value}
-                </a>
-                <button
+            <div className="flex items-center gap-3 p-4 rounded-xl border border-emerald-100 bg-emerald-50/50">
+                <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    {endpoint === "chapter-videos" ? <Video className="h-5 w-5 text-emerald-600" /> : <FileText className="h-5 w-5 text-emerald-600" />}
+                </div>
+                <div className="flex-1 overflow-hidden">
+                    <p className="text-xs font-black text-emerald-800 uppercase tracking-widest truncate">
+                        {endpoint === "chapter-videos" ? "Video ID" : "File Uploaded"}
+                    </p>
+                    <p className="text-[10px] font-bold text-emerald-600 truncate opacity-70">{value}</p>
+                </div>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-emerald-600 hover:text-rose-500"
                     onClick={() => onChange("")}
-                    className="bg-rose-500 text-white p-1 rounded-full absolute -top-2 -right-2 shadow-sm"
-                    type="button"
                     disabled={disabled}
                 >
                     <X className="h-4 w-4" />
-                </button>
+                </Button>
             </div>
         )
     }
 
     return (
-        <div {...getRootProps()} className="border-2 border-dashed border-slate-300 rounded-md p-10 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100/50 transition bg-slate-50">
+        <div {...getRootProps()} className={`
+            border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center cursor-pointer transition-all duration-300
+            ${isUploading ? "bg-slate-50 border-violet-300" : "bg-white border-slate-200 hover:border-violet-400 hover:bg-violet-50/30"}
+        `}>
             <input {...getInputProps()} />
-            <UploadCloud className="h-10 w-10 text-slate-500 mb-2" />
-            <p className="text-sm text-slate-500">
-                {isUploading ? "Uploading..." : "Drag & drop or click to select"}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-                {endpoint === "course-attachments"
-                    ? "Any file (max 500MB)"
-                    : (endpoint === "course-thumbnails" || endpoint === "blog-images")
-                        ? "Images only (max 10MB)"
-                        : "Videos only (max 4GB)"}
-            </p>
+            
+            {isUploading ? (
+                <div className="flex flex-col items-center text-center space-y-4">
+                    <div className="relative w-16 h-16">
+                        <Loader2 className="h-16 w-16 text-violet-600 animate-spin opacity-20" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-[10px] font-black text-violet-600">{uploadProgress}%</span>
+                        </div>
+                    </div>
+                    <div>
+                        <p className="text-sm font-black text-slate-700 uppercase tracking-widest">Uploading Resource</p>
+                        <p className="text-[10px] text-slate-400 font-bold">Please don't close the browser</p>
+                    </div>
+                    {/* Progress Bar */}
+                    <div className="w-48 h-1.5 bg-slate-100 rounded-full overflow-hidden border">
+                        <div 
+                            className="h-full bg-violet-600 transition-all duration-300" 
+                            style={{ width: `${uploadProgress}%` }}
+                        />
+                    </div>
+                </div>
+            ) : (
+                <>
+                    <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
+                        <UploadCloud className="h-8 w-8 text-slate-400" />
+                    </div>
+                    <div className="text-center">
+                        <p className="text-sm font-black text-slate-700 uppercase tracking-widest">Select {endpoint.replace("-", " ")}</p>
+                        <p className="text-[10px] text-slate-400 font-bold mt-1">
+                            {endpoint === "course-attachments"
+                                ? "Any file (max 500MB)"
+                                : (endpoint === "course-thumbnails" || endpoint === "blog-images")
+                                    ? "Images only (max 10MB)"
+                                    : "Videos only (max 4GB)"}
+                        </p>
+                    </div>
+                </>
+            )}
         </div>
     )
 }

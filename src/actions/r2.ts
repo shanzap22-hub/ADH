@@ -65,3 +65,32 @@ export async function deleteFromR2(fileUrl: string): Promise<{ success: boolean;
         return { success: false, error: error.message };
     }
 }
+
+/**
+ * Generate a pre-signed URL for client-side uploads to R2.
+ */
+export async function getPresignedUrl(fileName: string, contentType: string, folder: string) {
+    try {
+        const { getSignedUrl } = await import("@aws-sdk/s3-request-presigner");
+        const { PutObjectCommand } = await import("@aws-sdk/client-s3");
+        
+        const sanitizedName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
+        const key = `${folder}/${Date.now()}-${sanitizedName}`;
+        
+        const command = new PutObjectCommand({
+            Bucket: R2_BUCKET_NAME,
+            Key: key,
+            ContentType: contentType,
+        });
+
+        // URL expires in 1 hour
+        const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+        
+        const publicUrl = `${R2_PUBLIC_URL}/${key}`;
+
+        return { signedUrl, publicUrl, key };
+    } catch (error: any) {
+        console.error("Presigned URL Error:", error);
+        return { error: error.message };
+    }
+}
