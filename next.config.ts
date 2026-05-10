@@ -29,6 +29,11 @@ const nextConfig: NextConfig = {
         hostname: '*.b-cdn.net',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'media.adh.today',
+        pathname: '/**',
+      },
     ],
   },
   serverExternalPackages: ['pdf-parse'],

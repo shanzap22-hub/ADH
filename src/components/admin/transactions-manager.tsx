@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { format, differenceInDays, subDays } from "date-fns";
-import { Calendar as CalendarIcon, Loader2, Plus, Edit, Filter, Search, RefreshCcw, AlertTriangle, FileSpreadsheet } from "lucide-react";
+import { Calendar as CalendarIcon, Loader2, Plus, Edit, Filter, Search, RefreshCcw, AlertTriangle, FileSpreadsheet, User } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -341,7 +341,7 @@ export default function TransactionsManager() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Count</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <User className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{totalCount}</div>

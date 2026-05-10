@@ -97,17 +97,17 @@ export const FileUpload = ({
                     }
                 }
 
-                // For Images (Thumbnails/Blog): Continue using Server Action (small files)
+                // For Images (Thumbnails/Blog): Use Cloudflare R2
                 const formData = new FormData();
                 formData.append("file", file);
 
-                const { uploadToBunny } = await import("@/actions/bunny");
-                const result = await uploadToBunny(formData, endpoint);
+                const { uploadToR2 } = await import("@/actions/r2");
+                const result = await uploadToR2(formData, endpoint);
 
                 if (result.error) throw new Error(result.error);
 
                 onChange(result.url);
-                toast.success("File uploaded to Bunny");
+                toast.success("File uploaded to R2");
                 setIsUploading(false);
                 return;
             }

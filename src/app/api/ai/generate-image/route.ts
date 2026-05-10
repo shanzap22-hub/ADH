@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { uploadToBunny } from '@/actions/bunny';
+import { uploadToR2 } from '@/actions/r2';
 
 export async function POST(req: Request) {
     try {
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
         const blob = new Blob([buffer], { type: 'image/jpeg' });
         formData.append('file', blob, `ai-generated-${Date.now()}.jpg`);
 
-        const uploadResult = await uploadToBunny(formData, 'mindmap-ai');
+        const uploadResult = await uploadToR2(formData, 'mindmap-ai');
 
         if (uploadResult.error) {
             return NextResponse.json({ error: uploadResult.error }, { status: 500 });

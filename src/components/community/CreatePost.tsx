@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
-import { uploadToBunny } from "@/actions/bunny";
+import { uploadToR2 } from "@/actions/r2";
 
 const TIERS = [
     { value: "bronze", label: "Bronze" },
@@ -72,7 +72,7 @@ export function CreatePost() {
                 formData.append("file", imageFile);
 
                 // Upload to Bunny (folder: "feed_images")
-                const result = await uploadToBunny(formData, "feed_images");
+                const result = await uploadToR2(formData, "feed_images");
 
                 if (result.error) {
                     throw new Error(result.error);

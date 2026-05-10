@@ -17,6 +17,7 @@ import {
     PenTool,
     Link as LinkIcon,
     Bell,
+    GraduationCap,
 } from "lucide-react";
 
 const routes = [
@@ -61,6 +62,12 @@ const routes = [
         icon: Settings,
         href: "/admin/course-tiers",
         color: "text-purple-600",
+    },
+    {
+        label: "Journey",
+        icon: GraduationCap,
+        href: "/admin/journey",
+        color: "text-emerald-500",
     },
     {
         label: "Analytics",

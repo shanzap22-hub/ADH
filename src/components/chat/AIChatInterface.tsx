@@ -9,6 +9,7 @@ import { Mic, Send, Image as ImageIcon, Loader2, Bot, StopCircle, User, ArrowLef
 import Image from "next/image";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { uploadToR2 } from "@/actions/r2";
 
 interface AIChatInterfaceProps {
     onBack?: () => void;
@@ -114,15 +115,10 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
         formData.append("file", file);
 
         try {
-            const res = await fetch("/api/upload/bunny", {
-                method: "POST",
-                body: formData
-            });
+            const result = await uploadToR2(formData, "ai-coach-media");
 
-            const data = await res.json();
-
-            if (res.ok && data.url) {
-                setImageUrl(data.url);
+            if (result.url) {
+                setImageUrl(result.url);
                 toast.success("Image attached! You can now add a description.");
                 // Focus the textarea so the user knows they can type a text description
                 setTimeout(() => {

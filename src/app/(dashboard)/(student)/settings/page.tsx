@@ -128,7 +128,7 @@ export default function SettingsPage() {
                 </CardContent>
             </Card>
 
-            {/* Support & Legal - 2026 Play Store Compliance */}
+            {/* Support & Legal */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -150,41 +150,21 @@ export default function SettingsPage() {
 
                     <Separator className="my-2" />
 
-                    {/* Legal Links - Play Store Requirement */}
                     <div className="space-y-2">
                         <p className="text-xs font-semibold text-muted-foreground px-3 pt-2">
                             Legal Information
                         </p>
-
-                        <Link
-                            href="/privacy"
-                            className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                        >
+                        <Link href="/privacy" className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
                             <div className="flex items-center gap-3">
                                 <Shield className="h-5 w-5 text-blue-500" />
                                 <span className="font-medium">Privacy Policy</span>
                             </div>
                             <span className="text-xs text-slate-400">→</span>
                         </Link>
-
-                        <Link
-                            href="/terms"
-                            className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                        >
+                        <Link href="/terms" className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
                             <div className="flex items-center gap-3">
                                 <Shield className="h-5 w-5 text-green-500" />
                                 <span className="font-medium">Terms of Service</span>
-                            </div>
-                            <span className="text-xs text-slate-400">→</span>
-                        </Link>
-
-                        <Link
-                            href="/refund"
-                            className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                        >
-                            <div className="flex items-center gap-3">
-                                <Shield className="h-5 w-5 text-orange-500" />
-                                <span className="font-medium">Refund Policy</span>
                             </div>
                             <span className="text-xs text-slate-400">→</span>
                         </Link>
@@ -198,6 +178,43 @@ export default function SettingsPage() {
                             <span className="font-medium">App Version</span>
                         </div>
                         <span className="text-sm text-slate-500">v1.1.0</span>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Account Danger Zone */}
+            <Card className="border-rose-200 dark:border-rose-900/50 bg-rose-50/30 dark:bg-rose-950/10">
+                <CardHeader>
+                    <CardTitle className="text-rose-600 dark:text-rose-400">Account Management</CardTitle>
+                    <CardDescription>Actions that affect your account session and data.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <Button 
+                        variant="outline" 
+                        className="w-full justify-start gap-3 h-12 rounded-2xl border-slate-200 dark:border-slate-800"
+                        onClick={() => {
+                            toast.loading("Signing out...");
+                            // This would use the sign-out logic from the top header
+                            window.location.href = "/signout";
+                        }}
+                    >
+                        <LogOut className="h-4 w-4 text-rose-500" />
+                        <span className="font-bold">Sign Out from Device</span>
+                    </Button>
+
+                    <Separator />
+
+                    <div className="space-y-3">
+                        <p className="text-xs font-bold text-rose-600/60 uppercase tracking-widest px-1">Danger Zone</p>
+                        <Button 
+                            variant="destructive" 
+                            className="w-full h-12 rounded-2xl font-black shadow-lg shadow-rose-500/20"
+                            onClick={() => {
+                                toast.error("Please contact support to delete your account data.");
+                            }}
+                        >
+                            Delete Account Permanently
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
