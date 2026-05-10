@@ -132,21 +132,34 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
             const toastId = toast.loading("ഓഡിയോ തയ്യാറാക്കുന്നു...");
 
             try {
-                // തികച്ചും സൗജന്യമായതും IP ബ്ലോക്ക് ഇല്ലാത്തതുമായ Lingva API ഉപയോഗിക്കുന്നു
-                const text = encodeURIComponent(affirmations.slice(0, 500));
-                const response = await fetch(`https://lingva.ml/api/v1/audio/ml/${text}`);
+                // ഗൂഗിൾ ട്രാൻസ്ലേറ്റിന് 200 അക്ഷരങ്ങളുടെ ലിമിറ്റ് ഉള്ളതിനാൽ നമ്മൾ ടെക്സ്റ്റ് മുറിക്കുന്നു
+                const chunks = affirmations.match(/.{1,150}(?:\s|$)|.{1,150}/g) || [affirmations];
+                const audioArrays: Uint8Array[] = [];
 
-                if (!response.ok) throw new Error("TTS API failed");
-
-                const data = await response.json();
-                
-                if (!data.audio || data.audio.length === 0) {
-                    throw new Error("No audio data received");
+                // ഓരോ ഭാഗമായി API-ലേക്ക് അയച്ച് ഓഡിയോ എടുക്കുന്നു
+                for (const chunk of chunks) {
+                    if (!chunk.trim()) continue;
+                    const response = await fetch(`https://lingva.ml/api/v1/audio/ml/${encodeURIComponent(chunk.trim())}`);
+                    if (!response.ok) throw new Error("TTS API failed");
+                    const data = await response.json();
+                    if (data.audio && data.audio.length > 0) {
+                        audioArrays.push(new Uint8Array(data.audio));
+                    }
                 }
 
-                // ലഭിച്ച Audio Bytes-നെ ബ്രൗസറിന് പ്ലേ ചെയ്യാൻ കഴിയുന്ന Blob URL ആക്കി മാറ്റുന്നു
-                const audioBytes = new Uint8Array(data.audio);
-                const blob = new Blob([audioBytes], { type: 'audio/mpeg' });
+                if (audioArrays.length === 0) throw new Error("No audio generated");
+
+                // എല്ലാ ഓഡിയോ ഭാഗങ്ങളും ഒന്നിച്ച് ചേർക്കുന്നു (MP3 കൺകാറ്റിനേഷൻ)
+                const totalLength = audioArrays.reduce((acc, arr) => acc + arr.length, 0);
+                const combinedAudio = new Uint8Array(totalLength);
+                let offset = 0;
+                for (const arr of audioArrays) {
+                    combinedAudio.set(arr, offset);
+                    offset += arr.length;
+                }
+
+                // ബ്രൗസറിന് പ്ലേ ചെയ്യാൻ കഴിയുന്ന Blob URL ആക്കി മാറ്റുന്നു
+                const blob = new Blob([combinedAudio], { type: 'audio/mpeg' });
                 const audioUrl = URL.createObjectURL(blob);
 
                 if (audioRef.current) {
