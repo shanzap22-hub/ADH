@@ -39,18 +39,18 @@ export async function POST(req: NextRequest) {
         }
 
         // 2. ക്യാഷ് MISS: പൂർണ്ണമായും സൗജന്യമായ Google Translate TTS ഉപയോഗിക്കുന്നു (No API Key Required)
-        // 200 അക്ഷരങ്ങളിൽ താഴെയാണെങ്കിൽ ഒറ്റയടിക്ക് വർക്ക് ആകും. 
-        // അഫർമേഷൻസ് സാധാരണയായി ചെറുതായതിനാൽ ഇത് കൃത്യമായി വർക്ക് ചെയ്യും.
-        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(trimmedText)}&tl=ml&client=tw-ob`;
+        // Vercel IP Block ഒഴിവാക്കാൻ 'translate.googleapis.com' ഉം 'client=gtx' ഉം ഉപയോഗിക്കുന്നു.
+        const ttsUrl = `https://translate.googleapis.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(trimmedText)}&tl=ml&client=gtx`;
 
         const ttsResponse = await fetch(ttsUrl, {
             headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Referer": "https://translate.googleapis.com/"
             }
         });
 
         if (!ttsResponse.ok) {
-            console.error("Free TTS Error:", ttsResponse.statusText);
+            console.error("Free TTS Error:", ttsResponse.statusText, ttsResponse.status);
             return NextResponse.json({ error: "TTS generation failed" }, { status: 502 });
         }
 

@@ -143,8 +143,8 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                 if (!response.ok) {
                     console.warn("Server TTS failed, using client fallback");
                     // Server failed (likely Vercel IP block or missing env keys). 
-                    // Fallback to direct client-side Google Translate URL.
-                    audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(affirmations.slice(0, 200))}&tl=ml&client=tw-ob`;
+                    // Fallback to direct client-side Google Translate URL (using gtx to bypass CORS/Referrer issues).
+                    audioUrl = `https://translate.googleapis.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(affirmations.slice(0, 200))}&tl=ml&client=gtx`;
                 } else {
                     const data = await response.json();
                     audioUrl = data.audioUrl || (data.audioBase64 ? `data:audio/mpeg;base64,${data.audioBase64}` : "");
