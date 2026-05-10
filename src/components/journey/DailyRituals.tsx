@@ -132,29 +132,29 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
             const toastId = toast.loading("ഓഡിയോ തയ്യാറാക്കുന്നു...");
 
             try {
-                const response = await fetch("/api/tts", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ text: affirmations, lang: "ml-IN" })
-                });
+                // തികച്ചും സൗജന്യമായതും IP ബ്ലോക്ക് ഇല്ലാത്തതുമായ Lingva API ഉപയോഗിക്കുന്നു
+                const text = encodeURIComponent(affirmations.slice(0, 500));
+                const response = await fetch(`https://lingva.ml/api/v1/audio/ml/${text}`);
 
-                let audioUrl = "";
+                if (!response.ok) throw new Error("TTS API failed");
+
+                const data = await response.json();
                 
-                if (!response.ok) {
-                    console.warn("Server TTS failed, using client fallback");
-                    // Server failed (likely Vercel IP block or missing env keys). 
-                    // Fallback to direct client-side Google Translate URL (using gtx to bypass CORS/Referrer issues).
-                    audioUrl = `https://translate.googleapis.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(affirmations.slice(0, 200))}&tl=ml&client=gtx`;
-                } else {
-                    const data = await response.json();
-                    audioUrl = data.audioUrl || (data.audioBase64 ? `data:audio/mpeg;base64,${data.audioBase64}` : "");
+                if (!data.audio || data.audio.length === 0) {
+                    throw new Error("No audio data received");
                 }
 
-                if (!audioUrl) throw new Error("No audio available");
+                // ലഭിച്ച Audio Bytes-നെ ബ്രൗസറിന് പ്ലേ ചെയ്യാൻ കഴിയുന്ന Blob URL ആക്കി മാറ്റുന്നു
+                const audioBytes = new Uint8Array(data.audio);
+                const blob = new Blob([audioBytes], { type: 'audio/mpeg' });
+                const audioUrl = URL.createObjectURL(blob);
 
                 if (audioRef.current) {
                     audioRef.current.src = audioUrl;
-                    audioRef.current.onended = () => setIsAudioPlaying(false);
+                    audioRef.current.onended = () => {
+                        setIsAudioPlaying(false);
+                        URL.revokeObjectURL(audioUrl); // മെമ്മറി ഫ്രീ ആക്കുന്നു
+                    };
                     await audioRef.current.play();
                     setIsAudioPlaying(true);
                     toast.success("മലയാളം അഫിർമേഷൻസ് പ്ലേ ചെയ്യുന്നു...", { id: toastId });
