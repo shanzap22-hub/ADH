@@ -46,10 +46,8 @@ export default async function CourseIdPage({
     }
 
     // Check enrollment
-    // Check Enrollment (Purchase OR Tier Access)
     let isEnrolled = false;
     if (user) {
-        // 1. Check direct purchase
         const { data: enrollment } = await supabase
             .from("purchases")
             .select("*")
@@ -60,35 +58,28 @@ export default async function CourseIdPage({
         if (enrollment) {
             isEnrolled = true;
         } else {
-            // 2. Check Tier / Role Access
             const { data: profile } = await supabase
                 .from("profiles")
                 .select("membership_tier, role")
                 .eq("id", user.id)
                 .single();
 
-            const userTier = profile?.membership_tier;
             const userRole = profile?.role;
-
-            // Admins & Instructors get access
             if (["super_admin", "admin", "instructor"].includes(userRole)) {
                 isEnrolled = true;
             } else {
-                // Check if course allows this user's tier
                 const { data: allowedTiers } = await supabase
                     .from("course_tier_access")
                     .select("tier")
                     .eq("course_id", courseId);
 
-                // Exact match logic (consistent with accessible-courses action)
-                if (allowedTiers?.some(t => t.tier === userTier)) {
+                if (allowedTiers?.some(t => t.tier === profile?.membership_tier)) {
                     isEnrolled = true;
                 }
             }
         }
     }
 
-    // Strict Access Control: Redirect if not enrolled/authorized
     if (!isEnrolled || !user) {
         return redirect("/courses");
     }
@@ -104,8 +95,6 @@ export default async function CourseIdPage({
 
     if (progressData) {
         completedLessons = progressData.filter(p => p.is_completed).length;
-
-        // Get last viewed chapter (most recently updated)
         const sortedProgress = [...progressData].sort((a, b) =>
             new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
         );
@@ -134,17 +123,14 @@ export default async function CourseIdPage({
                 let videoId = "";
                 let libraryId: string | undefined = undefined;
 
-                // Check if URL is just a GUID (Video ID)
                 const cleanUrl = chapter.video_url.trim();
-                const isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanUrl);
-
+                
+                // Detection logic for Video IDs and new Player URLs
                 if (cleanUrl.startsWith("bunny://")) {
-                    // Handle custom bunny://VIDEO_ID format
                     videoId = cleanUrl.replace("bunny://", "");
-                } else if (isGuid) {
+                } else if (!cleanUrl.includes("/") && cleanUrl.length > 20) {
                     videoId = cleanUrl;
                 } else {
-                    // Support embed/LIB/VID and play/LIB/VID
                     const match = cleanUrl.match(/(?:embed|play)\/([^\/]+)\/([^\/?]+)/);
                     if (match && match[2]) {
                         libraryId = match[1];
@@ -153,9 +139,7 @@ export default async function CourseIdPage({
                 }
 
                 if (videoId) {
-                    // If libraryId is undefined, getBunnyVideoLength uses the ENV var default
                     const durationSec = await getBunnyVideoLength(videoId, libraryId);
-
                     if (durationSec > 0) {
                         const minutes = Math.floor(durationSec / 60);
                         const seconds = durationSec % 60;
@@ -178,10 +162,8 @@ export default async function CourseIdPage({
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-[env(safe-area-inset-top)]">
             <div className="max-w-6xl mx-auto p-4 space-y-8">
-                {/* Back Button */}
                 <CourseContentBackButton href="/courses" label="Back to Courses" />
 
-                {/* Hero Section */}
                 <CourseHero
                     title={course.title}
                     description={course.description}
@@ -190,7 +172,6 @@ export default async function CourseIdPage({
                     lessonsCount={totalLessons}
                 />
 
-                {/* Progress & CTA Section */}
                 {isEnrolled && (
                     <div className="grid md:grid-cols-2 gap-6">
                         <CourseProgress
@@ -208,15 +189,10 @@ export default async function CourseIdPage({
                     </div>
                 )}
 
-                {/* Not Enrolled State */}
                 {!isEnrolled && (
                     <div className="bg-gradient-to-br from-orange-500 to-pink-600 rounded-xl p-8 text-center">
-                        <h3 className="text-2xl font-bold text-white mb-2">
-                            Enroll to Start Learning
-                        </h3>
-                        <p className="text-orange-100 mb-6">
-                            Get access to all {totalLessons} lessons in this course
-                        </p>
+                        <h3 className="text-2xl font-bold text-white mb-2">Enroll to Start Learning</h3>
+                        <p className="text-orange-100 mb-6">Get access to all {totalLessons} lessons in this course</p>
                         <CourseEnrollButton
                             courseId={courseId}
                             price={course.price}
@@ -225,7 +201,6 @@ export default async function CourseIdPage({
                     </div>
                 )}
 
-                {/* Table of Contents */}
                 <CourseTOCPreview chapters={chaptersWithStatus} courseId={courseId} />
             </div>
         </div>

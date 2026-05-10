@@ -180,7 +180,7 @@ export async function getBunnyVideoLength(videoId: string, libraryId?: string): 
         const data = await response.json();
         return data.length || 0;
     } catch (e) {
-        console.error("Error fetching video length", e);
+        console.error("Error fetching video length:", e);
         return 0;
     }
 }
