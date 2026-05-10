@@ -121,7 +121,6 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
         const isMalayalam = /[\u0D00-\u0D7F]/.test(affirmations);
 
         if (isMalayalam) {
-            // ഇതിനകം പ്ലേ ആകുന്നുണ്ടെങ്കിൽ നിർത്തുന്നു
             if (audioRef.current && isAudioPlaying) {
                 audioRef.current.pause();
                 audioRef.current.currentTime = 0;
@@ -133,21 +132,26 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
             const toastId = toast.loading("ഓഡിയോ തയ്യാറാക്കുന്നു...");
 
             try {
-                // Server-side Google Cloud TTS API Route-ലേക്ക് അയക്കുന്നു
                 const response = await fetch("/api/tts", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ text: affirmations, lang: "ml-IN" })
                 });
 
-                if (!response.ok) throw new Error("TTS generation failed");
+                let audioUrl = "";
+                
+                if (!response.ok) {
+                    console.warn("Server TTS failed, using client fallback");
+                    // Server failed (likely Vercel IP block or missing env keys). 
+                    // Fallback to direct client-side Google Translate URL.
+                    audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(affirmations.slice(0, 200))}&tl=ml&client=tw-ob`;
+                } else {
+                    const data = await response.json();
+                    audioUrl = data.audioUrl || (data.audioBase64 ? `data:audio/mpeg;base64,${data.audioBase64}` : "");
+                }
 
-                const data = await response.json();
-                const audioUrl = data.audioUrl || (data.audioBase64 ? `data:audio/mpeg;base64,${data.audioBase64}` : null);
+                if (!audioUrl) throw new Error("No audio available");
 
-                if (!audioUrl) throw new Error("No audio received");
-
-                // ഓഡിയോ പ്ലേ ചെയ്യുന്നു
                 if (audioRef.current) {
                     audioRef.current.src = audioUrl;
                     audioRef.current.onended = () => setIsAudioPlaying(false);
@@ -157,7 +161,7 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                 }
             } catch (error) {
                 console.error("TTS Error:", error);
-                toast.error("ഓഡിയോ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല. GOOGLE_CLOUD_TTS_API_KEY ചെക്ക് ചെയ്യുക.", { id: toastId });
+                toast.error("ഓഡിയോ പ്ലേ ചെയ്യാൻ കഴിഞ്ഞില്ല. ഇൻ്റർനെറ്റ് കണക്ഷൻ പരിശോധിക്കുക.", { id: toastId });
             } finally {
                 setIsGeneratingTTS(false);
             }
