@@ -41,15 +41,15 @@ export const AchievementJourney = ({ currentLevelIndex, milestoneNames }: Achiev
                     <span className="text-xs font-black">{Math.round(progress)}%</span>
                 </div>
             </CardHeader>
-            <CardContent className="p-4 pt-12 pb-10">
-                <div className="relative flex items-center justify-between gap-10 overflow-x-auto pb-6 scrollbar-hide px-10">
+            <CardContent className="p-4 pt-8 md:pt-12 pb-6 md:pb-10">
+                <div className="relative flex items-center justify-between gap-4 md:gap-10 overflow-x-auto pb-6 scrollbar-hide px-4 md:px-10">
                     {/* Connecting Line Background */}
-                    <div className="absolute top-[52px] left-20 right-20 h-2 bg-slate-100 dark:bg-slate-800 rounded-full -z-0" />
+                    <div className="absolute top-[36px] md:top-[52px] left-10 md:left-20 right-10 md:right-20 h-1.5 md:h-2 bg-slate-100 dark:bg-slate-800 rounded-full -z-0" />
                     
                     {/* Active Connecting Line */}
                     <div 
-                        className="absolute top-[52px] left-20 h-2 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-full -z-0 transition-all duration-1000 shadow-[0_0_15px_rgba(124,58,237,0.4)]"
-                        style={{ width: `calc(${progress}% - 80px)` }}
+                        className="absolute top-[36px] md:top-[52px] left-10 md:left-20 h-1.5 md:h-2 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-full -z-0 transition-all duration-1000 shadow-[0_0_15px_rgba(124,58,237,0.4)]"
+                        style={{ width: `calc(${progress}% - ${typeof window !== 'undefined' && window.innerWidth < 768 ? '40px' : '80px'})` }}
                     />
 
                     {milestones.map((m, i) => {
@@ -59,25 +59,25 @@ export const AchievementJourney = ({ currentLevelIndex, milestoneNames }: Achiev
                         const Icon = m.icon;
 
                         return (
-                            <div key={m.name} className="relative z-10 flex flex-col items-center min-w-[150px] gap-6 group">
+                            <div key={m.name} className="relative z-10 flex flex-col items-center min-w-[100px] md:min-w-[150px] gap-4 md:gap-6 group">
                                 {/* Milestone Node */}
                                 <div 
                                     className={cn(
-                                        "h-24 w-24 flex items-center justify-center border-2 transition-all duration-700 relative overflow-hidden",
+                                        "h-16 w-16 md:h-24 md:w-24 flex items-center justify-center border-2 transition-all duration-700 relative overflow-hidden",
                                         isCompleted 
                                             ? "bg-slate-900 border-white dark:border-slate-800 text-white shadow-2xl"
                                             : isCurrent
-                                                ? "bg-white dark:bg-slate-950 border-violet-600 text-violet-600 scale-110 shadow-2xl ring-8 ring-violet-500/10"
+                                                ? "bg-white dark:bg-slate-950 border-violet-600 text-violet-600 scale-110 shadow-2xl ring-4 md:ring-8 ring-violet-500/10"
                                                 : "bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-300"
                                     )}
-                                    style={{ borderRadius: '2.5rem' }} 
+                                    style={{ borderRadius: typeof window !== 'undefined' && window.innerWidth < 768 ? '1.5rem' : '2.5rem' }} 
                                 >
                                     <div className={cn(
                                         "transition-all duration-500 relative z-10",
                                         isCurrent && "animate-bounce",
                                         isLocked && "opacity-30 blur-[0.5px]"
                                     )}>
-                                        <Icon className={cn("h-10 w-10")} />
+                                        <Icon className={cn("h-7 w-7 md:h-10 md:w-10")} />
                                     </div>
 
                                     {isLocked && (
@@ -87,8 +87,8 @@ export const AchievementJourney = ({ currentLevelIndex, milestoneNames }: Achiev
                                     )}
 
                                     {isCompleted && (
-                                        <div className="absolute top-2 right-2 bg-emerald-500 rounded-full p-1 border-2 border-white dark:border-slate-900 shadow-md">
-                                            <Check className="h-3 w-3 text-white stroke-[4]" />
+                                        <div className="absolute top-1 md:top-2 right-1 md:right-2 bg-emerald-500 rounded-full p-0.5 md:p-1 border-2 border-white dark:border-slate-900 shadow-md">
+                                            <Check className="h-2 w-2 md:h-3 md:w-3 text-white stroke-[4]" />
                                         </div>
                                     )}
                                 </div>

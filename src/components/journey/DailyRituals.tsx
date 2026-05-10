@@ -34,6 +34,7 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
     const [isEditingAffirmations, setIsEditingAffirmations] = useState(false);
     const [isAudioPlaying, setIsAudioPlaying] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isGeneratingTTS, setIsGeneratingTTS] = useState(false);
     const [isUpdatingRevenue, setIsUpdatingRevenue] = useState(false);
     const [newRevenue, setNewRevenue] = useState("");
     const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -113,33 +114,70 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
         }
     };
 
-    const speakAffirmations = () => {
+    const speakAffirmations = async () => {
         if (!affirmations) return toast.error("Please write some affirmations first");
-        const synth = window.speechSynthesis;
-        synth.cancel();
 
-        const loadAndSpeak = () => {
-            const voices = synth.getVoices();
-            const utterance = new SpeechSynthesisUtterance(affirmations);
-            const isMalayalam = /[അ-ഹ]/.test(affirmations);
-            
-            if (isMalayalam) {
-                const mlVoice = voices.find(v => v.lang.startsWith('ml') || v.name.toLowerCase().includes('malayalam') || v.name.toLowerCase().includes('india'));
-                if (mlVoice) { utterance.voice = mlVoice; utterance.lang = mlVoice.lang; }
-                else { utterance.lang = 'ml-IN'; }
-            } else {
-                const enVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Premium')));
-                if (enVoice) { utterance.voice = enVoice; utterance.lang = enVoice.lang; }
-                else { utterance.lang = 'en-US'; }
+        // Malayalam ടെക്സ്റ്റ് ഡിറ്റക്ഷൻ
+        const isMalayalam = /[\u0D00-\u0D7F]/.test(affirmations);
+
+        if (isMalayalam) {
+            // ഇതിനകം പ്ലേ ആകുന്നുണ്ടെങ്കിൽ നിർത്തുന്നു
+            if (audioRef.current && isAudioPlaying) {
+                audioRef.current.pause();
+                audioRef.current.currentTime = 0;
+                setIsAudioPlaying(false);
+                return;
             }
 
-            utterance.rate = 0.85;
-            setTimeout(() => { synth.speak(utterance); }, 50);
-            toast.info(isMalayalam ? "മലയാളം അഫിർമേഷൻസ് പ്ലേ ചെയ്യുന്നു..." : "Playing affirmations...");
-        };
+            setIsGeneratingTTS(true);
+            const toastId = toast.loading("ഓഡിയോ തയ്യാറാക്കുന്നു...");
 
-        if (synth.getVoices().length === 0) { synth.onvoiceschanged = loadAndSpeak; }
-        else { loadAndSpeak(); }
+            try {
+                // Server-side Google Cloud TTS API Route-ലേക്ക് അയക്കുന്നു
+                const response = await fetch("/api/tts", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: affirmations, lang: "ml-IN" })
+                });
+
+                if (!response.ok) throw new Error("TTS generation failed");
+
+                const data = await response.json();
+                const audioUrl = data.audioUrl || (data.audioBase64 ? `data:audio/mpeg;base64,${data.audioBase64}` : null);
+
+                if (!audioUrl) throw new Error("No audio received");
+
+                // ഓഡിയോ പ്ലേ ചെയ്യുന്നു
+                if (audioRef.current) {
+                    audioRef.current.src = audioUrl;
+                    audioRef.current.onended = () => setIsAudioPlaying(false);
+                    await audioRef.current.play();
+                    setIsAudioPlaying(true);
+                    toast.success("മലയാളം അഫിർമേഷൻസ് പ്ലേ ചെയ്യുന്നു...", { id: toastId });
+                }
+            } catch (error) {
+                console.error("TTS Error:", error);
+                toast.error("ഓഡിയോ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല. GOOGLE_CLOUD_TTS_API_KEY ചെക്ക് ചെയ്യുക.", { id: toastId });
+            } finally {
+                setIsGeneratingTTS(false);
+            }
+            return;
+        }
+
+        // ഇംഗ്ലീഷ് TTS: Browser speechSynthesis ഉപയോഗിക്കുന്നു
+        const synth = window.speechSynthesis;
+        if (synth.speaking) { synth.cancel(); return; }
+
+        const voices = synth.getVoices();
+        const utterance = new SpeechSynthesisUtterance(affirmations);
+        const enVoice = voices.find(v => v.lang.startsWith("en") && (v.name.includes("Google") || v.name.includes("Premium")));
+        if (enVoice) { utterance.voice = enVoice; }
+        utterance.lang = "en-US";
+        utterance.rate = 0.9;
+        utterance.onstart = () => setIsAudioPlaying(true);
+        utterance.onend = () => setIsAudioPlaying(false);
+        toast.info("Playing affirmations...");
+        synth.speak(utterance);
     };
 
     const toggleAudio = () => {
@@ -387,8 +425,19 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                 </div>
                             </div>
                             <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
-                                <Button size="icon" variant="outline" onClick={speakAffirmations} className="rounded-2xl h-14 w-14 border-violet-100 dark:border-violet-900 text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-950/30 shadow-sm">
-                                    <Headphones className="h-6 w-6" />
+                                <Button 
+                                    size="icon" 
+                                    variant="outline" 
+                                    onClick={speakAffirmations} 
+                                    disabled={isGeneratingTTS}
+                                    className="rounded-2xl h-14 w-14 border-violet-100 dark:border-violet-900 text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-950/30 shadow-sm"
+                                >
+                                    {isGeneratingTTS 
+                                        ? <span className="h-5 w-5 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
+                                        : isAudioPlaying 
+                                            ? <Pause className="h-6 w-6" /> 
+                                            : <Headphones className="h-6 w-6" />
+                                    }
                                 </Button>
                                 <button 
                                     onClick={() => toggleRitual(affirmationRitual.id)}
