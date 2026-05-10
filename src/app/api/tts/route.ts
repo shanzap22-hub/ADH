@@ -38,53 +38,26 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ audioUrl: publicUrl.publicUrl, cached: true });
         }
 
-        // 2. ക്യാഷ് MISS: Google Cloud TTS API-ൽ നിന്ന് ഓഡിയോ ജനറേറ്റ് ചെയ്യുന്നു
-        const apiKey = process.env.GOOGLE_CLOUD_TTS_API_KEY;
-        if (!apiKey) {
-            return NextResponse.json({ error: "TTS API key not configured" }, { status: 500 });
-        }
+        // 2. ക്യാഷ് MISS: പൂർണ്ണമായും സൗജന്യമായ Google Translate TTS ഉപയോഗിക്കുന്നു (No API Key Required)
+        // 200 അക്ഷരങ്ങളിൽ താഴെയാണെങ്കിൽ ഒറ്റയടിക്ക് വർക്ക് ആകും. 
+        // അഫർമേഷൻസ് സാധാരണയായി ചെറുതായതിനാൽ ഇത് കൃത്യമായി വർക്ക് ചെയ്യും.
+        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(trimmedText)}&tl=ml&client=tw-ob`;
 
-        const ttsResponse = await fetch(
-            `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    input: { text: trimmedText },
-                    voice: {
-                        languageCode: lang,
-                        // Malayalam-ന് WaveNet ശബ്ദം ഉപയോഗിക്കുന്നു (ഏറ്റവും മികച്ചത്)
-                        name: lang === "ml-IN" ? "ml-IN-Wavenet-A" : "en-US-Neural2-F",
-                        ssmlGender: "FEMALE"
-                    },
-                    audioConfig: {
-                        audioEncoding: "MP3",
-                        speakingRate: 0.9, // അല്പം പതുക്കെ, കൂടുതൽ വ്യക്തം
-                        pitch: 0,
-                        volumeGainDb: 0
-                    }
-                })
+        const ttsResponse = await fetch(ttsUrl, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
             }
-        );
+        });
 
         if (!ttsResponse.ok) {
-            const errorData = await ttsResponse.json();
-            console.error("Google TTS Error:", errorData);
-            return NextResponse.json(
-                { error: "TTS generation failed", details: errorData },
-                { status: 502 }
-            );
+            console.error("Free TTS Error:", ttsResponse.statusText);
+            return NextResponse.json({ error: "TTS generation failed" }, { status: 502 });
         }
 
-        const ttsData = await ttsResponse.json();
-        const audioBase64 = ttsData.audioContent;
-
-        if (!audioBase64) {
-            return NextResponse.json({ error: "No audio content received" }, { status: 502 });
-        }
+        const arrayBuffer = await ttsResponse.arrayBuffer();
+        const audioBuffer = Buffer.from(arrayBuffer);
 
         // 3. Supabase Storage-ൽ ക്യാഷ് ചെയ്യുന്നു
-        const audioBuffer = Buffer.from(audioBase64, "base64");
         const { error: uploadError } = await supabaseAdmin.storage
             .from("tts-cache")
             .upload(cachePath, audioBuffer, {
@@ -96,6 +69,7 @@ export async function POST(req: NextRequest) {
         if (uploadError) {
             console.error("Cache upload error:", uploadError);
             // ക്യാഷ് ഫെയ്ൽ ആയാലും ഓഡിയോ Base64 ആയി നൽകുന്നു
+            const audioBase64 = audioBuffer.toString('base64');
             return NextResponse.json({ audioBase64, cached: false });
         }
 
