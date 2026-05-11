@@ -135,6 +135,7 @@ export const BunnyVideoPlayer = ({
         }
 
         const initPlayer = () => {
+            console.log("[BunnyPlayer] Attempting to initialize player SDK...");
             if (window.playerjs && iframeRef.current) {
                 if (!playerRef.current || playerRef.current.element !== iframeRef.current) {
                     try {
@@ -142,6 +143,7 @@ export const BunnyVideoPlayer = ({
                         playerRef.current = player;
 
                         player.on('ready', () => {
+                            console.log("[BunnyPlayer] SDK Ready event received");
                             setIsReady(true);
                             if (!isInitialTimeSetRef.current) {
                                 const t = initialTimeRef.current;
@@ -165,6 +167,7 @@ export const BunnyVideoPlayer = ({
                         });
 
                         player.on('ended', () => {
+                            console.log("[BunnyPlayer] Video ended");
                             handleCompletion();
                         });
 
@@ -176,16 +179,31 @@ export const BunnyVideoPlayer = ({
                         console.error("[BunnyPlayer] Initialization failed:", e);
                     }
                 }
+            } else {
+                console.log("[BunnyPlayer] Cannot init: window.playerjs or iframeRef missing", {
+                    hasPlayerJS: !!window.playerjs,
+                    hasIframe: !!iframeRef.current
+                });
             }
         };
+
+        // Timeout to hide loader even if SDK ready event fails
+        const readyTimeout = setTimeout(() => {
+            if (!isReady) {
+                console.warn("[BunnyPlayer] SDK ready event timed out, forcing isReady=true to show iframe");
+                setIsReady(true);
+            }
+        }, 6000); // 6 seconds timeout
 
         if (window.playerjs) {
             initPlayer();
         } else {
+            console.log("[BunnyPlayer] SDK not loaded yet, adding listener...");
             script.addEventListener("load", initPlayer);
         }
 
         return () => {
+            clearTimeout(readyTimeout);
             script.removeEventListener("load", initPlayer);
             if (playerRef.current) {
                 playerRef.current = null;

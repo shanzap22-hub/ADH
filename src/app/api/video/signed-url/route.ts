@@ -29,12 +29,15 @@ export async function GET(req: Request) {
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
+            console.error("[SIGNED_URL] No authenticated user found");
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         // 2. Access check — use JWT metadata for speed and reliability
         const userRole = user.app_metadata?.role || "student";
         const userTier = user.app_metadata?.membership_tier || "free";
+        
+        console.log(`[SIGNED_URL] Request for video: ${videoId}, user: ${user.id}, role: ${userRole}, tier: ${userTier}`);
 
         // Admin/Instructor ആണെങ്കിൽ always allow
         const isPrivileged = userRole === "super_admin" || 
@@ -76,6 +79,7 @@ export async function GET(req: Request) {
             const hasFreeContent = freeChapter && freeChapter.length > 0;
 
             if (!hasTierAccess && !hasPurchase && !hasFreeContent) {
+                console.warn(`[SIGNED_URL] Access denied for user ${user.id} to course ${courseId}`);
                 return NextResponse.json({ error: "Access denied" }, { status: 403 });
             }
         }
@@ -86,7 +90,7 @@ export async function GET(req: Request) {
 
         if (!securityKey || !libraryId) {
             // Token key configure ചെയ്തിട്ടില്ലെങ്കിൽ unsigned URL return ചെയ്യുക (backward compatible)
-            console.warn("[SIGNED_URL] BUNNY_STREAM_TOKEN_KEY not configured, returning unsigned URL");
+            console.warn("[SIGNED_URL] BUNNY_STREAM_TOKEN_KEY or NEXT_PUBLIC_BUNNY_LIBRARY_ID not configured, returning unsigned URL");
             return NextResponse.json({
                 url: `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true`,
                 signed: false
@@ -104,6 +108,8 @@ export async function GET(req: Request) {
             .digest("hex");
 
         const signedUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?token=${token}&expires=${expiresAt}&autoplay=false&preload=true`;
+        
+        console.log(`[SIGNED_URL] Success: Generated signed URL for video ${videoId}`);
 
         return NextResponse.json({
             url: signedUrl,
@@ -112,7 +118,7 @@ export async function GET(req: Request) {
         });
 
     } catch (error: any) {
-        console.error("[SIGNED_URL] Error:", error);
+        console.error("[SIGNED_URL] Fatal Error:", error);
         return NextResponse.json({ error: "Failed to generate video URL" }, { status: 500 });
     }
 }
