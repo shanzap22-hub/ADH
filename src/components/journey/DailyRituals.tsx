@@ -41,6 +41,7 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
     const [newRevenue, setNewRevenue] = useState("");
     const [fetchedAudioUrl, setFetchedAudioUrl] = useState<string | null>(null);
     const [isWritingGoalsOnline, setIsWritingGoalsOnline] = useState(false);
+    const [isHistoryMode, setIsHistoryMode] = useState(false);
     const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
     const [goalsHistory, setGoalsHistory] = useState<Record<string, Record<string, string[]>>>({});
     const [activeCategoryIdx, setActiveCategoryIdx] = useState(0);
@@ -431,7 +432,13 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                     <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-center">
                                         <p className="text-[11px] font-bold text-slate-400 italic">"Keep your vision clear and written"</p>
                                     </div>
-                                    <Dialog open={isWritingGoalsOnline} onOpenChange={setIsWritingGoalsOnline}>
+                                     <Dialog open={isWritingGoalsOnline} onOpenChange={(open) => {
+                                        setIsWritingGoalsOnline(open);
+                                        if (open) {
+                                            setIsHistoryMode(false);
+                                            setSelectedDate(new Date().toISOString().split('T')[0]);
+                                        }
+                                    }}>
                                         <DialogTrigger asChild>
                                             <Button variant="outline" className="w-full rounded-2xl border-slate-200 dark:border-slate-800 text-slate-500 hover:text-indigo-600 hover:border-indigo-200 dark:hover:border-indigo-900 hover:bg-indigo-50 dark:hover:bg-indigo-950/30">
                                                 <Edit3 className="mr-2 h-4 w-4" />
@@ -441,13 +448,47 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                         <DialogContent className="rounded-[2.5rem] max-w-2xl w-[95vw] h-[80vh] flex flex-col p-0 overflow-hidden">
                                             <DialogHeader className="p-6 md:p-8 pb-0">
                                                 <DialogTitle className="text-2xl font-black flex items-center justify-between">
-                                                    <span>Write Your 20 Goals</span>
+                                                    <span>{isHistoryMode ? "Goal History" : "Write Your 20 Goals"}</span>
                                                 </DialogTitle>
-                                                <div className="flex items-center justify-center mt-6 mb-2 bg-slate-100 dark:bg-slate-800/50 p-2 rounded-2xl">
-                                                    <span className="font-bold text-slate-700 dark:text-slate-300">
-                                                        {new Date(selectedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                                    </span>
-                                                </div>
+                                                
+                                                {isHistoryMode ? (
+                                                    <div className="flex items-center justify-between mt-6 mb-2 bg-slate-100 dark:bg-slate-800/50 p-2 rounded-2xl">
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="sm"
+                                                            className="rounded-xl"
+                                                            onClick={() => {
+                                                                const d = new Date(selectedDate);
+                                                                d.setDate(d.getDate() - 1);
+                                                                setSelectedDate(d.toISOString().split('T')[0]);
+                                                            }}
+                                                        >
+                                                            &larr; Prev
+                                                        </Button>
+                                                        <span className="font-bold text-slate-700 dark:text-slate-300">
+                                                            {new Date(selectedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                        </span>
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="sm"
+                                                            className="rounded-xl"
+                                                            onClick={() => {
+                                                                const d = new Date(selectedDate);
+                                                                d.setDate(d.getDate() + 1);
+                                                                setSelectedDate(d.toISOString().split('T')[0]);
+                                                            }}
+                                                            disabled={selectedDate === new Date().toISOString().split('T')[0]}
+                                                        >
+                                                            Next &rarr;
+                                                        </Button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center justify-center mt-6 mb-2 bg-slate-100 dark:bg-slate-800/50 p-2 rounded-2xl">
+                                                        <span className="font-bold text-slate-700 dark:text-slate-300">
+                                                            {new Date(selectedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                        </span>
+                                                    </div>
+                                                )}
 
                                             </DialogHeader>
                                             <div className="flex-1 p-4 md:p-8 overflow-y-auto bg-slate-50/50 dark:bg-slate-950/50">
@@ -492,8 +533,12 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                                                 </div>
                                                                 <Input 
                                                                     value={val}
+                                                                    disabled={isHistoryMode}
                                                                     placeholder={goalIdx === 0 ? goalCategories[activeCategoryIdx].placeholder : `Write goal #${goalIdx + 1}...`}
-                                                                    className="h-12 rounded-2xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus-visible:ring-indigo-500"
+                                                                    className={cn(
+                                                                        "h-12 rounded-2xl border-slate-200 dark:border-slate-800 focus-visible:ring-indigo-500",
+                                                                        isHistoryMode ? "bg-transparent opacity-80 cursor-default" : "bg-slate-50 dark:bg-slate-950"
+                                                                    )}
                                                                     onChange={(e) => {
                                                                         setGoalsHistory(prev => {
                                                                             const newHistory = { ...prev };
@@ -518,14 +563,38 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                                     })}
                                                 </div>
                                             </div>
-                                            <div className="p-6 md:p-8 pt-0 flex justify-end gap-3 mt-auto">
-                                                <Button variant="ghost" onClick={() => setIsWritingGoalsOnline(false)} className="rounded-2xl px-8">Close</Button>
-                                                <Button onClick={() => {
-                                                    toast.success(`Goals saved for ${new Date(selectedDate).toLocaleDateString()}!`);
-                                                    setIsWritingGoalsOnline(false);
-                                                }} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-12 font-black shadow-xl shadow-indigo-500/20">
-                                                    Save Goals
-                                                </Button>
+                                            <div className="p-6 md:p-8 pt-0 flex justify-end gap-3 mt-auto border-t border-slate-100 dark:border-slate-800/60 pt-4">
+                                                {isHistoryMode ? (
+                                                    <>
+                                                        <Button variant="ghost" onClick={() => setIsWritingGoalsOnline(false)} className="rounded-2xl px-8">Close</Button>
+                                                        <Button onClick={() => {
+                                                            setIsHistoryMode(false);
+                                                            setSelectedDate(new Date().toISOString().split('T')[0]);
+                                                        }} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-8 font-black shadow-xl shadow-indigo-500/20">
+                                                            <Edit3 className="h-4 w-4 mr-2" /> Write Today's Goals
+                                                        </Button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <div className="flex-1">
+                                                            <Button variant="outline" onClick={() => {
+                                                                setIsHistoryMode(true);
+                                                                const d = new Date(selectedDate);
+                                                                d.setDate(d.getDate() - 1);
+                                                                setSelectedDate(d.toISOString().split('T')[0]);
+                                                            }} className="rounded-2xl px-4 text-slate-500 border-slate-200 dark:border-slate-800">
+                                                                View History
+                                                            </Button>
+                                                        </div>
+                                                        <Button variant="ghost" onClick={() => setIsWritingGoalsOnline(false)} className="rounded-2xl px-4 md:px-8">Close</Button>
+                                                        <Button onClick={() => {
+                                                            toast.success(`Goals saved for ${new Date(selectedDate).toLocaleDateString()}!`);
+                                                            setIsWritingGoalsOnline(false);
+                                                        }} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-6 md:px-12 font-black shadow-xl shadow-indigo-500/20">
+                                                            Save Goals
+                                                        </Button>
+                                                    </>
+                                                )}
                                             </div>
                                         </DialogContent>
                                     </Dialog>
