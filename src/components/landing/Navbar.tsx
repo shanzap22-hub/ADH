@@ -29,8 +29,8 @@ export function Navbar() {
                     </Link>
                 </nav>
                 <div className="flex items-center gap-4">
-                    <Link href="/login" className="hidden md:block text-sm font-medium hover:underline underline-offset-4">
-                        Login
+                    <Link href="/login" className="text-sm font-medium hover:underline underline-offset-4 px-2">
+                        Login Member
                     </Link>
                     <Link href="/contact">
                         <Button size="sm" className="font-semibold">

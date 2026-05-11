@@ -25,9 +25,9 @@ export default async function HomePage() {
             </Link>
 
             <div className="flex items-center gap-4">
-              <Link href="/login" className="hidden sm:block">
-                <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-medium rounded-full px-6">
-                  Member Login
+              <Link href="/login" className="flex">
+                <Button variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/5 transition-colors font-medium rounded-full px-4 sm:px-6 text-xs sm:text-sm">
+                  Login Member
                 </Button>
               </Link>
               <RazorpayButtonWrapper>
