@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { 
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger 
 } from "@/components/ui/dialog";
@@ -41,7 +42,8 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
     const [fetchedAudioUrl, setFetchedAudioUrl] = useState<string | null>(null);
     const [isWritingGoalsOnline, setIsWritingGoalsOnline] = useState(false);
     const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
-    const [goalsHistory, setGoalsHistory] = useState<Record<string, Record<string, string>>>({});
+    const [goalsHistory, setGoalsHistory] = useState<Record<string, Record<string, string[]>>>({});
+    const [activeCategoryIdx, setActiveCategoryIdx] = useState(0);
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const affirmationsAudioRef = useRef<HTMLAudioElement | null>(null);
     const supabase = createClient();
@@ -461,27 +463,72 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                                     </p>
                                                 </div>
                                             </DialogHeader>
-                                            <div className="flex-1 p-6 md:p-8 overflow-y-auto">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                    {goalCategories.map((category, idx) => (
-                                                        <div key={idx} className="space-y-2">
-                                                            <label className="font-bold text-sm text-indigo-600 dark:text-indigo-400">{category}</label>
-                                                            <Textarea 
-                                                                value={goalsHistory[selectedDate]?.[category] || ""}
-                                                                onChange={(e) => {
-                                                                    setGoalsHistory(prev => {
-                                                                        const newHistory = { ...prev };
-                                                                        if (!newHistory[selectedDate]) newHistory[selectedDate] = {};
-                                                                        newHistory[selectedDate][category] = e.target.value;
-                                                                        localStorage.setItem('daily_goals_history', JSON.stringify(newHistory));
-                                                                        return newHistory;
-                                                                    });
-                                                                }}
-                                                                placeholder="1. \n2. \n3. \n4. \n5. "
-                                                                className="w-full h-40 rounded-2xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus-visible:ring-indigo-500 p-4 text-sm font-medium leading-relaxed resize-none"
-                                                            />
-                                                        </div>
+                                            <div className="flex-1 p-4 md:p-8 overflow-y-auto bg-slate-50/50 dark:bg-slate-950/50">
+                                                {/* Category Tabs */}
+                                                <div className="flex overflow-x-auto gap-2 pb-4 mb-4 scrollbar-hide">
+                                                    {goalCategories.map((cat, idx) => (
+                                                        <button
+                                                            key={idx}
+                                                            onClick={() => setActiveCategoryIdx(idx)}
+                                                            className={cn(
+                                                                "whitespace-nowrap px-4 py-2 rounded-2xl font-bold text-sm transition-all",
+                                                                activeCategoryIdx === idx 
+                                                                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20" 
+                                                                    : "bg-white dark:bg-slate-900 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border border-slate-200 dark:border-slate-800"
+                                                            )}
+                                                        >
+                                                            {cat}
+                                                        </button>
                                                     ))}
+                                                </div>
+                                                
+                                                {/* Goals List */}
+                                                <div className="space-y-3 bg-white dark:bg-slate-900 p-4 md:p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                                                    <h3 className="font-black text-lg text-slate-800 dark:text-slate-200 mb-4">
+                                                        {goalCategories[activeCategoryIdx]} Goals
+                                                    </h3>
+                                                    {[0, 1, 2, 3, 4].map((goalIdx) => {
+                                                        const isPast = selectedDate < new Date().toISOString().split('T')[0];
+                                                        const catName = goalCategories[activeCategoryIdx];
+                                                        const val = (goalsHistory[selectedDate]?.[catName] && Array.isArray(goalsHistory[selectedDate][catName])) 
+                                                            ? goalsHistory[selectedDate][catName][goalIdx] 
+                                                            : "";
+                                                        
+                                                        return (
+                                                            <div key={goalIdx} className="flex gap-3 items-center">
+                                                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-sm">
+                                                                    {goalIdx + 1}
+                                                                </div>
+                                                                <Input 
+                                                                    value={val}
+                                                                    disabled={isPast}
+                                                                    placeholder={`Write goal #${goalIdx + 1}...`}
+                                                                    className={cn(
+                                                                        "h-12 rounded-2xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus-visible:ring-indigo-500",
+                                                                        isPast ? "opacity-70 cursor-not-allowed" : ""
+                                                                    )}
+                                                                    onChange={(e) => {
+                                                                        setGoalsHistory(prev => {
+                                                                            const newHistory = { ...prev };
+                                                                            if (!newHistory[selectedDate]) newHistory[selectedDate] = {};
+                                                                            
+                                                                            let catArray = newHistory[selectedDate][catName];
+                                                                            if (!Array.isArray(catArray)) {
+                                                                                catArray = ["", "", "", "", ""];
+                                                                            } else {
+                                                                                catArray = [...catArray];
+                                                                            }
+                                                                            
+                                                                            catArray[goalIdx] = e.target.value;
+                                                                            newHistory[selectedDate][catName] = catArray;
+                                                                            localStorage.setItem('daily_goals_history', JSON.stringify(newHistory));
+                                                                            return newHistory;
+                                                                        });
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
                                             <div className="p-6 md:p-8 pt-0 flex justify-end gap-3 mt-auto">
