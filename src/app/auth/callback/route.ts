@@ -53,7 +53,7 @@ export async function GET(request: Request) {
                             // Determine redirect path based on role
                             if (next === '/') {
                                 if (profile.role === 'instructor') redirectPath = '/instructor/courses'
-                                else if (profile.role === 'admin' || profile.role === 'super_admin') redirectPath = '/dashboard'
+                                else if (profile.role === 'admin' || profile.role === 'super_admin') redirectPath = '/admin'
                                 else redirectPath = '/dashboard'
                             } else {
                                 redirectPath = next

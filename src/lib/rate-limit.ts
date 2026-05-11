@@ -25,10 +25,10 @@ try {
     if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
         const redis = Redis.fromEnv();
 
-        // Auth, payments, coupon validation — strict: 5 requests/minute
+        // Auth, payments, coupon validation — strict: 20 requests/minute
         strictLimiter = new Ratelimit({
             redis,
-            limiter: Ratelimit.slidingWindow(5, '60 s'),
+            limiter: Ratelimit.slidingWindow(20, '60 s'),
             analytics: true,
             prefix: 'adh:rl:strict',
         });
@@ -105,9 +105,9 @@ export async function rateLimit(
         try {
             // Select appropriate limiter based on limit value
             let limiter: Ratelimit;
-            if (limit <= 5) {
+            if (limit <= 20) {
                 limiter = strictLimiter!;
-            } else if (limit <= 20) {
+            } else if (limit <= 50) {
                 limiter = moderateLimiter!;
             } else {
                 limiter = generousLimiter!;
@@ -183,8 +183,8 @@ export async function rateLimit(
  * Preset rate limit configurations
  */
 export const RateLimitPresets = {
-    /** Very strict: 5 requests per minute (auth, payments, coupons) */
-    STRICT: { limit: 5, windowMs: 60000 },
+    /** Very strict: 20 requests per minute (auth, payments, coupons) */
+    STRICT: { limit: 20, windowMs: 60000 },
 
     /** Moderate: 20 requests per minute (general API) */
     MODERATE: { limit: 20, windowMs: 60000 },
