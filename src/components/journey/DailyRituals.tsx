@@ -40,6 +40,8 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
     const [isUpdatingRevenue, setIsUpdatingRevenue] = useState(false);
     const [newRevenue, setNewRevenue] = useState("");
     const [fetchedAudioUrl, setFetchedAudioUrl] = useState<string | null>(null);
+    const [audioProgress, setAudioProgress] = useState(0);
+    const [audioDuration, setAudioDuration] = useState(0);
     const [isWritingGoalsOnline, setIsWritingGoalsOnline] = useState(false);
     const [isHistoryMode, setIsHistoryMode] = useState(false);
     const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -274,6 +276,39 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
         }
     };
 
+    const handleTimeUpdate = () => {
+        if (audioRef.current) {
+            setAudioProgress(audioRef.current.currentTime);
+            localStorage.setItem('strangest_secret_progress', audioRef.current.currentTime.toString());
+        }
+    };
+
+    const handleLoadedMetadata = () => {
+        if (audioRef.current) {
+            setAudioDuration(audioRef.current.duration);
+            const savedProgress = localStorage.getItem('strangest_secret_progress');
+            if (savedProgress) {
+                audioRef.current.currentTime = parseFloat(savedProgress);
+                setAudioProgress(parseFloat(savedProgress));
+            }
+        }
+    };
+    
+    const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const time = parseFloat(e.target.value);
+        if (audioRef.current) {
+            audioRef.current.currentTime = time;
+            setAudioProgress(time);
+        }
+    };
+
+    const formatTime = (time: number) => {
+        if (!time || isNaN(time)) return "00:00";
+        const minutes = Math.floor(time / 60);
+        const seconds = Math.floor(time % 60);
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    };
+
     const completedCount = rituals.filter(r => r.is_completed).length;
     const progress = rituals.length > 0 ? (completedCount / rituals.length) * 100 : 0;
     
@@ -396,9 +431,27 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                     {isAudioPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                                     {isAudioPlaying ? "Playing..." : "Play Now"}
                                 </Button>
+                                
+                                <div className="space-y-1">
+                                    <input 
+                                        type="range" 
+                                        min="0" 
+                                        max={audioDuration || 100} 
+                                        value={audioProgress}
+                                        onChange={handleSeek}
+                                        className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full appearance-none cursor-pointer accent-rose-500"
+                                    />
+                                    <div className="flex justify-between text-[10px] font-bold text-slate-400">
+                                        <span>{formatTime(audioProgress)}</span>
+                                        <span>{formatTime(audioDuration)}</span>
+                                    </div>
+                                </div>
+
                                 <audio 
                                     ref={audioRef} 
                                     src={audioSource} 
+                                    onTimeUpdate={handleTimeUpdate}
+                                    onLoadedMetadata={handleLoadedMetadata}
                                     onEnded={() => setIsAudioPlaying(false)}
                                 />
                             </div>
