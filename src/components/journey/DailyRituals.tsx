@@ -49,10 +49,26 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
     const supabase = createClient();
 
     const goalCategories = [
-        "Category 1 (Health & Fitness)",
-        "Category 2 (Wealth & Career)",
-        "Category 3 (Relationships & Family)",
-        "Category 4 (Personal & Spiritual)"
+        {
+            name: "Business & Career",
+            desc: "What changes do you want to bring in your business? (e.g., launching a new product/course)",
+            placeholder: "e.g. I have successfully launched my new online course..."
+        },
+        {
+            name: "Purchases & Wealth",
+            desc: "What do you intend to buy? (Write as if you already own it)",
+            placeholder: "e.g. I am so happy and grateful that I bought my dream car..."
+        },
+        {
+            name: "Relationships",
+            desc: "How do you want to improve relationships with family and others?",
+            placeholder: "e.g. I have a very loving and peaceful relationship with my family..."
+        },
+        {
+            name: "Personal Life",
+            desc: "Habits to build or avoid (e.g., stop eating junk food)",
+            placeholder: "e.g. I eat only healthy food and take care of my body..."
+        }
     ];
 
     useEffect(() => {
@@ -457,11 +473,7 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                                         Next Day &rarr;
                                                     </Button>
                                                 </div>
-                                                <div className="mt-2 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50">
-                                                    <p className="text-sm font-bold text-amber-600 dark:text-amber-500">
-                                                        ⚠️ നിങ്ങൾക്ക് ഓഫ്‌ലൈൻ ആയി ബുക്കിൽ എഴുതാൻ സൗകര്യമില്ലെങ്കിൽ മാത്രമാണ് ഓൺലൈൻ ആയി എഴുതേണ്ടത്.
-                                                    </p>
-                                                </div>
+
                                             </DialogHeader>
                                             <div className="flex-1 p-4 md:p-8 overflow-y-auto bg-slate-50/50 dark:bg-slate-950/50">
                                                 {/* Category Tabs */}
@@ -477,19 +489,24 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                                                     : "bg-white dark:bg-slate-900 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 border border-slate-200 dark:border-slate-800"
                                                             )}
                                                         >
-                                                            {cat}
+                                                            {cat.name}
                                                         </button>
                                                     ))}
                                                 </div>
                                                 
                                                 {/* Goals List */}
-                                                <div className="space-y-3 bg-white dark:bg-slate-900 p-4 md:p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                                                    <h3 className="font-black text-lg text-slate-800 dark:text-slate-200 mb-4">
-                                                        {goalCategories[activeCategoryIdx]} Goals
-                                                    </h3>
+                                                <div className="space-y-4 bg-white dark:bg-slate-900 p-4 md:p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                                                    <div className="mb-4 space-y-1">
+                                                        <h3 className="font-black text-lg text-slate-800 dark:text-slate-200">
+                                                            {goalCategories[activeCategoryIdx].name} Goals
+                                                        </h3>
+                                                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                                                            {goalCategories[activeCategoryIdx].desc}
+                                                        </p>
+                                                    </div>
                                                     {[0, 1, 2, 3, 4].map((goalIdx) => {
                                                         const isPast = selectedDate < new Date().toISOString().split('T')[0];
-                                                        const catName = goalCategories[activeCategoryIdx];
+                                                        const catName = goalCategories[activeCategoryIdx].name;
                                                         const val = (goalsHistory[selectedDate]?.[catName] && Array.isArray(goalsHistory[selectedDate][catName])) 
                                                             ? goalsHistory[selectedDate][catName][goalIdx] 
                                                             : "";
@@ -502,7 +519,7 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                                                 <Input 
                                                                     value={val}
                                                                     disabled={isPast}
-                                                                    placeholder={`Write goal #${goalIdx + 1}...`}
+                                                                    placeholder={goalIdx === 0 ? goalCategories[activeCategoryIdx].placeholder : `Write goal #${goalIdx + 1}...`}
                                                                     className={cn(
                                                                         "h-12 rounded-2xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus-visible:ring-indigo-500",
                                                                         isPast ? "opacity-70 cursor-not-allowed" : ""
