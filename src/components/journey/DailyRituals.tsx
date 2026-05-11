@@ -40,15 +40,29 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
     const [newRevenue, setNewRevenue] = useState("");
     const [fetchedAudioUrl, setFetchedAudioUrl] = useState<string | null>(null);
     const [isWritingGoalsOnline, setIsWritingGoalsOnline] = useState(false);
-    const [onlineGoalsText, setOnlineGoalsText] = useState("");
+    const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+    const [goalsHistory, setGoalsHistory] = useState<Record<string, Record<string, string>>>({});
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const affirmationsAudioRef = useRef<HTMLAudioElement | null>(null);
     const supabase = createClient();
 
+    const goalCategories = [
+        "Category 1 (Health & Fitness)",
+        "Category 2 (Wealth & Career)",
+        "Category 3 (Relationships & Family)",
+        "Category 4 (Personal & Spiritual)"
+    ];
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            const savedGoals = localStorage.getItem('daily_goals_offline');
-            if (savedGoals) setOnlineGoalsText(savedGoals);
+            const history = localStorage.getItem('daily_goals_history');
+            if (history) {
+                try {
+                    setGoalsHistory(JSON.parse(history));
+                } catch (e) {
+                    console.error("Failed to parse goals history");
+                }
+            }
         }
     }, []);
 
@@ -407,29 +421,73 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                             </Button>
                                         </DialogTrigger>
                                         <DialogContent className="rounded-[2.5rem] max-w-2xl w-[95vw] h-[80vh] flex flex-col p-0 overflow-hidden">
-                                            <DialogHeader className="p-8 pb-0">
-                                                <DialogTitle className="text-2xl font-black">Write Your 20 Goals</DialogTitle>
-                                                <div className="mt-4 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50">
+                                            <DialogHeader className="p-6 md:p-8 pb-0">
+                                                <DialogTitle className="text-2xl font-black flex items-center justify-between">
+                                                    <span>Write Your 20 Goals</span>
+                                                </DialogTitle>
+                                                <div className="flex items-center justify-between mt-6 mb-2 bg-slate-100 dark:bg-slate-800/50 p-2 rounded-2xl">
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="sm"
+                                                        className="rounded-xl"
+                                                        onClick={() => {
+                                                            const d = new Date(selectedDate);
+                                                            d.setDate(d.getDate() - 1);
+                                                            setSelectedDate(d.toISOString().split('T')[0]);
+                                                        }}
+                                                    >
+                                                        &larr; Previous Day
+                                                    </Button>
+                                                    <span className="font-bold text-slate-700 dark:text-slate-300">
+                                                        {new Date(selectedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                    </span>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="sm"
+                                                        className="rounded-xl"
+                                                        onClick={() => {
+                                                            const d = new Date(selectedDate);
+                                                            d.setDate(d.getDate() + 1);
+                                                            setSelectedDate(d.toISOString().split('T')[0]);
+                                                        }}
+                                                        disabled={selectedDate === new Date().toISOString().split('T')[0]}
+                                                    >
+                                                        Next Day &rarr;
+                                                    </Button>
+                                                </div>
+                                                <div className="mt-2 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50">
                                                     <p className="text-sm font-bold text-amber-600 dark:text-amber-500">
                                                         ⚠️ നിങ്ങൾക്ക് ഓഫ്‌ലൈൻ ആയി ബുക്കിൽ എഴുതാൻ സൗകര്യമില്ലെങ്കിൽ മാത്രമാണ് ഓൺലൈൻ ആയി എഴുതേണ്ടത്.
                                                     </p>
                                                 </div>
                                             </DialogHeader>
-                                            <div className="flex-1 p-8">
-                                                <Textarea 
-                                                    value={onlineGoalsText}
-                                                    onChange={(e) => {
-                                                        setOnlineGoalsText(e.target.value);
-                                                        localStorage.setItem('daily_goals_offline', e.target.value);
-                                                    }}
-                                                    placeholder="1. I will become...\n2. I am going to...\n..."
-                                                    className="w-full h-full rounded-[2rem] border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus-visible:ring-indigo-500 p-8 text-lg font-medium leading-relaxed resize-none"
-                                                />
+                                            <div className="flex-1 p-6 md:p-8 overflow-y-auto">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    {goalCategories.map((category, idx) => (
+                                                        <div key={idx} className="space-y-2">
+                                                            <label className="font-bold text-sm text-indigo-600 dark:text-indigo-400">{category}</label>
+                                                            <Textarea 
+                                                                value={goalsHistory[selectedDate]?.[category] || ""}
+                                                                onChange={(e) => {
+                                                                    setGoalsHistory(prev => {
+                                                                        const newHistory = { ...prev };
+                                                                        if (!newHistory[selectedDate]) newHistory[selectedDate] = {};
+                                                                        newHistory[selectedDate][category] = e.target.value;
+                                                                        localStorage.setItem('daily_goals_history', JSON.stringify(newHistory));
+                                                                        return newHistory;
+                                                                    });
+                                                                }}
+                                                                placeholder="1. \n2. \n3. \n4. \n5. "
+                                                                className="w-full h-40 rounded-2xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus-visible:ring-indigo-500 p-4 text-sm font-medium leading-relaxed resize-none"
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                            <div className="p-8 pt-0 flex justify-end gap-3">
+                                            <div className="p-6 md:p-8 pt-0 flex justify-end gap-3 mt-auto">
                                                 <Button variant="ghost" onClick={() => setIsWritingGoalsOnline(false)} className="rounded-2xl px-8">Close</Button>
                                                 <Button onClick={() => {
-                                                    toast.success("Goals saved locally!");
+                                                    toast.success(`Goals saved for ${new Date(selectedDate).toLocaleDateString()}!`);
                                                     setIsWritingGoalsOnline(false);
                                                 }} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-12 font-black shadow-xl shadow-indigo-500/20">
                                                     Save Goals

@@ -201,21 +201,6 @@ export default function SettingsPage() {
                         <LogOut className="h-4 w-4 text-rose-500" />
                         <span className="font-bold">Sign Out from Device</span>
                     </Button>
-
-                    <Separator />
-
-                    <div className="space-y-3">
-                        <p className="text-xs font-bold text-rose-600/60 uppercase tracking-widest px-1">Danger Zone</p>
-                        <Button 
-                            variant="destructive" 
-                            className="w-full h-12 rounded-2xl font-black shadow-lg shadow-rose-500/20"
-                            onClick={() => {
-                                toast.error("Please contact support to delete your account data.");
-                            }}
-                        >
-                            Delete Account Permanently
-                        </Button>
-                    </div>
                 </CardContent>
             </Card>
         </div>
