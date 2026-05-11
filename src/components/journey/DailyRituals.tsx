@@ -443,35 +443,10 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                                 <DialogTitle className="text-2xl font-black flex items-center justify-between">
                                                     <span>Write Your 20 Goals</span>
                                                 </DialogTitle>
-                                                <div className="flex items-center justify-between mt-6 mb-2 bg-slate-100 dark:bg-slate-800/50 p-2 rounded-2xl">
-                                                    <Button 
-                                                        variant="ghost" 
-                                                        size="sm"
-                                                        className="rounded-xl"
-                                                        onClick={() => {
-                                                            const d = new Date(selectedDate);
-                                                            d.setDate(d.getDate() - 1);
-                                                            setSelectedDate(d.toISOString().split('T')[0]);
-                                                        }}
-                                                    >
-                                                        &larr; Previous Day
-                                                    </Button>
+                                                <div className="flex items-center justify-center mt-6 mb-2 bg-slate-100 dark:bg-slate-800/50 p-2 rounded-2xl">
                                                     <span className="font-bold text-slate-700 dark:text-slate-300">
                                                         {new Date(selectedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                     </span>
-                                                    <Button 
-                                                        variant="ghost" 
-                                                        size="sm"
-                                                        className="rounded-xl"
-                                                        onClick={() => {
-                                                            const d = new Date(selectedDate);
-                                                            d.setDate(d.getDate() + 1);
-                                                            setSelectedDate(d.toISOString().split('T')[0]);
-                                                        }}
-                                                        disabled={selectedDate === new Date().toISOString().split('T')[0]}
-                                                    >
-                                                        Next Day &rarr;
-                                                    </Button>
                                                 </div>
 
                                             </DialogHeader>
@@ -505,7 +480,6 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                                         </p>
                                                     </div>
                                                     {[0, 1, 2, 3, 4].map((goalIdx) => {
-                                                        const isPast = selectedDate < new Date().toISOString().split('T')[0];
                                                         const catName = goalCategories[activeCategoryIdx].name;
                                                         const val = (goalsHistory[selectedDate]?.[catName] && Array.isArray(goalsHistory[selectedDate][catName])) 
                                                             ? goalsHistory[selectedDate][catName][goalIdx] 
@@ -518,12 +492,8 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                                                 </div>
                                                                 <Input 
                                                                     value={val}
-                                                                    disabled={isPast}
                                                                     placeholder={goalIdx === 0 ? goalCategories[activeCategoryIdx].placeholder : `Write goal #${goalIdx + 1}...`}
-                                                                    className={cn(
-                                                                        "h-12 rounded-2xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus-visible:ring-indigo-500",
-                                                                        isPast ? "opacity-70 cursor-not-allowed" : ""
-                                                                    )}
+                                                                    className="h-12 rounded-2xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus-visible:ring-indigo-500"
                                                                     onChange={(e) => {
                                                                         setGoalsHistory(prev => {
                                                                             const newHistory = { ...prev };
