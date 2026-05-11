@@ -23,6 +23,22 @@ export default async function MyJourneyPage() {
         .eq("id", user.id)
         .single();
 
+    const currentTier = profile?.membership_tier || "free";
+
+    // Check Tier Permissions
+    const { data: tierFeature } = await supabase
+        .from("tier_pricing")
+        .select("has_my_journey_access")
+        .eq("tier", currentTier)
+        .single();
+
+    // Give default true if the tier doesn't exist yet to prevent breaking
+    const hasAccess = tierFeature?.has_my_journey_access ?? true;
+    
+    if (!hasAccess && profile?.role !== "super_admin") {
+        return redirect("/dashboard?error=upgrade_required_for_journey");
+    }
+
     // Fetch/Initialize Income Target
     let { data: incomeData } = await supabase
         .from("user_income_targets")
@@ -146,7 +162,7 @@ export default async function MyJourneyPage() {
 
             {/* Achievement Timeline */}
             <AchievementJourney 
-                currentLevelIndex={milestones.length - 1} 
+                currentLevelIndex={milestones.length} 
                 milestoneNames={availableMilestones}
             />
 

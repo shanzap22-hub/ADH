@@ -16,6 +16,7 @@ interface TierFeature {
     has_ai_access: boolean;
     has_weekly_live_access?: boolean;
     has_booking_access?: boolean;
+    has_my_journey_access?: boolean;
 }
 
 interface TierFeatureManagerProps {
@@ -38,7 +39,8 @@ export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps)
     const [features, setFeatures] = useState<TierFeature[]>(initialFeatures.map(f => ({
         ...f,
         has_weekly_live_access: f.has_weekly_live_access ?? true,
-        has_booking_access: f.has_booking_access ?? true
+        has_booking_access: f.has_booking_access ?? true,
+        has_my_journey_access: f.has_my_journey_access ?? true
     })));
 
     const toggleFeature = (tierValue: string, featureKey: keyof Omit<TierFeature, 'tier'>) => {
@@ -59,7 +61,8 @@ export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps)
             has_community_chat_access: false,
             has_ai_access: false,
             has_weekly_live_access: false,
-            has_booking_access: false
+            has_booking_access: false,
+            has_my_journey_access: false
         };
     };
 
@@ -92,7 +95,7 @@ export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps)
                     Tier Feature Control
                 </CardTitle>
                 <CardDescription>
-                    Control access to Community Feed, Community Chat, AI Mentor, Weekly Live, and Booking for each tier.
+                    Control access to Community Feed, Community Chat, AI Mentor, Weekly Live, Booking, and My Journey for each tier.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -162,6 +165,18 @@ export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps)
                                             />
                                             <label htmlFor={`booking-${tier.value}`} className="text-sm cursor-pointer select-none">
                                                 Booking Access
+                                            </label>
+                                        </div>
+
+                                        {/* My Journey Access */}
+                                        <div className="flex items-center gap-2">
+                                            <Checkbox
+                                                id={`journey-${tier.value}`}
+                                                checked={feature.has_my_journey_access}
+                                                onCheckedChange={() => toggleFeature(tier.value, 'has_my_journey_access')}
+                                            />
+                                            <label htmlFor={`journey-${tier.value}`} className="text-sm cursor-pointer select-none">
+                                                My Journey
                                             </label>
                                         </div>
                                     </div>

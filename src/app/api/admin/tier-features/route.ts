@@ -34,7 +34,8 @@ export async function POST(req: Request) {
                     has_community_chat_access: feature.has_community_chat_access,
                     has_ai_access: feature.has_ai_access,
                     has_weekly_live_access: feature.has_weekly_live_access,
-                    has_booking_access: feature.has_booking_access
+                    has_booking_access: feature.has_booking_access,
+                    has_my_journey_access: feature.has_my_journey_access
                 })
                 .eq('tier', feature.tier);
 
