@@ -89,6 +89,7 @@ export const VideoPlayer = ({
             <div className="relative">
                 <BunnyVideoPlayer
                     videoId={bunnyVideoId}
+                    courseId={courseId}
                     title={title}
                 />
                 {completeOnEnd && (

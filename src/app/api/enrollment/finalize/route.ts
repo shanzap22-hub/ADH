@@ -51,10 +51,16 @@ export async function POST(req: Request) {
 
         // Create Razorpay instance to fetch details
          
+        // SECURITY: Razorpay credentials ഒരിക്കലും hardcode ചെയ്യരുത്
+        if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+            console.error("[FINALIZE_ENROLLMENT] Razorpay credentials missing from environment");
+            return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+        }
+
         const Razorpay = require("razorpay");
         const instance = new Razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_StqvqJ8w5pW5kK",
-            key_secret: process.env.RAZORPAY_KEY_SECRET || "IT6mwpTe3Hxzu8Kml0xwd9rg"
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET,
         });
 
         let finalEmail = email;
@@ -185,10 +191,10 @@ export async function POST(req: Request) {
             console.error("[FINALIZE_ENROLLMENT] Transaction Logic Error:", txnEx);
         }
 
-        // Return success with temp password for new users
+        // Return success — tempPassword ഇപ്പോഴും client-ൽ ആവശ്യമാണ് (onboarding flow)
+        // TODO: ഭാവിയിൽ WhatsApp/OTP delivery ആയി മാറ്റുക
         return NextResponse.json({
             success: true,
-            userId: userId,
             email: finalEmail,
             tempPassword: isNewUser ? tempPassword : null,
             isNewUser: isNewUser
@@ -196,6 +202,7 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error("[FINALIZE_ENROLLMENT] === FATAL ERROR ===", error);
-        return NextResponse.json({ error: "Server error during enrollment", details: error.message }, { status: 500 });
+        // SECURITY: Internal error details client-ന് expose ചെയ്യരുത്
+        return NextResponse.json({ error: "Server error during enrollment" }, { status: 500 });
     }
 }

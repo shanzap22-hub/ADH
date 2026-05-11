@@ -32,7 +32,9 @@ export async function middleware(request: NextRequest) {
     ];
 
     // 2026 Security: Rate Limiting for Auth & API Routes
-    if (pathname.startsWith('/api/auth') || pathname === '/login') {
+    // Coupon brute-force, payment abuse എന്നിവ STRICT ആയി limit ചെയ്യുക
+    const strictApiPaths = ['/api/auth', '/api/coupons/validate', '/api/razorpay', '/api/enrollment'];
+    if (strictApiPaths.some(p => pathname.startsWith(p)) || pathname === '/login') {
         const rateLimitResponse = await rateLimit(request, RateLimitPresets.STRICT);
         if (rateLimitResponse) return rateLimitResponse;
     } else if (pathname.startsWith('/api/')) {

@@ -13,6 +13,7 @@ declare global {
 
 interface BunnyVideoPlayerProps {
     videoId: string;
+    courseId?: string; // Signed URL access check-ന് ആവശ്യം
     title?: string;
     onEnd?: () => void;
     onProgress?: (seconds: number) => void;
@@ -22,6 +23,7 @@ interface BunnyVideoPlayerProps {
 
 export const BunnyVideoPlayer = ({
     videoId,
+    courseId,
     title,
     onEnd,
     onProgress,
@@ -30,8 +32,9 @@ export const BunnyVideoPlayer = ({
 }: BunnyVideoPlayerProps) => {
     const libraryId = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID;
 
-    // Memoize the embed URL to use the NEW Bunny Player hostname
-    const [embedUrl, setEmbedUrl] = useState(`https://player.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true`);
+    // Signed URL server-ൽ നിന്ന് fetch ചെയ്യുന്നു (piracy protection)
+    const [embedUrl, setEmbedUrl] = useState<string | null>(null);
+    const [urlError, setUrlError] = useState<string | null>(null);
 
     const [isReady, setIsReady] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -55,15 +58,49 @@ export const BunnyVideoPlayer = ({
         onProgressRef.current = onProgress;
     }, [onProgress]);
 
-    // Reset state when VIDEO ID changes
+    // Server-ൽ നിന്ന് signed URL fetch ചെയ്യുക
+    const fetchSignedUrl = useCallback(async (vid: string) => {
+        try {
+            setEmbedUrl(null);
+            setUrlError(null);
+            setIsReady(false);
+
+            const params = new URLSearchParams({ videoId: vid });
+            if (courseId) params.set("courseId", courseId);
+
+            const res = await fetch(`/api/video/signed-url?${params.toString()}`);
+            
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.error || `HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            setEmbedUrl(data.url);
+        } catch (err: any) {
+            console.error("[BunnyPlayer] Signed URL fetch failed:", err);
+            setUrlError(err.message || "Failed to load video");
+            
+            // Fallback: unsigned URL ഉപയോഗിക്കുക (BUNNY_STREAM_TOKEN_KEY configure ചെയ്തിട്ടില്ലെങ്കിൽ)
+            if (libraryId) {
+                setEmbedUrl(`https://iframe.mediadelivery.net/embed/${libraryId}/${vid}?autoplay=false&preload=true`);
+                setUrlError(null);
+            }
+        }
+    }, [courseId, libraryId]);
+
+    // Video ID change ആകുമ്പോൾ new signed URL fetch ചെയ്യുക
     const [prevVideoId, setPrevVideoId] = useState(videoId);
     if (videoId !== prevVideoId) {
         setPrevVideoId(videoId);
-        setIsReady(false);
-        if (libraryId) {
-            setEmbedUrl(`https://player.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&preload=true`);
-        }
+        fetchSignedUrl(videoId);
     }
+
+    // Initial load-ൽ signed URL fetch ചെയ്യുക
+    useEffect(() => {
+        fetchSignedUrl(videoId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useEffect(() => {
         hasEndedRef.current = false;
@@ -85,7 +122,7 @@ export const BunnyVideoPlayer = ({
     }, []);
 
     useEffect(() => {
-        if (!libraryId) return;
+        if (!embedUrl) return;
         const scriptId = "bunny-player-sdk";
         let script = document.getElementById(scriptId) as HTMLScriptElement;
 
@@ -154,7 +191,7 @@ export const BunnyVideoPlayer = ({
                 playerRef.current = null;
             }
         };
-    }, [videoId, handleCompletion, libraryId]);
+    }, [embedUrl, handleCompletion]);
 
     if (!libraryId) {
         return (
@@ -162,6 +199,17 @@ export const BunnyVideoPlayer = ({
                 <div className="text-center p-4">
                     <p className="font-bold">Configuration Error</p>
                     <p className="text-sm">Video Library ID is missing.</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (urlError) {
+        return (
+            <div className={cn("relative aspect-video bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center text-amber-500", className)}>
+                <div className="text-center p-4">
+                    <p className="font-bold">Access Denied</p>
+                    <p className="text-sm">{urlError}</p>
                 </div>
             </div>
         );
@@ -176,14 +224,16 @@ export const BunnyVideoPlayer = ({
                 </div>
             )}
 
-            <iframe
-                ref={iframeRef}
-                src={embedUrl}
-                title={title || "Video player"}
-                className={cn("absolute top-0 left-0 w-full h-full border-0 transition-opacity duration-500", !isReady ? "opacity-0" : "opacity-100")}
-                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; clipboard-write"
-                allowFullScreen
-            />
+            {embedUrl && (
+                <iframe
+                    ref={iframeRef}
+                    src={embedUrl}
+                    title={title || "Video player"}
+                    className={cn("absolute top-0 left-0 w-full h-full border-0 transition-opacity duration-500", !isReady ? "opacity-0" : "opacity-100")}
+                    allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; clipboard-write"
+                    allowFullScreen
+                />
+            )}
         </div>
     );
 };

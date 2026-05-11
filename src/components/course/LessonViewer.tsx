@@ -139,6 +139,7 @@ export const LessonViewer = ({
                             <div className="w-full h-full">
                                 <BunnyVideoPlayer
                                     videoId={bunnyVideoId}
+                                    courseId={courseId}
                                     title={title}
                                     initialTime={lastPlayedSecond}
                                     onProgress={handleProgress}

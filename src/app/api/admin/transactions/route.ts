@@ -370,7 +370,7 @@ export async function POST(req: Request) {
 
         // --- SYNC MANUAL ENTRY TO GOOGLE SHEET ---
         try {
-            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwsBDuj15M1f_nHng6kQjkZIhl6FZsXNCI71Vf55jrZKjJ55EB7joj4XjJstLgVghRT/exec";
+            const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL;
 
             const payload = {
                 id: data.id,

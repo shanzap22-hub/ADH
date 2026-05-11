@@ -1,34 +1,80 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
 /**
- * 2026 Security: In-Memory Rate Limiting
+ * 2026 Security: Upstash Redis Rate Limiting
  * 
- * Protects API routes from abuse, brute force attacks, and DDoS attempts.
- * Uses IP-based tracking with configurable limits per route.
+ * Persistent rate limiting — deploy ചെയ്താലും data retain ആകും.
+ * Serverless functions-ന് across instances shared ആണ്.
  * 
- * For production at scale, consider:
- * - Redis-based rate limiting (Upstash, Vercel KV)
- * - Edge-based rate limiting (Cloudflare, Vercel Edge Config)
+ * Setup:
+ * 1. https://console.upstash.com/ → Create Redis Database
+ * 2. UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN → .env.local-ൽ add ചെയ്യുക
+ * 
+ * Fallback: Upstash credentials ഇല്ലെങ്കിൽ in-memory rate limiter ഉപയോഗിക്കും
  */
 
+// ===== Upstash Redis Rate Limiter (Production) =====
+let redisAvailable = false;
+let strictLimiter: Ratelimit | null = null;
+let moderateLimiter: Ratelimit | null = null;
+let generousLimiter: Ratelimit | null = null;
+
+try {
+    if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+        const redis = Redis.fromEnv();
+
+        // Auth, payments, coupon validation — strict: 5 requests/minute
+        strictLimiter = new Ratelimit({
+            redis,
+            limiter: Ratelimit.slidingWindow(5, '60 s'),
+            analytics: true,
+            prefix: 'adh:rl:strict',
+        });
+
+        // General API — moderate: 20 requests/minute
+        moderateLimiter = new Ratelimit({
+            redis,
+            limiter: Ratelimit.slidingWindow(20, '60 s'),
+            analytics: true,
+            prefix: 'adh:rl:moderate',
+        });
+
+        // Public endpoints — generous: 100 requests/minute
+        generousLimiter = new Ratelimit({
+            redis,
+            limiter: Ratelimit.slidingWindow(100, '60 s'),
+            analytics: true,
+            prefix: 'adh:rl:generous',
+        });
+
+        redisAvailable = true;
+        console.log('[RateLimit] ✅ Upstash Redis connected');
+    }
+} catch (e) {
+    console.warn('[RateLimit] ⚠️ Upstash Redis not available, using in-memory fallback');
+}
+
+// ===== In-Memory Fallback (Development / Redis ഇല്ലെങ്കിൽ) =====
 interface RateLimitRecord {
     count: number;
     resetAt: number;
 }
 
-// In-memory storage (will reset on server restart)
-// For production, use Redis or Vercel KV
 const rateLimitMap = new Map<string, RateLimitRecord>();
 
-// Cleanup old entries every 10 minutes to prevent memory leaks
-setInterval(() => {
-    const now = Date.now();
-    for (const [key, record] of rateLimitMap.entries()) {
-        if (now > record.resetAt) {
-            rateLimitMap.delete(key);
+// Memory cleanup — 10 minute interval
+if (typeof setInterval !== 'undefined') {
+    setInterval(() => {
+        const now = Date.now();
+        for (const [key, record] of rateLimitMap.entries()) {
+            if (now > record.resetAt) {
+                rateLimitMap.delete(key);
+            }
         }
-    }
-}, 10 * 60 * 1000);
+    }, 10 * 60 * 1000);
+}
 
 export interface RateLimitOptions {
     /** Maximum number of requests allowed in the window */
@@ -40,27 +86,7 @@ export interface RateLimitOptions {
 }
 
 /**
- * Rate limit a request
- * 
- * @param request - The Next.js request object
- * @param options - Rate limit configuration
- * @returns NextResponse with 429 status if limit exceeded, null if allowed
- * 
- * @example
- * ```ts
- * // In API route
- * const rateLimitResponse = await rateLimit(request, { limit: 5, windowMs: 60000 });
- * if (rateLimitResponse) return rateLimitResponse;
- * ```
- * 
- * @example
- * ```ts
- * // In middleware
- * if (pathname.startsWith('/api/auth')) {
- *   const rateLimitResponse = await rateLimit(request, { limit: 10 });
- *   if (rateLimitResponse) return rateLimitResponse;
- * }
- * ```
+ * Rate limit a request — Upstash Redis ഉണ്ടെങ്കിൽ Redis, ഇല്ലെങ്കിൽ in-memory
  */
 export async function rateLimit(
     request: NextRequest,
@@ -68,31 +94,69 @@ export async function rateLimit(
 ): Promise<NextResponse | null> {
     const { limit, windowMs = 60000, identifier } = options;
 
-    // Get identifier (IP address or custom key)
+    // IP address identify ചെയ്യുക
     const ip = identifier ||
         request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
         request.headers.get('x-real-ip') ||
         'unknown';
 
+    // ===== Upstash Redis Path =====
+    if (redisAvailable) {
+        try {
+            // Select appropriate limiter based on limit value
+            let limiter: Ratelimit;
+            if (limit <= 5) {
+                limiter = strictLimiter!;
+            } else if (limit <= 20) {
+                limiter = moderateLimiter!;
+            } else {
+                limiter = generousLimiter!;
+            }
+
+            const key = `${ip}:${request.nextUrl.pathname}`;
+            const { success, limit: maxLimit, remaining, reset } = await limiter.limit(key);
+
+            if (!success) {
+                const retryAfter = Math.ceil((reset - Date.now()) / 1000);
+                return NextResponse.json(
+                    {
+                        error: 'Too Many Requests',
+                        message: `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
+                        retryAfter,
+                    },
+                    {
+                        status: 429,
+                        headers: {
+                            'Retry-After': String(Math.max(1, retryAfter)),
+                            'X-RateLimit-Limit': String(maxLimit),
+                            'X-RateLimit-Remaining': '0',
+                        },
+                    }
+                );
+            }
+
+            return null; // ✅ Request allowed
+        } catch (e) {
+            // Redis error ആയാൽ in-memory fallback-ലേക്ക് fall through
+            console.warn('[RateLimit] Redis error, falling back to in-memory:', e);
+        }
+    }
+
+    // ===== In-Memory Fallback Path =====
     const now = Date.now();
     const key = `${ip}:${request.nextUrl.pathname}`;
-
-    // Get or create record
     const record = rateLimitMap.get(key);
 
-    // If no record or window expired, create new record
     if (!record || now > record.resetAt) {
         rateLimitMap.set(key, {
             count: 1,
             resetAt: now + windowMs,
         });
-        return null; // Allow request
+        return null;
     }
 
-    // If limit exceeded, return 429
     if (record.count >= limit) {
         const retryAfter = Math.ceil((record.resetAt - now) / 1000);
-
         return NextResponse.json(
             {
                 error: 'Too Many Requests',
@@ -111,18 +175,15 @@ export async function rateLimit(
         );
     }
 
-    // Increment count
     record.count++;
-
-    // Add rate limit headers to successful responses
-    return null; // Allow request
+    return null;
 }
 
 /**
- * Preset rate limit configurations for common use cases
+ * Preset rate limit configurations
  */
 export const RateLimitPresets = {
-    /** Very strict: 5 requests per minute (auth endpoints) */
+    /** Very strict: 5 requests per minute (auth, payments, coupons) */
     STRICT: { limit: 5, windowMs: 60000 },
 
     /** Moderate: 20 requests per minute (general API) */
