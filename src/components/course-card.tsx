@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState, useCallback, memo } from "react";
-import { MetaballLoader } from "@/components/ui/metaball-loader";
+
 import { BookOpen, Play, Lock, ArrowRight } from "lucide-react";
 import { CourseProgress } from "@/components/course-progress";
 
@@ -33,12 +33,6 @@ const CourseCardComponent = ({
     backgroundClass,
     titleClass
 }: CourseCardProps) => {
-    const [isLoading, setIsLoading] = useState(false);
-
-    const handleClick = useCallback(() => {
-        setIsLoading(true);
-    }, []);
-
     const handleImageError = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
         e.currentTarget.style.display = "none";
     }, []);
@@ -48,8 +42,7 @@ const CourseCardComponent = ({
 
     return (
         <>
-            {isLoading && <MetaballLoader fullscreen />}
-            <Link href={`/courses/${id}`} onClick={handleClick} className="block h-full group">
+            <Link href={`/courses/${id}`} className="block h-full group">
                 <div className={`
                     relative h-full flex flex-col overflow-hidden rounded-2xl
                     border border-slate-200/80 dark:border-slate-700/50

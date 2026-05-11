@@ -169,15 +169,18 @@ export const BunnyVideoPlayer = ({
 
     return (
         <div className={cn("relative aspect-video bg-slate-900 rounded-2xl overflow-hidden", className)}>
+            {/* Cinematic skeleton instead of MetaballLoader */}
             {!isReady && (
-                <MetaballLoader className="absolute inset-0 z-10" />
+                <div className="absolute inset-0 z-10 bg-slate-900 animate-pulse flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-slate-800" />
+                </div>
             )}
 
             <iframe
                 ref={iframeRef}
                 src={embedUrl}
                 title={title || "Video player"}
-                className="absolute top-0 left-0 w-full h-full border-0"
+                className={cn("absolute top-0 left-0 w-full h-full border-0 transition-opacity duration-500", !isReady ? "opacity-0" : "opacity-100")}
                 allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; clipboard-write"
                 allowFullScreen
             />

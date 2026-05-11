@@ -89,8 +89,8 @@ export const TopHeader = () => {
                                         className={cn(
                                             "flex items-center gap-2.5 px-4 py-2 rounded-2xl text-sm font-bold transition-all duration-300 relative group",
                                             isActive
-                                                ? "text-violet-600 dark:text-violet-400 bg-violet-500/5 dark:bg-violet-500/10"
-                                                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-500/5"
+                                                ? "text-fuchsia-600 dark:text-fuchsia-400 bg-fuchsia-500/5 dark:bg-fuchsia-500/10"
+                                                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                                         )}
                                     >
                                         <Icon className={cn(
@@ -99,7 +99,7 @@ export const TopHeader = () => {
                                         )} />
                                         <span>{item.label}</span>
                                         {isActive && (
-                                            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-violet-500 dark:bg-violet-400 -mb-1" />
+                                            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 rounded-t-md bg-gradient-to-r from-violet-600 to-fuchsia-600" />
                                         )}
                                     </Link>
                                 );
@@ -110,7 +110,7 @@ export const TopHeader = () => {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => setIsSearchOpen(true)}
-                            className="hidden sm:flex items-center justify-center w-10 h-10 rounded-2xl bg-slate-500/5 hover:bg-slate-500/10 transition-colors text-slate-500 dark:text-slate-400 group"
+                            className="hidden sm:flex items-center justify-center w-10 h-10 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400 group"
                             aria-label="Search"
                         >
                             <Search className="h-5 w-5 group-hover:scale-110 transition-transform" />
@@ -121,21 +121,21 @@ export const TopHeader = () => {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button
-                                    className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-700 text-white text-sm font-black hover:scale-105 active:scale-95 transition-all shadow-lg shadow-violet-500/20"
+                                    className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white text-sm font-black hover:scale-105 active:scale-95 transition-all shadow-lg shadow-fuchsia-500/20"
                                     aria-label="User menu"
                                 >
                                     {user?.email ? getInitials(user.email) : "U"}
                                 </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-64 rounded-3xl border-slate-200/40 dark:border-slate-800/40 backdrop-blur-2xl bg-white/90 dark:bg-slate-950/90 shadow-2xl p-2 mt-2">
+                            <DropdownMenuContent align="end" className="w-64 rounded-3xl border-slate-200/60 dark:border-slate-800/60 backdrop-blur-2xl bg-white/95 dark:bg-slate-950/95 shadow-2xl p-2 mt-2">
                                 <DropdownMenuLabel className="px-4 py-3">
                                     <p className="text-sm font-black text-slate-900 dark:text-slate-100">My Account</p>
                                     <p className="text-xs font-medium text-slate-500 truncate mt-0.5">{user?.email}</p>
                                 </DropdownMenuLabel>
-                                <DropdownMenuSeparator className="bg-slate-200/40 dark:bg-slate-800/40 mx-2" />
+                                <DropdownMenuSeparator className="bg-slate-200/60 dark:bg-slate-800/60 mx-2" />
                                 <DropdownMenuItem
                                     onClick={() => router.push("/profile")}
-                                    className="rounded-2xl cursor-pointer py-3 px-4 font-bold text-sm hover:bg-violet-500/5 focus:bg-violet-500/5 transition-colors"
+                                    className="rounded-2xl cursor-pointer py-3 px-4 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800/50 focus:bg-slate-100 dark:focus:bg-slate-800/50 transition-colors"
                                 >
                                     Profile
                                 </DropdownMenuItem>

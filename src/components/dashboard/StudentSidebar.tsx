@@ -12,11 +12,11 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter, usePathname } from "next/navigation";
 
 const routes = [
-    { label: "Home",        icon: LayoutDashboard, href: "/dashboard", color: "text-violet-500" },
-    { label: "My Journey",  icon: GraduationCap,  href: "/my-journey",   color: "text-indigo-500" },
-    { label: "Courses",     icon: BookOpen,        href: "/courses",   color: "text-emerald-500" },
-    { label: "Live",        icon: Video,           href: "/live",      color: "text-rose-500"   },
-    { label: "Chat",        icon: MessageSquare,   href: "/chat",      color: "text-amber-500"  },
+    { label: "Home",        icon: LayoutDashboard, href: "/dashboard" },
+    { label: "My Journey",  icon: GraduationCap,  href: "/my-journey" },
+    { label: "Courses",     icon: BookOpen,        href: "/courses" },
+    { label: "Live",        icon: Video,           href: "/live" },
+    { label: "Chat",        icon: MessageSquare,   href: "/chat" },
 ];
 
 interface StudentSidebarProps {
@@ -58,10 +58,9 @@ export const StudentSidebar = ({
     });
 
     return (
-        <div className="h-full flex flex-col overflow-y-auto bg-white/50 dark:bg-slate-950/50 backdrop-blur-3xl border-r border-slate-200/40 dark:border-slate-800/40">
-
-            <div className="px-8 py-8 border-b border-slate-200/40 dark:border-slate-800/40">
-                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+        <div className="h-full flex flex-col overflow-y-auto bg-white dark:bg-slate-950 border-r border-slate-200/60 dark:border-slate-800/60">
+            <div className="px-8 py-8 border-b border-slate-200/60 dark:border-slate-800/60">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
                     ADH Connect
                 </p>
             </div>
@@ -77,32 +76,28 @@ export const StudentSidebar = ({
                             href={route.href}
                             onClick={() => handleNavClick(route.href)}
                             className={cn(
-                                "group relative flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-black transition-all duration-300 select-none",
+                                "group relative flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all duration-300 select-none",
                                 isActive
-                                    ? "bg-violet-600 text-white shadow-xl shadow-violet-500/30 scale-[1.02]"
-                                    : "text-slate-500 dark:text-slate-400 hover:bg-violet-500/5 hover:text-slate-900 dark:hover:text-slate-100"
+                                    ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/25 scale-[1.02]"
+                                    : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-100"
                             )}
                             style={{ WebkitTapHighlightColor: "transparent" }}
                         >
                             <Icon className={cn(
-                                "h-5 w-5 shrink-0 transition-all duration-300 group-hover:scale-110",
-                                isActive ? "text-white" : route.color
+                                "h-5 w-5 shrink-0 transition-transform duration-300 group-hover:scale-110",
+                                isActive ? "text-white" : "text-slate-400 dark:text-slate-500"
                             )} />
 
                             <span className="truncate">{route.label}</span>
-
-                            {isActive && (
-                                <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-white/50 animate-pulse" />
-                            )}
                         </Link>
                     );
                 })}
             </div>
 
-            <div className="mt-auto px-4 pb-8 pt-4 border-t border-slate-200/40 dark:border-slate-800/40 space-y-2">
+            <div className="mt-auto px-4 pb-8 pt-4 border-t border-slate-200/60 dark:border-slate-800/60 space-y-2">
                 {is_super_admin && (
                     <Link href="/admin" className="block">
-                        <Button variant="outline" size="sm" className="w-full justify-start gap-3 h-12 rounded-2xl text-xs font-bold hover:bg-violet-500/5 hover:border-violet-500/30 transition-all">
+                        <Button variant="outline" size="sm" className="w-full justify-start gap-3 h-12 rounded-2xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all">
                             <Shield className="h-4 w-4 text-violet-500" />
                             Admin Center
                         </Button>
@@ -111,8 +106,8 @@ export const StudentSidebar = ({
 
                 {is_instructor && (
                     <Link href="/instructor/courses" className="block">
-                        <Button variant="outline" size="sm" className="w-full justify-start gap-3 h-12 rounded-2xl text-xs font-bold hover:bg-violet-500/5 hover:border-violet-500/30 transition-all">
-                            <GraduationCap className="h-4 w-4 text-emerald-500" />
+                        <Button variant="outline" size="sm" className="w-full justify-start gap-3 h-12 rounded-2xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all">
+                            <GraduationCap className="h-4 w-4 text-fuchsia-500" />
                             Instructor Mode
                         </Button>
                     </Link>
