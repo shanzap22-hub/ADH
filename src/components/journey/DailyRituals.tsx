@@ -33,12 +33,32 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
     const [affirmations, setAffirmations] = useState("");
     const [isEditingAffirmations, setIsEditingAffirmations] = useState(false);
     const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+    const [isAffirmationsPlaying, setIsAffirmationsPlaying] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isGeneratingTTS, setIsGeneratingTTS] = useState(false);
     const [isUpdatingRevenue, setIsUpdatingRevenue] = useState(false);
     const [newRevenue, setNewRevenue] = useState("");
+    const [fetchedAudioUrl, setFetchedAudioUrl] = useState<string | null>(null);
+    const [isWritingGoalsOnline, setIsWritingGoalsOnline] = useState(false);
+    const [onlineGoalsText, setOnlineGoalsText] = useState("");
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const affirmationsAudioRef = useRef<HTMLAudioElement | null>(null);
     const supabase = createClient();
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const savedGoals = localStorage.getItem('daily_goals_offline');
+            if (savedGoals) setOnlineGoalsText(savedGoals);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (affirmationsAudioRef.current) {
+            affirmationsAudioRef.current.src = "";
+            setIsAffirmationsPlaying(false);
+            setFetchedAudioUrl(null);
+        }
+    }, [affirmations]);
 
     useEffect(() => {
         const fetchRitualData = async () => {
@@ -117,14 +137,28 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
     const speakAffirmations = async () => {
         if (!affirmations) return toast.error("Please write some affirmations first");
 
-        // Malayalam ടെക്സ്റ്റ് ഡിറ്റക്ഷൻ
         const isMalayalam = /[\u0D00-\u0D7F]/.test(affirmations);
 
         if (isMalayalam) {
-            if (audioRef.current && isAudioPlaying) {
-                audioRef.current.pause();
-                audioRef.current.currentTime = 0;
-                setIsAudioPlaying(false);
+            // Pause if already playing
+            if (isAffirmationsPlaying && affirmationsAudioRef.current) {
+                affirmationsAudioRef.current.pause();
+                setIsAffirmationsPlaying(false);
+                return;
+            }
+
+            // Resume if paused and loaded
+            if (!isAffirmationsPlaying && affirmationsAudioRef.current && affirmationsAudioRef.current.src && affirmationsAudioRef.current.currentTime > 0 && !affirmationsAudioRef.current.ended) {
+                await affirmationsAudioRef.current.play();
+                setIsAffirmationsPlaying(true);
+                return;
+            }
+
+            // Play from cache if already fetched
+            if (fetchedAudioUrl && affirmationsAudioRef.current) {
+                affirmationsAudioRef.current.currentTime = 0;
+                await affirmationsAudioRef.current.play();
+                setIsAffirmationsPlaying(true);
                 return;
             }
 
@@ -132,8 +166,6 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
             const toastId = toast.loading("ഓഡിയോ തയ്യാറാക്കുന്നു...");
 
             try {
-                // Vercel Server-ലേക്ക് റിക്വസ്റ്റ് അയക്കുന്നു. 
-                // എല്ലാ റേറ്റുലിമിറ്റുകളും പരിഹരിച്ച് ഒറ്റ ഓഡിയോ ഫയൽ ആക്കി സെർവർ നൽകും.
                 const response = await fetch("/api/tts", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -147,26 +179,27 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
 
                 if (!audioUrl) throw new Error("No audio received");
 
-                if (audioRef.current) {
-                    audioRef.current.src = audioUrl;
-                    audioRef.current.onended = () => setIsAudioPlaying(false);
-                    await audioRef.current.play();
-                    setIsAudioPlaying(true);
+                setFetchedAudioUrl(audioUrl);
+
+                if (affirmationsAudioRef.current) {
+                    affirmationsAudioRef.current.src = audioUrl;
+                    affirmationsAudioRef.current.onended = () => setIsAffirmationsPlaying(false);
+                    await affirmationsAudioRef.current.play();
+                    setIsAffirmationsPlaying(true);
                     toast.success("മലയാളം അഫിർമേഷൻസ് പ്ലേ ചെയ്യുന്നു...", { id: toastId });
                 }
             } catch (error) {
                 console.error("TTS Error:", error);
                 
-                // Native Fallback in case of server failure
                 try {
                     const synth = window.speechSynthesis;
                     if (synth) {
                         const utterance = new SpeechSynthesisUtterance(affirmations);
                         utterance.lang = 'ml-IN';
                         utterance.rate = 0.85;
-                        utterance.onend = () => setIsAudioPlaying(false);
+                        utterance.onend = () => setIsAffirmationsPlaying(false);
                         synth.speak(utterance);
-                        setIsAudioPlaying(true);
+                        setIsAffirmationsPlaying(true);
                         toast.success("മലയാളം അഫിർമേഷൻസ് പ്ലേ ചെയ്യുന്നു...", { id: toastId });
                     } else {
                         toast.error("ഓഡിയോ പ്ലേ ചെയ്യാൻ കഴിഞ്ഞില്ല.", { id: toastId });
@@ -182,7 +215,11 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
 
         // ഇംഗ്ലീഷ് TTS: Browser speechSynthesis ഉപയോഗിക്കുന്നു
         const synth = window.speechSynthesis;
-        if (synth.speaking) { synth.cancel(); return; }
+        if (synth.speaking) { 
+            synth.cancel(); 
+            setIsAffirmationsPlaying(false);
+            return; 
+        }
 
         const voices = synth.getVoices();
         const utterance = new SpeechSynthesisUtterance(affirmations);
@@ -190,8 +227,8 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
         if (enVoice) { utterance.voice = enVoice; }
         utterance.lang = "en-US";
         utterance.rate = 0.9;
-        utterance.onstart = () => setIsAudioPlaying(true);
-        utterance.onend = () => setIsAudioPlaying(false);
+        utterance.onstart = () => setIsAffirmationsPlaying(true);
+        utterance.onend = () => setIsAffirmationsPlaying(false);
         toast.info("Playing affirmations...");
         synth.speak(utterance);
     };
@@ -356,10 +393,50 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                             <div className="space-y-4">
                                 <div>
                                     <h4 className="text-sm font-black uppercase tracking-wide">{twentyGoalsRitual.ritual_name}</h4>
-                                    <p className="text-xs text-slate-500">Handwritten offline</p>
+                                    <p className="text-xs text-slate-500">Handwritten offline or Online</p>
                                 </div>
-                                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-center">
-                                    <p className="text-[11px] font-bold text-slate-400 italic">"Keep your vision clear and written"</p>
+                                <div className="flex flex-col gap-3">
+                                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-center">
+                                        <p className="text-[11px] font-bold text-slate-400 italic">"Keep your vision clear and written"</p>
+                                    </div>
+                                    <Dialog open={isWritingGoalsOnline} onOpenChange={setIsWritingGoalsOnline}>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline" className="w-full rounded-2xl border-slate-200 dark:border-slate-800 text-slate-500 hover:text-indigo-600 hover:border-indigo-200 dark:hover:border-indigo-900 hover:bg-indigo-50 dark:hover:bg-indigo-950/30">
+                                                <Edit3 className="mr-2 h-4 w-4" />
+                                                Write Online Instead
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="rounded-[2.5rem] max-w-2xl w-[95vw] h-[80vh] flex flex-col p-0 overflow-hidden">
+                                            <DialogHeader className="p-8 pb-0">
+                                                <DialogTitle className="text-2xl font-black">Write Your 20 Goals</DialogTitle>
+                                                <div className="mt-4 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50">
+                                                    <p className="text-sm font-bold text-amber-600 dark:text-amber-500">
+                                                        ⚠️ നിങ്ങൾക്ക് ഓഫ്‌ലൈൻ ആയി ബുക്കിൽ എഴുതാൻ സൗകര്യമില്ലെങ്കിൽ മാത്രമാണ് ഓൺലൈൻ ആയി എഴുതേണ്ടത്.
+                                                    </p>
+                                                </div>
+                                            </DialogHeader>
+                                            <div className="flex-1 p-8">
+                                                <Textarea 
+                                                    value={onlineGoalsText}
+                                                    onChange={(e) => {
+                                                        setOnlineGoalsText(e.target.value);
+                                                        localStorage.setItem('daily_goals_offline', e.target.value);
+                                                    }}
+                                                    placeholder="1. I will become...\n2. I am going to...\n..."
+                                                    className="w-full h-full rounded-[2rem] border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus-visible:ring-indigo-500 p-8 text-lg font-medium leading-relaxed resize-none"
+                                                />
+                                            </div>
+                                            <div className="p-8 pt-0 flex justify-end gap-3">
+                                                <Button variant="ghost" onClick={() => setIsWritingGoalsOnline(false)} className="rounded-2xl px-8">Close</Button>
+                                                <Button onClick={() => {
+                                                    toast.success("Goals saved locally!");
+                                                    setIsWritingGoalsOnline(false);
+                                                }} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-12 font-black shadow-xl shadow-indigo-500/20">
+                                                    Save Goals
+                                                </Button>
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
                                 </div>
                             </div>
                         </div>
@@ -430,8 +507,13 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                                     </div>
                                                     <div className="sticky bottom-0 pt-6 bg-inherit">
                                                         <Button onClick={speakAffirmations} className="w-full rounded-2xl h-14 bg-violet-600 hover:bg-violet-700 text-white font-black gap-3 shadow-xl shadow-violet-500/20">
-                                                            <Headphones className="h-5 w-5" />
-                                                            Listen to Voice
+                                                            {isGeneratingTTS ? (
+                                                                <><span className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Preparing Audio...</>
+                                                            ) : isAffirmationsPlaying ? (
+                                                                <><Pause className="h-5 w-5" /> Pause Audio</>
+                                                            ) : (
+                                                                <><Headphones className="h-5 w-5" /> Listen to Voice</>
+                                                            )}
                                                         </Button>
                                                     </div>
                                                 </DialogContent>
@@ -450,11 +532,12 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                 >
                                     {isGeneratingTTS 
                                         ? <span className="h-5 w-5 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
-                                        : isAudioPlaying 
+                                        : isAffirmationsPlaying 
                                             ? <Pause className="h-6 w-6" /> 
                                             : <Headphones className="h-6 w-6" />
                                     }
                                 </Button>
+                                <audio ref={affirmationsAudioRef} className="hidden" />
                                 <button 
                                     onClick={() => toggleRitual(affirmationRitual.id)}
                                     className={cn(
