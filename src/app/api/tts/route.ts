@@ -38,47 +38,64 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ audioUrl: publicUrl.publicUrl, cached: true });
         }
 
-        // 2. ക്യാഷ് MISS: പൂർണ്ണമായും സൗജന്യമായ Google Translate TTS ഉപയോഗിക്കുന്നു (No API Key Required)
-        // Vercel IP Block ഒഴിവാക്കാൻ 'translate.googleapis.com' ഉം 'client=gtx' ഉം ഉപയോഗിക്കുന്നു.
-        const ttsUrl = `https://translate.googleapis.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(trimmedText)}&tl=ml&client=gtx`;
+        // 2. ക്യാഷ് MISS: Backend Chunking & Concatenation
+        const chunks = trimmedText.match(/.{1,150}(?:\s|$)|.{1,150}/g) || [trimmedText];
+        const audioBuffers: Buffer[] = [];
 
-        const ttsResponse = await fetch(ttsUrl, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Referer": "https://translate.googleapis.com/"
-            }
-        });
+        for (const chunk of chunks) {
+            if (!chunk.trim()) continue;
 
-        if (!ttsResponse.ok) {
-            console.error("Free TTS Error:", ttsResponse.statusText, ttsResponse.status);
-            return NextResponse.json({ error: "TTS generation failed" }, { status: 502 });
-        }
+            const urlGtx = `https://translate.googleapis.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunk.trim())}&tl=ml&client=gtx`;
+            const urlTwob = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunk.trim())}&tl=ml&client=tw-ob`;
 
-        const arrayBuffer = await ttsResponse.arrayBuffer();
-        const audioBuffer = Buffer.from(arrayBuffer);
-
-        // 3. Supabase Storage-ൽ ക്യാഷ് ചെയ്യുന്നു
-        const { error: uploadError } = await supabaseAdmin.storage
-            .from("tts-cache")
-            .upload(cachePath, audioBuffer, {
-                contentType: "audio/mpeg",
-                cacheControl: "31536000", // 1 വർഷം ക്യാഷ്
-                upsert: true
+            let response = await fetch(urlGtx, {
+                headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }
             });
 
-        if (uploadError) {
-            console.error("Cache upload error:", uploadError);
-            // ക്യാഷ് ഫെയ്ൽ ആയാലും ഓഡിയോ Base64 ആയി നൽകുന്നു
-            const audioBase64 = audioBuffer.toString('base64');
-            return NextResponse.json({ audioBase64, cached: false });
+            if (!response.ok) {
+                // Fallback if gtx is blocked
+                response = await fetch(urlTwob, {
+                    headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }
+                });
+            }
+
+            if (!response.ok) {
+                console.error("Free TTS Error:", response.statusText, response.status);
+                throw new Error("TTS generation failed for chunk");
+            }
+
+            const arrayBuffer = await response.arrayBuffer();
+            audioBuffers.push(Buffer.from(arrayBuffer));
+            
+            // Add a small delay to prevent rate limits
+            await new Promise(r => setTimeout(r, 300));
         }
 
-        // 4. Public URL നൽകുന്നു
-        const { data: publicUrl } = supabaseAdmin.storage
-            .from("tts-cache")
-            .getPublicUrl(cachePath);
+        if (audioBuffers.length === 0) throw new Error("No audio generated");
 
-        return NextResponse.json({ audioUrl: publicUrl.publicUrl, cached: false });
+        const combinedBuffer = Buffer.concat(audioBuffers);
+        const audioBase64 = combinedBuffer.toString('base64');
+
+        // 3. Supabase-ൽ സ്റ്റോർ ചെയ്യുന്നു
+        try {
+            const { error: uploadError } = await supabaseAdmin
+                .storage
+                .from('tts-cache')
+                .upload(cachePath, combinedBuffer, {
+                    contentType: 'audio/mpeg',
+                    upsert: true
+                });
+
+            if (!uploadError) {
+                const { data: { publicUrl } } = supabaseAdmin.storage.from('tts-cache').getPublicUrl(cachePath);
+                return NextResponse.json({ audioUrl: publicUrl, audioBase64, cached: false });
+            }
+        } catch (storageError) {
+            console.error("Storage cache error:", storageError);
+            // Cache failed, but we still return base64
+        }
+
+        return NextResponse.json({ audioBase64, cached: false });
 
     } catch (error) {
         console.error("TTS Route Error:", error);

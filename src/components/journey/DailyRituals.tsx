@@ -132,52 +132,49 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
             const toastId = toast.loading("ഓഡിയോ തയ്യാറാക്കുന്നു...");
 
             try {
-                // ഗൂഗിൾ ട്രാൻസ്ലേറ്റിന് 200 അക്ഷരങ്ങളുടെ ലിമിറ്റ് ഉള്ളതിനാൽ നമ്മൾ ടെക്സ്റ്റ് മുറിക്കുന്നു
-                const chunks = affirmations.match(/.{1,150}(?:\s|$)|.{1,150}/g) || [affirmations];
-                
-                // ഓരോ ഭാഗത്തിനും Google Translate URL ഉണ്ടാക്കുന്നു (CORS / Rate Limit പ്രശ്നങ്ങളില്ല)
-                const urls = chunks
-                    .filter(chunk => chunk.trim().length > 0)
-                    .map(chunk => `https://translate.googleapis.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunk.trim())}&tl=ml&client=gtx`);
+                // Vercel Server-ലേക്ക് റിക്വസ്റ്റ് അയക്കുന്നു. 
+                // എല്ലാ റേറ്റുലിമിറ്റുകളും പരിഹരിച്ച് ഒറ്റ ഓഡിയോ ഫയൽ ആക്കി സെർവർ നൽകും.
+                const response = await fetch("/api/tts", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: affirmations, lang: "ml-IN" })
+                });
 
-                if (urls.length === 0) throw new Error("No text to play");
+                if (!response.ok) throw new Error("TTS generation failed");
+
+                const data = await response.json();
+                const audioUrl = data.audioUrl || (data.audioBase64 ? `data:audio/mpeg;base64,${data.audioBase64}` : null);
+
+                if (!audioUrl) throw new Error("No audio received");
 
                 if (audioRef.current) {
-                    let currentChunkIndex = 0;
-                    
-                    const playNextChunk = async () => {
-                        if (!audioRef.current) return;
-                        
-                        if (currentChunkIndex < urls.length) {
-                            audioRef.current.src = urls[currentChunkIndex];
-                            // Android Webview-ലും ബ്രൗസറുകളിലും ഗൂഗിൾ ബ്ലോക്ക് ചെയ്യാതിരിക്കാൻ
-                            audioRef.current.setAttribute("referrerPolicy", "no-referrer");
-                            
-                            try {
-                                await audioRef.current.play();
-                                setIsAudioPlaying(true);
-                                currentChunkIndex++;
-                            } catch (e) {
-                                console.error("Chunk play error", e);
-                                toast.error("ഓഡിയോ പ്ലേ ചെയ്യാൻ കഴിഞ്ഞില്ല.");
-                                setIsAudioPlaying(false);
-                            }
-                        } else {
-                            setIsAudioPlaying(false);
-                            audioRef.current.onended = null;
-                        }
-                    };
-
-                    // ഒരു വരി കഴിയുമ്പോൾ അടുത്തത് പ്ലേ ചെയ്യാൻ സെറ്റ് ചെയ്യുന്നു
-                    audioRef.current.onended = playNextChunk;
-                    
+                    audioRef.current.src = audioUrl;
+                    audioRef.current.onended = () => setIsAudioPlaying(false);
+                    await audioRef.current.play();
+                    setIsAudioPlaying(true);
                     toast.success("മലയാളം അഫിർമേഷൻസ് പ്ലേ ചെയ്യുന്നു...", { id: toastId });
-                    setIsGeneratingTTS(false);
-                    playNextChunk();
                 }
             } catch (error) {
                 console.error("TTS Error:", error);
-                toast.error("ഓഡിയോ പ്ലേ ചെയ്യാൻ കഴിഞ്ഞില്ല.", { id: toastId });
+                
+                // Native Fallback in case of server failure
+                try {
+                    const synth = window.speechSynthesis;
+                    if (synth) {
+                        const utterance = new SpeechSynthesisUtterance(affirmations);
+                        utterance.lang = 'ml-IN';
+                        utterance.rate = 0.85;
+                        utterance.onend = () => setIsAudioPlaying(false);
+                        synth.speak(utterance);
+                        setIsAudioPlaying(true);
+                        toast.success("മലയാളം അഫിർമേഷൻസ് പ്ലേ ചെയ്യുന്നു...", { id: toastId });
+                    } else {
+                        toast.error("ഓഡിയോ പ്ലേ ചെയ്യാൻ കഴിഞ്ഞില്ല.", { id: toastId });
+                    }
+                } catch {
+                    toast.error("ഓഡിയോ പ്ലേ ചെയ്യാൻ കഴിഞ്ഞില്ല.", { id: toastId });
+                }
+            } finally {
                 setIsGeneratingTTS(false);
             }
             return;
