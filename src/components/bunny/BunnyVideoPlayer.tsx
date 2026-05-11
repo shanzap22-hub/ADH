@@ -204,23 +204,37 @@ export const BunnyVideoPlayer = ({
         );
     }
 
-    if (urlError) {
-        return (
-            <div className={cn("relative aspect-video bg-slate-900 rounded-lg overflow-hidden flex items-center justify-center text-amber-500", className)}>
-                <div className="text-center p-4">
-                    <p className="font-bold">Access Denied</p>
-                    <p className="text-sm">{urlError}</p>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className={cn("relative aspect-video bg-slate-900 rounded-2xl overflow-hidden", className)}>
+        <div className={cn("relative aspect-video bg-slate-900 rounded-2xl overflow-hidden group", className)}>
             {/* Cinematic skeleton instead of MetaballLoader */}
-            {!isReady && (
+            {!isReady && !urlError && (
                 <div className="absolute inset-0 z-10 bg-slate-900 animate-pulse flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-slate-800" />
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 rounded-full border-4 border-orange-500/20 border-t-orange-500 animate-spin" />
+                        <p className="text-slate-400 text-xs font-medium animate-pulse">Initializing Secure Player...</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Detailed Error State */}
+            {urlError && (
+                <div className="absolute inset-0 z-20 bg-slate-950/90 flex items-center justify-center p-6 text-center backdrop-blur-sm">
+                    <div className="max-w-md space-y-4">
+                        <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto border border-red-500/20">
+                            <span className="text-red-500 text-2xl">⚠️</span>
+                        </div>
+                        <div>
+                            <h3 className="text-white font-bold text-lg">Playback Blocked</h3>
+                            <p className="text-slate-400 text-sm mt-1">{urlError}</p>
+                            <p className="text-slate-500 text-[10px] mt-4 uppercase tracking-widest">Security: Signed URL Required</p>
+                        </div>
+                        <button 
+                            onClick={() => fetchSignedUrl(videoId)}
+                            className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-sm transition-all border border-white/10"
+                        >
+                            Retry Loading
+                        </button>
+                    </div>
                 </div>
             )}
 
@@ -229,10 +243,19 @@ export const BunnyVideoPlayer = ({
                     ref={iframeRef}
                     src={embedUrl}
                     title={title || "Video player"}
-                    className={cn("absolute top-0 left-0 w-full h-full border-0 transition-opacity duration-500", !isReady ? "opacity-0" : "opacity-100")}
+                    className={cn("absolute top-0 left-0 w-full h-full border-0 transition-opacity duration-700", (!isReady || !!urlError) ? "opacity-0" : "opacity-100")}
                     allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; clipboard-write"
                     allowFullScreen
                 />
+            )}
+            
+            {/* Overlay for Branding or Metadata */}
+            {isReady && !urlError && (
+                <div className="absolute top-4 left-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <span className="bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-[10px] text-white border border-white/10 uppercase tracking-widest">
+                        ADH Secure Stream
+                    </span>
+                </div>
             )}
         </div>
     );

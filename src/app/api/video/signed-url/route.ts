@@ -32,57 +32,51 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // 2. Access check — user-ന്റെ tier-ന് course access ഉണ്ടോ?
-        if (courseId) {
+        // 2. Access check — use JWT metadata for speed and reliability
+        const userRole = user.app_metadata?.role || "student";
+        const userTier = user.app_metadata?.membership_tier || "free";
+
+        // Admin/Instructor ആണെങ്കിൽ always allow
+        const isPrivileged = userRole === "super_admin" || 
+                             userRole === "admin" || 
+                             userRole === "instructor";
+
+        if (!isPrivileged && courseId) {
             const { createClient: createSupabaseClient } = await import("@supabase/supabase-js");
             const supabaseAdmin = createSupabaseClient(
                 process.env.NEXT_PUBLIC_SUPABASE_URL!,
                 process.env.SUPABASE_SERVICE_ROLE_KEY!
             );
 
-            // User profile fetch ചെയ്യുക
-            const { data: profile } = await supabaseAdmin
-                .from("profiles")
-                .select("membership_tier, role")
-                .eq("id", user.id)
-                .single();
+            // Tier-based access check
+            const { data: tierAccess } = await supabaseAdmin
+                .from("course_tier_access")
+                .select("tier")
+                .eq("course_id", courseId)
+                .eq("tier", userTier);
 
-            // Admin/Instructor ആണെങ്കിൽ always allow
-            const isPrivileged = profile?.role === "super_admin" || 
-                                 profile?.role === "admin" || 
-                                 profile?.role === "instructor";
+            // Direct purchase check
+            const { data: purchase } = await supabaseAdmin
+                .from("purchases")
+                .select("id")
+                .eq("user_id", user.id)
+                .eq("course_id", courseId)
+                .maybeSingle();
 
-            if (!isPrivileged) {
-                // Tier-based access check
-                const { data: tierAccess } = await supabaseAdmin
-                    .from("course_tier_access")
-                    .select("tier")
-                    .eq("course_id", courseId)
-                    .eq("tier", profile?.membership_tier || "free");
+            // Chapter free check
+            const { data: freeChapter } = await supabaseAdmin
+                .from("chapters")
+                .select("id")
+                .eq("course_id", courseId)
+                .eq("is_free", true)
+                .limit(1);
 
-                // Direct purchase check
-                const { data: purchase } = await supabaseAdmin
-                    .from("purchases")
-                    .select("id")
-                    .eq("user_id", user.id)
-                    .eq("course_id", courseId)
-                    .maybeSingle();
+            const hasTierAccess = tierAccess && tierAccess.length > 0;
+            const hasPurchase = !!purchase;
+            const hasFreeContent = freeChapter && freeChapter.length > 0;
 
-                // Chapter free check
-                const { data: freeChapter } = await supabaseAdmin
-                    .from("chapters")
-                    .select("id")
-                    .eq("course_id", courseId)
-                    .eq("is_free", true)
-                    .limit(1);
-
-                const hasTierAccess = tierAccess && tierAccess.length > 0;
-                const hasPurchase = !!purchase;
-                const hasFreeContent = freeChapter && freeChapter.length > 0;
-
-                if (!hasTierAccess && !hasPurchase && !hasFreeContent) {
-                    return NextResponse.json({ error: "Access denied" }, { status: 403 });
-                }
+            if (!hasTierAccess && !hasPurchase && !hasFreeContent) {
+                return NextResponse.json({ error: "Access denied" }, { status: 403 });
             }
         }
 
