@@ -39,30 +39,41 @@ export async function GET(request: Request) {
                 try {
                     const { data: { user } } = await supabase.auth.getUser()
                     if (user) {
-                        // STRICT PROFILE CHECK
-                        // Random Google Logins will NOT have a profile (since trigger is disabled)
-                        // Only Paid Users (via finalize API) or Instructor Enrolled (via admin) will have a profile
-                        const { data: profile } = await supabase
-                            .from('profiles')
-                            .select('role, membership_tier')
-                            .eq('id', user.id)
-                            .single()
+                        // 1. Priority: Check JWT metadata for role
+                        const role = user.app_metadata?.role;
+                        const membershipTier = user.app_metadata?.membership_tier;
 
-                        if (profile) {
-                            // User authorized! 
-                            // Determine redirect path based on role
+                        if (role) {
+                            // User authorized via JWT!
                             if (next === '/') {
-                                if (profile.role === 'instructor') redirectPath = '/instructor/courses'
-                                else if (profile.role === 'admin' || profile.role === 'super_admin') redirectPath = '/admin'
+                                if (role === 'instructor') redirectPath = '/instructor/courses'
+                                else if (role === 'admin' || role === 'super_admin') redirectPath = '/admin'
                                 else redirectPath = '/dashboard'
                             } else {
                                 redirectPath = next
                             }
                         } else {
-                            // CRITICAL: No profile found - unauthorized access attempt
-                            console.log('[AUTH_CALLBACK] Access Denied: No profile found for user:', user.email);
-                            await supabase.auth.signOut();
-                            return NextResponse.redirect(`${origin}/?error=unauthorized_no_profile`);
+                            // 2. Fallback: Check profiles table if metadata is missing (e.g., first time)
+                            const { data: profile } = await supabase
+                                .from('profiles')
+                                .select('role, membership_tier')
+                                .eq('id', user.id)
+                                .single()
+
+                            if (profile) {
+                                if (next === '/') {
+                                    if (profile.role === 'instructor') redirectPath = '/instructor/courses'
+                                    else if (profile.role === 'admin' || profile.role === 'super_admin') redirectPath = '/admin'
+                                    else redirectPath = '/dashboard'
+                                } else {
+                                    redirectPath = next
+                                }
+                            } else {
+                                // CRITICAL: No profile found - unauthorized access attempt
+                                console.log('[AUTH_CALLBACK] Access Denied: No profile found for user:', user.email);
+                                await supabase.auth.signOut();
+                                return NextResponse.redirect(`${origin}/?error=unauthorized_no_profile`);
+                            }
                         }
                     }
                 } catch (e) {

@@ -66,10 +66,11 @@ function LoginForm() {
 
                         // Quick verification:
                         if (data.user) {
-                            // Fetch Role Logic (Duplicate of handleLogin logic, ideally refactor, but copying for safety now)
-                            const { data: profile } = await supabase.from('profiles').select('role, membership_tier').eq('id', data.user.id).single();
+                            // SECURE: Use JWT metadata instead of querying profiles table via anon key
+                            const role = data.user.app_metadata?.role || 'student';
+                            const membershipTier = data.user.app_metadata?.membership_tier || 'free';
 
-                            if (profile?.membership_tier === 'cancelled' && profile.role !== 'super_admin') {
+                            if (membershipTier === 'cancelled' && role !== 'super_admin') {
                                 setError('Your membership has been cancelled.');
                                 await supabase.auth.signOut();
                                 setGoogleLoading(false);
@@ -77,7 +78,8 @@ function LoginForm() {
                             }
 
                             let redirectPath = '/dashboard';
-                            if (profile?.role === 'instructor') redirectPath = '/instructor/courses';
+                            if (role === 'instructor') redirectPath = '/instructor/courses';
+                            if (role === 'admin' || role === 'super_admin') redirectPath = '/admin';
 
                             router.push(redirectPath);
                             router.refresh();
@@ -124,21 +126,12 @@ function LoginForm() {
                 const { data: { user } } = await supabase.auth.getUser()
 
                 if (user) {
-                    // Get user profile from profiles table
-                    const { data: profile, error: profileError } = await supabase
-                        .from('profiles')
-                        .select('role, membership_tier')
-                        .eq('id', user.id)
-                        .single()
-
-                    if (profileError || !profile) {
-                        setError('Could not fetch user profile')
-                        setLoading(false)
-                        return
-                    }
+                    // SECURE: Use JWT metadata instead of querying profiles table via anon key
+                    const role = user.app_metadata?.role || 'student';
+                    const membershipTier = user.app_metadata?.membership_tier || 'free';
 
                     // STRICT CHECK: Membership Cancelled
-                    if (profile.membership_tier === 'cancelled' && profile.role !== 'super_admin') {
+                    if (membershipTier === 'cancelled' && role !== 'super_admin') {
                         setError('Your membership has been cancelled. You cannot log in.')
                         await supabase.auth.signOut()
                         setLoading(false)
@@ -147,10 +140,10 @@ function LoginForm() {
 
                     // Redirect based on role
                     let redirectPath = '/dashboard'
-                    if (profile.role === 'instructor') {
+                    if (role === 'instructor') {
                         redirectPath = '/instructor/courses'
-                    } else if (profile.role === 'admin') {
-                        redirectPath = '/dashboard'
+                    } else if (role === 'admin' || role === 'super_admin') {
+                        redirectPath = '/admin'
                     }
 
                     router.push(redirectPath)
