@@ -16,7 +16,6 @@ interface Booking {
         full_name: string;
         email: string;
     };
-    meeting_link: string;
 }
 
 export default function InstructorCalendarPage() {

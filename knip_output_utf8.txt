@@ -1,0 +1,156 @@
+﻿Unused files (80)
+android/app/build/intermediates/assets/productionDebug/mergeProductionDebugAssets/native-bridge.js             
+android/app/build/intermediates/assets/productionDebug/mergeProductionDebugAssets/public/cordova_plugins.js    
+android/app/build/intermediates/assets/productionDebug/mergeProductionDebugAssets/public/cordova.js            
+android/app/build/intermediates/assets/productionRelease/mergeProductionReleaseAssets/native-bridge.js         
+android/app/build/intermediates/assets/productionRelease/mergeProductionReleaseAssets/public/cordova_plugins.js
+android/app/build/intermediates/assets/productionRelease/mergeProductionReleaseAssets/public/cordova.js        
+android/app/build/intermediates/assets/stagingDebug/mergeStagingDebugAssets/native-bridge.js                   
+android/app/build/intermediates/assets/stagingDebug/mergeStagingDebugAssets/public/cordova_plugins.js          
+android/app/build/intermediates/assets/stagingDebug/mergeStagingDebugAssets/public/cordova.js                  
+android/app/build/intermediates/assets/stagingRelease/mergeStagingReleaseAssets/native-bridge.js               
+android/app/build/intermediates/assets/stagingRelease/mergeStagingReleaseAssets/public/cordova_plugins.js      
+android/app/build/intermediates/assets/stagingRelease/mergeStagingReleaseAssets/public/cordova.js              
+android/app/build/reports/tests/testProductionDebugUnitTest/css/base-style.css                                 
+android/app/build/reports/tests/testProductionDebugUnitTest/css/style.css                                      
+android/app/build/reports/tests/testProductionDebugUnitTest/js/report.js                                       
+android/app/build/reports/tests/testStagingDebugUnitTest/css/base-style.css                                    
+android/app/build/reports/tests/testStagingDebugUnitTest/css/style.css                                         
+android/app/build/reports/tests/testStagingDebugUnitTest/js/report.js                                          
+android/app/src/main/assets/public/cordova_plugins.js                                                          
+android/app/src/main/assets/public/cordova.js                                                                  
+scripts/apply-mind-map-migration.js                                                                            
+scripts/audit-client-components.ts                                                                             
+scripts/browser_diag.js                                                                                        
+scripts/check-access.js                                                                                        
+scripts/check-schema.js                                                                                        
+scripts/check-student-progress.js                                                                              
+scripts/check-tiers.js                                                                                         
+scripts/create_super_admin.js                                                                                  
+scripts/create_test_user.js                                                                                    
+scripts/create-test-student.js                                                                                 
+scripts/debug_availability.js                                                                                  
+scripts/debug-tiers.js                                                                                         
+scripts/diagnose-db.js                                                                                         
+scripts/fetch-debug.js                                                                                         
+scripts/migrate-tier-features.js                                                                               
+scripts/print-migration.js                                                                                     
+scripts/seed-admin.js                                                                                          
+scripts/set-admin-role.js                                                                                      
+scripts/test_db_update.js                                                                                      
+scripts/test-api-logic.js                                                                                      
+scripts/test-gemini.js                                                                                         
+scripts/test-live-api.js                                                                                       
+scripts/test-new-progress.js                                                                                   
+scripts/test-search.js                                                                                         
+scripts/test-student-api.js                                                                                    
+scripts/verify_db_write.ts                                                                                     
+src/actions/get-courses.ts                                                                                     
+src/app/(dashboard)/(student)/dashboard/_components/info-card.tsx                                              
+src/components/admin/RefundButton.tsx                                                                          
+src/components/admin/TierBookingToggle.tsx                                                                     
+src/components/admin/TierPricingEditor.tsx                                                                     
+src/components/chapter-list-student.tsx                                                                        
+src/components/chapter-tabs.tsx                                                                                
+src/components/course/ChapterCard.tsx                                                                          
+src/components/course/CourseSidebar_OLD.tsx                                                                    
+src/components/course/UnitCard.tsx                                                                             
+src/components/courses/PriceForm.tsx                                                                           
+src/components/dashboard/FeedCard.tsx                                                                          
+src/components/dashboard/MobileLayout.tsx                                                                      
+src/components/enroll-student-form.tsx                                                                         
+src/components/icon-badge.tsx                                                                                  
+src/components/membership/TierComparisonTable.tsx                                                              
+src/components/razorpay-script.tsx                                                                             
+src/components/skeletons/chat-page-skeleton.tsx                                                                
+src/components/skeletons/course-card-skeleton.tsx                                                              
+src/components/skeletons/dashboard-skeleton.tsx                                                                
+src/components/video-player.tsx                                                                                
+src/examples/secure-browser-usage.tsx                                                                          
+src/examples/secure-storage-usage.tsx                                                                          
+src/lib/api-validator.ts                                                                                       
+src/lib/auth/roles.ts                                                                                          
+src/lib/crashlytics.ts                                                                                         
+src/lib/get-user-role-client.ts                                                                                
+src/lib/get-user-role.ts                                                                                       
+src/lib/haptics.ts                                                                                             
+src/lib/membership/check-course-access.ts                                                                      
+src/lib/secure-browser.ts                                                                                      
+src/lib/secure-storage.ts                                                                                      
+src/lib/share.ts                                                                                               
+UPDATED_APPS_SCRIPT.js                                                                                         
+Unused dependencies (13)
+@ai-sdk/google                   package.json:12:6
+@ai-sdk/react                    package.json:13:6
+@capacitor-firebase/crashlytics  package.json:16:6
+@capacitor/browser               package.json:19:6
+@capacitor/haptics               package.json:23:6
+@capacitor/ios                   package.json:24:6
+@capacitor/share                 package.json:26:6
+@langchain/community             package.json:31:6
+@types/uuid                      package.json:50:6
+ai                               package.json:54:6
+dotenv                           package.json:61:6
+langchain                        package.json:65:6
+zod-to-json-schema               package.json:88:6
+Unused devDependencies (3)
+@capacitor/assets  package.json:93:6 
+@types/pdf-parse   package.json:96:6 
+playwright         package.json:101:6
+Unlisted dependencies (3)
+@tailwindcss/postcss             postcss.config.mjs                                    
+axios                            src/components/courses/ChapterAttachmentsForm.tsx:4:19
+@radix-ui/react-visually-hidden  src/components/dashboard/SearchModal.tsx:9:32         
+Unused exports (43)
+uploadToBunny             function  src/actions/bunny.ts:8:23                                                
+getBunnyCredentials       function  src/actions/bunny.ts:65:23                                               
+deleteFromR2              function  src/actions/r2.ts:51:23                                                  
+dynamic                             src/app/(dashboard)/admin/notifications/AdminNotificationsClient.tsx:3:14
+updateIncomeTargetAction  function  src/app/actions/journey.ts:47:23                                         
+TierBadge                 function  src/components/membership/MembershipBadge.tsx:34:17                      
+LivePageSkeleton          function  src/components/skeletons/live-page-skeleton.tsx:45:17                    
+AlertDialogPortal                   src/components/ui/alert-dialog.tsx:131:5                                 
+AlertDialogOverlay                  src/components/ui/alert-dialog.tsx:132:5                                 
+badgeVariants                       src/components/ui/badge.tsx:36:17                                        
+DialogPortal                        src/components/ui/dialog.tsx:113:5                                       
+DialogOverlay                       src/components/ui/dialog.tsx:114:5                                       
+DialogClose                         src/components/ui/dialog.tsx:115:5                                       
+DropdownMenuCheckboxItem            src/components/ui/dropdown-menu.tsx:189:5                                
+DropdownMenuRadioItem               src/components/ui/dropdown-menu.tsx:190:5                                
+DropdownMenuShortcut                src/components/ui/dropdown-menu.tsx:193:5                                
+DropdownMenuGroup                   src/components/ui/dropdown-menu.tsx:194:5                                
+DropdownMenuPortal                  src/components/ui/dropdown-menu.tsx:195:5                                
+DropdownMenuSub                     src/components/ui/dropdown-menu.tsx:196:5                                
+DropdownMenuSubContent              src/components/ui/dropdown-menu.tsx:197:5                                
+DropdownMenuSubTrigger              src/components/ui/dropdown-menu.tsx:198:5                                
+DropdownMenuRadioGroup              src/components/ui/dropdown-menu.tsx:199:5                                
+useFormField                        src/components/ui/form.tsx:168:3                                         
+ScrollBar                           src/components/ui/scroll-area.tsx:48:22                                  
+SelectGroup                         src/components/ui/select.tsx:151:5                                       
+SelectLabel                         src/components/ui/select.tsx:155:5                                       
+SelectSeparator                     src/components/ui/select.tsx:157:5                                       
+SelectScrollUpButton                src/components/ui/select.tsx:158:5                                       
+SelectScrollDownButton              src/components/ui/select.tsx:159:5                                       
+SheetPortal                         src/components/ui/sheet.tsx:131:5                                        
+SheetOverlay                        src/components/ui/sheet.tsx:132:5                                        
+SheetClose                          src/components/ui/sheet.tsx:134:5                                        
+SheetHeader                         src/components/ui/sheet.tsx:136:5                                        
+SheetFooter                         src/components/ui/sheet.tsx:137:5                                        
+SheetTitle                          src/components/ui/sheet.tsx:138:5                                        
+SheetDescription                    src/components/ui/sheet.tsx:139:5                                        
+TableFooter                         src/components/ui/table.tsx:112:5                                        
+TableCaption                        src/components/ui/table.tsx:116:5                                        
+getTierHierarchy          function  src/lib/membership/utils.ts:5:17                                         
+getMinimumRequiredTier    function  src/lib/membership/utils.ts:29:17                                        
+compareTiers              function  src/lib/membership/utils.ts:107:17                                       
+updateOneSignalTags       function  src/lib/notifications.ts:37:23                                           
+addRateLimitHeaders       function  src/lib/rate-limit.ts:202:17                                             
+Unused exported types (8)
+CourseProgress    interface  src/actions/get-batch-course-progress.ts:3:18
+RFState           type       src/components/mind-map/store.ts:20:13       
+BadgeProps        interface  src/components/ui/badge.tsx:26:18            
+ButtonProps       interface  src/components/ui/button.tsx:50:18           
+CalendarProps     type       src/components/ui/calendar.tsx:10:13         
+InputProps        type       src/components/ui/input.tsx:5:13             
+TextareaProps     type       src/components/ui/textarea.tsx:5:13          
+NotificationType  type       src/lib/notifications.ts:7:13                
