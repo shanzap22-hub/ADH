@@ -9,15 +9,15 @@ export const revalidate = 3600;
 
 export default async function HomePage() {
   return (
-    <div className="relative flex flex-col min-h-screen bg-[#020617] overflow-hidden selection:bg-fuchsia-500/30">
+    <div className="relative flex flex-col min-h-screen bg-[#03020c] overflow-hidden selection:bg-orange-500/30">
       
       {/* --- Ambient Background Glows --- */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-violet-600/20 blur-[120px] pointer-events-none" />
-      <div className="absolute top-[20%] right-[-10%] w-[30%] h-[50%] rounded-full bg-fuchsia-600/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[20%] w-[50%] h-[40%] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none" />
+      <div className="absolute top-[-10%] left-[-10%] w-[45%] h-[45%] rounded-full bg-orange-600/15 blur-[130px] pointer-events-none" />
+      <div className="absolute top-[20%] right-[-10%] w-[35%] h-[50%] rounded-full bg-pink-600/10 blur-[130px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[20%] w-[55%] h-[40%] rounded-full bg-violet-600/10 blur-[130px] pointer-events-none" />
 
       {/* --- Premium Navbar --- */}
-      <nav className="fixed top-0 w-full z-50 bg-[#020617]/50 backdrop-blur-2xl border-b border-white/5 transition-all duration-300">
+      <nav className="fixed top-0 w-full z-50 bg-[#03020c]/60 backdrop-blur-2xl border-b border-white/5 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <Link href="/" className="flex items-center space-x-3 transition-opacity hover:opacity-80 shrink-0">
@@ -31,7 +31,7 @@ export default async function HomePage() {
                 </Button>
               </Link>
               <RazorpayButtonWrapper>
-                <Button className="group relative overflow-hidden rounded-full bg-white text-slate-950 hover:bg-slate-100 px-6 sm:px-8 py-5 sm:py-6 font-bold shadow-[0_0_40px_rgba(255,255,255,0.1)] transition-all hover:scale-105 active:scale-95 text-sm sm:text-base">
+                <Button className="group relative overflow-hidden rounded-full bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 hover:from-indigo-950 hover:via-pink-700 hover:to-orange-600 text-white px-6 sm:px-8 py-5 sm:py-6 font-bold shadow-[0_0_30px_rgba(219,39,119,0.25)] transition-all hover:scale-105 active:scale-95 text-sm sm:text-base border-none">
                   <span className="relative z-10 flex items-center gap-2">
                     Join the Hub <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </span>
@@ -46,25 +46,25 @@ export default async function HomePage() {
       <section className="relative pt-40 pb-24 px-4 sm:px-6 lg:px-8 flex items-center justify-center min-h-[90vh]">
         <div className="max-w-5xl mx-auto text-center space-y-8 sm:space-y-10 z-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-both">
           
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-            <Sparkles className="h-4 w-4 text-fuchsia-400" />
-            <span className="text-xs sm:text-sm font-medium text-slate-300">Kerala's Premier Digital Leadership Community</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 backdrop-blur-md">
+            <Sparkles className="h-4 w-4 text-orange-400" />
+            <span className="text-xs sm:text-sm font-medium text-orange-300">Kerala's Premier Digital Leadership Community</span>
           </div>
 
           <h1 className="text-5xl sm:text-7xl lg:text-[5.5rem] font-bold text-white leading-[1.1] tracking-tight">
             Stop Outsourcing.<br />
-            <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-orange-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-orange-400 via-pink-500 to-violet-500 bg-clip-text text-transparent">
               Start Leading.
             </span>
           </h1>
 
           <p className="text-lg sm:text-2xl text-slate-400 max-w-3xl mx-auto leading-relaxed font-light">
-            Master <strong className="text-white font-medium">Meta Marketing</strong> & <strong className="text-white font-medium">AI Automation</strong> to scale your business through strategic digital leadership.
+            Master <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-400 font-semibold">Meta Marketing</span> & <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-violet-400 font-semibold">AI Automation</span> to scale your business through strategic digital leadership.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-5 justify-center items-center pt-8">
             <RazorpayButtonWrapper>
-              <Button size="lg" className="group w-full sm:w-auto relative h-14 sm:h-16 px-8 sm:px-10 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold text-base sm:text-lg shadow-[0_0_40px_rgba(168,85,247,0.4)] transition-all hover:scale-[1.02] active:scale-95 overflow-hidden">
+              <Button size="lg" className="group w-full sm:w-auto relative h-14 sm:h-16 px-8 sm:px-10 rounded-full bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 hover:from-indigo-950 hover:via-pink-700 hover:to-orange-600 text-white font-bold text-base sm:text-lg shadow-[0_0_40px_rgba(219,39,119,0.35)] transition-all hover:scale-[1.02] active:scale-95 overflow-hidden border-none">
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
                 <span className="relative flex items-center gap-3">
                   Unlock Premium Access <ArrowRight className="h-5 w-5 group-hover:translate-x-2 transition-transform" />
@@ -79,7 +79,7 @@ export default async function HomePage() {
       </section>
 
       {/* --- Problem/Solution Section (Glassmorphism) --- */}
-      <section className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 border-y border-white/5 bg-white/[0.01]">
+      <section className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-transparent">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 sm:mb-20 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200 fill-mode-both">
             <h2 className="text-3xl sm:text-5xl font-bold text-white mb-6 tracking-tight">
@@ -107,12 +107,12 @@ export default async function HomePage() {
             </div>
 
             {/* With Card (Premium Glow) */}
-            <div className="group relative rounded-[2rem] bg-gradient-to-br from-violet-600/10 to-fuchsia-600/10 border border-fuchsia-500/20 backdrop-blur-xl p-8 sm:p-10 hover:border-fuchsia-500/40 transition-all duration-500 shadow-[0_0_50px_rgba(168,85,247,0.1)] hover:shadow-[0_0_80px_rgba(168,85,247,0.2)] hover:-translate-y-2">
+            <div className="group relative rounded-[2rem] bg-gradient-to-br from-orange-600/10 to-pink-600/10 border border-orange-500/20 backdrop-blur-xl p-8 sm:p-10 hover:border-orange-500/40 transition-all duration-500 shadow-[0_0_50px_rgba(249,115,22,0.08)] hover:shadow-[0_0_80px_rgba(249,115,22,0.15)] hover:-translate-y-2">
               <div className="absolute top-0 right-0 p-8 opacity-20 pointer-events-none">
-                <Sparkles className="w-24 h-24 sm:w-32 sm:h-32 text-fuchsia-400" />
+                <Sparkles className="w-24 h-24 sm:w-32 sm:h-32 text-orange-400" />
               </div>
               <div className="relative z-10">
-                <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center mb-8 border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                <div className="h-14 w-14 rounded-2xl bg-orange-500/10 flex items-center justify-center mb-8 border border-orange-500/20 shadow-[0_0_20px_rgba(249,115,22,0.15)]">
                   <span className="text-2xl">✅</span>
                 </div>
                 <h3 className="text-2xl font-semibold text-white mb-6">With ADH CONNECT</h3>
@@ -125,7 +125,7 @@ export default async function HomePage() {
                     "Become a digital leader in your niche"
                   ].map((item, i) => (
                     <li key={i} className="flex items-start text-slate-200">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-400 mr-3 mt-0.5 shrink-0" /> {item}
+                      <CheckCircle2 className="h-5 w-5 text-orange-400 mr-3 mt-0.5 shrink-0" /> {item}
                     </li>
                   ))}
                 </ul>
@@ -194,12 +194,12 @@ export default async function HomePage() {
       </section>
 
       {/* --- CTA Section --- */}
-      <section className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 border-t border-white/5 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-fuchsia-900/10 to-[#020617] pointer-events-none" />
+      <section className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-orange-900/10 to-[#03020c] pointer-events-none" />
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <h2 className="text-4xl sm:text-6xl font-bold text-white mb-8 tracking-tight leading-tight">
             Stop Overthinking.<br />
-            <span className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-orange-400 via-pink-500 to-violet-400 bg-clip-text text-transparent">
               Start Executing.
             </span>
           </h2>
@@ -208,9 +208,9 @@ export default async function HomePage() {
           </p>
 
           <RazorpayButtonWrapper>
-            <Button size="lg" className="group w-full sm:w-auto relative h-14 sm:h-16 px-8 sm:px-12 rounded-full bg-white text-slate-950 font-bold text-base sm:text-lg shadow-[0_0_40px_rgba(255,255,255,0.15)] transition-all hover:scale-[1.02] active:scale-95">
+            <Button size="lg" className="group w-full sm:w-auto relative h-14 sm:h-16 px-8 sm:px-12 rounded-full bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 hover:from-indigo-950 hover:via-pink-700 hover:to-orange-600 text-white font-bold text-base sm:text-lg shadow-[0_0_40px_rgba(219,39,119,0.35)] transition-all hover:scale-[1.02] active:scale-95 border-none">
               <span className="flex items-center gap-3">
-                <Sparkles className="h-5 w-5 text-fuchsia-600" />
+                <Sparkles className="h-5 w-5 text-orange-400" />
                 Claim Your Spot Now
               </span>
             </Button>
@@ -220,7 +220,7 @@ export default async function HomePage() {
       </section>
 
       {/* --- Footer --- */}
-      <footer className="border-t border-white/10 py-12 px-4 bg-[#020617] relative z-10">
+      <footer className="py-12 px-4 bg-transparent relative z-10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="text-center md:text-left">
             <Image src="/logo.png" alt="ADH" width={100} height={30} className="h-8 w-auto mb-4 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all mx-auto md:mx-0" />
@@ -229,7 +229,7 @@ export default async function HomePage() {
 
           <div className="flex flex-wrap justify-center gap-6 sm:gap-8 text-sm font-medium text-slate-500">
             {["Privacy Policy", "Terms of Service", "Refund Policy", "Contact Us"].map(link => (
-              <Link key={link} href={`/${link.toLowerCase().replace(/ /g, '-')}`} className="hover:text-white transition-colors">
+              <Link key={link} href={`/${link.toLowerCase().replace(/ /g, '-')}`} className="hover:text-orange-400 transition-colors">
                 {link}
               </Link>
             ))}

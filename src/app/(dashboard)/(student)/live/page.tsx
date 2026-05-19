@@ -311,7 +311,7 @@ export default function LivePage() {
                                     <CardFooter className="px-5 pb-5 pt-0">
                                         {latestSession ? (
                                             <a href={latestSession.join_url} target="_blank" rel="noreferrer" className="w-full">
-                                                <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-indigo-500/20 py-5 text-base font-bold tracking-wide transition-all hover:translate-y-[-1px]">
+                                                <Button className="w-full bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 hover:from-indigo-950 hover:via-pink-700 hover:to-orange-600 border-none text-white shadow-lg shadow-pink-500/20 py-5 text-base font-bold tracking-wide transition-all hover:translate-y-[-1px]">
                                                     JOIN WORKSHOP
                                                 </Button>
                                             </a>
@@ -368,7 +368,7 @@ export default function LivePage() {
                                     <CardFooter className="px-5 pb-5 pt-0">
                                         <Link href="/book-session" className="w-full">
                                             {/* Modern Button for Mentorship: Teal/Emerald */}
-                                            <Button className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white shadow-lg shadow-teal-500/20 py-5 text-base font-bold tracking-wide transition-all hover:translate-y-[-1px]">
+                                            <Button className="w-full bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 hover:from-indigo-950 hover:via-pink-700 hover:to-orange-600 border-none text-white shadow-lg shadow-pink-500/20 py-5 text-base font-bold tracking-wide transition-all hover:translate-y-[-1px]">
                                                 BOOK STRATEGY CALL
                                             </Button>
                                         </Link>

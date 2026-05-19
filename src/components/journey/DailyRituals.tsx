@@ -352,7 +352,7 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                             className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none font-bold text-lg"
                                         />
                                     </div>
-                                    <Button onClick={updateRevenue} disabled={isLoading} className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-black">
+                                    <Button onClick={updateRevenue} disabled={isLoading} className="w-full h-12 rounded-xl bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 hover:from-indigo-950 hover:via-pink-700 hover:to-orange-600 border-none text-white font-black">
                                         {isLoading ? "Updating..." : "Confirm Update"}
                                     </Button>
                                 </div>
@@ -623,7 +623,7 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                                         <Button onClick={() => {
                                                             setIsHistoryMode(false);
                                                             setSelectedDate(new Date().toISOString().split('T')[0]);
-                                                        }} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-8 font-black shadow-xl shadow-indigo-500/20">
+                                                        }} className="bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 hover:from-indigo-950 hover:via-pink-700 hover:to-orange-600 border-none text-white rounded-2xl px-8 font-black shadow-xl shadow-pink-500/20">
                                                             <Edit3 className="h-4 w-4 mr-2" /> Write Today's Goals
                                                         </Button>
                                                     </>
@@ -643,7 +643,7 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                                         <Button onClick={() => {
                                                             toast.success(`Goals saved for ${new Date(selectedDate).toLocaleDateString()}!`);
                                                             setIsWritingGoalsOnline(false);
-                                                        }} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-6 md:px-12 font-black shadow-xl shadow-indigo-500/20">
+                                                        }} className="bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 hover:from-indigo-950 hover:via-pink-700 hover:to-orange-600 border-none text-white rounded-2xl px-6 md:px-12 font-black shadow-xl shadow-pink-500/20">
                                                             Save Goals
                                                         </Button>
                                                     </>
@@ -689,7 +689,7 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                                 </div>
                                                 <div className="p-8 pt-0 flex justify-end gap-3">
                                                     <Button variant="ghost" onClick={() => setIsEditingAffirmations(false)} className="rounded-2xl px-8">Cancel</Button>
-                                                    <Button onClick={saveAffirmations} disabled={isLoading} className="bg-violet-600 hover:bg-violet-700 text-white rounded-2xl px-12 font-black shadow-xl shadow-violet-500/20">
+                                                    <Button onClick={saveAffirmations} disabled={isLoading} className="bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 hover:from-indigo-950 hover:via-pink-700 hover:to-orange-600 border-none text-white rounded-2xl px-12 font-black shadow-xl shadow-pink-500/20">
                                                         {isLoading ? "Saving..." : "Save Affirmations"}
                                                     </Button>
                                                 </div>
@@ -720,7 +720,7 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                                         "{affirmations}"
                                                     </div>
                                                     <div className="sticky bottom-0 pt-6 bg-inherit">
-                                                        <Button onClick={speakAffirmations} className="w-full rounded-2xl h-14 bg-violet-600 hover:bg-violet-700 text-white font-black gap-3 shadow-xl shadow-violet-500/20">
+                                                        <Button onClick={speakAffirmations} className="w-full rounded-2xl h-14 bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 hover:from-indigo-950 hover:via-pink-700 hover:to-orange-600 border-none text-white font-black gap-3 shadow-xl shadow-pink-500/20">
                                                             {isGeneratingTTS ? (
                                                                 <><span className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Preparing Audio...</>
                                                             ) : isAffirmationsPlaying ? (
