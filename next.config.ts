@@ -1,4 +1,11 @@
 import type { NextConfig } from "next"; // Restart trigger
+import withSerwistInit from "@serwist/next";
+
+const withSerwist = withSerwistInit({
+  swSrc: "src/app/sw.ts",
+  swDest: "public/sw.js",
+  disable: process.env.NODE_ENV === "development",
+});
 
 // 2026 Performance: Bundle Analyzer for optimization
 // Usage: ANALYZE=true npm run build
@@ -95,4 +102,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withBundleAnalyzer(nextConfig);
+export default withBundleAnalyzer(withSerwist(nextConfig));

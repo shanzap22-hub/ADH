@@ -69,19 +69,36 @@ export default async function Dashboard() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return redirect("/");
 
-    const courses = await getDashboardCourses(user.id);
-    const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+    const yesterdayDate = new Date();
+    yesterdayDate.setHours(yesterdayDate.getHours() - 24);
+    const yesterday = yesterdayDate.toISOString();
 
-    // Posts
-    const { data: posts } = await supabase
-        .from("posts")
-        .select(`id, content, image_url, link, created_at, is_pinned, author_id,
-                 post_tier_access ( tier ),
-                 author:profiles ( full_name, avatar_url )`)
-        .order("is_pinned", { ascending: false })
-        .order("created_at",  { ascending: false });
+    const [
+        courses,
+        { data: profile },
+        { data: posts },
+        { data: weeklySessions },
+        { data: bookings }
+    ] = await Promise.all([
+        getDashboardCourses(user.id),
+        supabase.from("profiles").select("*").eq("id", user.id).single(),
+        supabase
+            .from("posts")
+            .select(`id, content, image_url, link, created_at, is_pinned, author_id,
+                     post_tier_access ( tier ),
+                     author:profiles ( full_name, avatar_url )`)
+            .order("is_pinned", { ascending: false })
+            .order("created_at",  { ascending: false }),
+        (supabase as any)
+            .from("weekly_live_sessions").select("*")
+            .gte("scheduled_at", yesterday).order("scheduled_at", { ascending: true }).limit(5),
+        supabase
+            .from("bookings").select("*, profiles:instructor_id(full_name)")
+            .eq("user_id", user.id).eq("status", "confirmed")
+            .gte("start_time", yesterday).order("start_time", { ascending: true }).limit(5)
+    ]);
 
-    // Tier access
+    // Tier access (Sequential because it depends on profile)
     const userTier = profile?.membership_tier || "bronze";
     const { data: tierSettings } = await supabase
         .from("tier_pricing").select("has_community_feed_access")
@@ -96,20 +113,6 @@ export default async function Dashboard() {
             return access.length === 0 || access.some((a: any) => a.tier === userTier);
         });
     }
-
-    // Live sessions
-    const yesterdayDate = new Date();
-    yesterdayDate.setHours(yesterdayDate.getHours() - 24);
-    const yesterday = yesterdayDate.toISOString();
-
-    const { data: weeklySessions } = await (supabase as any)
-        .from("weekly_live_sessions").select("*")
-        .gte("scheduled_at", yesterday).order("scheduled_at", { ascending: true }).limit(5);
-
-    const { data: bookings } = await supabase
-        .from("bookings").select("*, profiles:instructor_id(full_name)")
-        .eq("user_id", user.id).eq("status", "confirmed")
-        .gte("start_time", yesterday).order("start_time", { ascending: true }).limit(5);
 
     // Stats
     const coursesInProgress = courses.filter(c => (c.progress ?? 0) < 100);

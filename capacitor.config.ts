@@ -15,7 +15,8 @@ const config: CapacitorConfig = {
       '*.adh.today',
       '*.google.com',
       '*.googleapis.com',
-      '*.gstatic.com'
+      '*.gstatic.com',
+      '*.razorpay.com'
     ]
   },
   plugins: {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { format } from "date-fns";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -258,10 +259,11 @@ export default function LivePage() {
                                     {latestSession?.banner_url ? (
                                         <div className="h-36 w-full overflow-hidden relative">
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
-                                            <img
+                                            <Image
                                                 src={latestSession.banner_url}
                                                 alt="Live Banner"
-                                                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                                fill
+                                                className="object-cover transform group-hover:scale-105 transition-transform duration-700"
                                             />
                                             <div className="absolute bottom-2 left-3 z-20">
                                                 <span className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide shadow-sm">
@@ -336,10 +338,11 @@ export default function LivePage() {
                                     <div className="h-36 w-full overflow-hidden relative">
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
                                         {/* Image: Strategy/Business Growth */}
-                                        <img
+                                        <Image
                                             src={oneOnOneSettings?.banner_url || "https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=600&auto=format&fit=crop"}
                                             alt="Business Consulting"
-                                            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                            fill
+                                            className="object-cover transform group-hover:scale-105 transition-transform duration-700"
                                         />
                                         <div className="absolute bottom-2 left-3 z-20">
                                             <span className="bg-teal-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide shadow-sm">
