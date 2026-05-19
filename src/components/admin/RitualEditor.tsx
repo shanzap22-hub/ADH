@@ -9,7 +9,7 @@ import {
 import { toast } from "sonner";
 import { updateRitualAction } from "@/app/actions/journey";
 import { Headphones, CheckCircle2, Upload, Loader2, Music, X } from "lucide-react";
-import { uploadToR2 } from "@/actions/r2";
+import { getPresignedUrl } from "@/actions/r2";
 
 interface RitualEditorProps {
     ritual: {
@@ -38,17 +38,29 @@ export const RitualEditor = ({ ritual }: RitualEditorProps) => {
         }
 
         setIsUploading(true);
-        const formData = new FormData();
-        formData.append("file", file);
 
         try {
-            const result = await uploadToR2(formData, "rituals-audio");
-            if (result.url) {
-                setAudioUrl(result.url);
-                toast.success("Audio uploaded to R2 successfully!");
-            } else {
-                throw new Error(result.error);
+            // 1. Get presigned URL
+            const { signedUrl, publicUrl, error } = await getPresignedUrl(file.name, file.type, "rituals-audio");
+            if (error || !signedUrl) {
+                throw new Error(error || "Failed to generate upload URL");
             }
+
+            // 2. Upload directly to Cloudflare R2 from browser
+            const uploadResponse = await fetch(signedUrl, {
+                method: "PUT",
+                body: file,
+                headers: {
+                    "Content-Type": file.type,
+                },
+            });
+
+            if (!uploadResponse.ok) {
+                throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+            }
+
+            setAudioUrl(publicUrl);
+            toast.success("Audio uploaded to R2 successfully!");
         } catch (error: any) {
             toast.error("Upload failed: " + error.message);
         } finally {
