@@ -9,7 +9,8 @@ export async function POST(req: Request) {
 
         const body = await req.json();
         // Only whatsappNumber is used for minimal profile creation
-        const { fullName, email, contactNumber, whatsappNumber, paymentId } = body;
+        const { fullName, email, contactNumber, paymentId } = body;
+        const frontendWhatsappNumber = body.whatsappNumber;
 
         console.log("[FINALIZE_ENROLLMENT] Received data:", {
             fullName,
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
         });
 
         // Validate required fields
-        if (!whatsappNumber || !paymentId) {
+        if (!frontendWhatsappNumber || !paymentId) {
             console.error("[FINALIZE_ENROLLMENT] Missing required fields: paymentId or whatsappNumber");
             return NextResponse.json(
                 { error: "Payment ID and WhatsApp Number are required" },
@@ -48,6 +49,12 @@ export async function POST(req: Request) {
                 { status: 403 }
             );
         }
+
+        // CRITICAL SECURITY FIX: Trust DB whatsapp_number, ignore frontend
+        const whatsappNumber = paymentRecord.whatsapp_number;
+
+        // CRITICAL SECURITY FIX: Delete the verified record to prevent replay attacks
+        await supabaseAdmin.from("payments_temp").delete().eq("payment_id", paymentId);
 
         // Create Razorpay instance to fetch details
          
@@ -164,28 +171,48 @@ export async function POST(req: Request) {
             }
         }
 
-        // STEP 2.5: Insert into TRANSACTIONS table (Verified Record)
-        // This ensures the payment shows up in "Transaction Manager" with correct amount
+        // STEP 2.5: UPSERT into TRANSACTIONS table (Verified Record)
+        // Fix double entry bug: Update if exists (from webhook), otherwise insert
         try {
-            const { error: txnError } = await supabaseAdmin.from('transactions').insert({
-                user_id: userId,
-                student_name: fullName || "Student",
-                student_email: finalEmail.toLowerCase().trim(),
-                whatsapp_number: whatsappNumber,
-                amount: paymentRecord.amount, // Real amount from payment
-                currency: paymentRecord.currency || 'INR',
-                status: 'verified',
-                source: 'razorpay',
-                razorpay_payment_id: paymentId,
-                razorpay_order_id: paymentRecord.order_id,
-                membership_plan: 'silver',
-                created_at: new Date().toISOString()
-            });
+            const { data: updatedTxn, error: updateError } = await supabaseAdmin
+                .from('transactions')
+                .update({
+                    user_id: userId,
+                    student_name: fullName || "Student",
+                    student_email: finalEmail.toLowerCase().trim(),
+                    whatsapp_number: whatsappNumber
+                })
+                .eq('razorpay_payment_id', paymentId)
+                .select();
 
-            if (txnError) {
-                console.error("[FINALIZE_ENROLLMENT] Transaction insert failed (non-fatal):", txnError);
+            if (updateError) {
+                console.error("[FINALIZE_ENROLLMENT] Transaction update error:", updateError);
+            }
+
+            if (!updatedTxn || updatedTxn.length === 0) {
+                // If update affected 0 rows, it means webhook hasn't inserted it yet. So we insert.
+                const { error: txnError } = await supabaseAdmin.from('transactions').insert({
+                    user_id: userId,
+                    student_name: fullName || "Student",
+                    student_email: finalEmail.toLowerCase().trim(),
+                    whatsapp_number: whatsappNumber,
+                    amount: paymentRecord.amount, // Real amount from payment
+                    currency: paymentRecord.currency || 'INR',
+                    status: 'verified',
+                    source: 'razorpay',
+                    razorpay_payment_id: paymentId,
+                    razorpay_order_id: paymentRecord.order_id,
+                    membership_plan: 'silver',
+                    created_at: new Date().toISOString()
+                });
+
+                if (txnError) {
+                    console.error("[FINALIZE_ENROLLMENT] Transaction insert failed (non-fatal):", txnError);
+                } else {
+                    console.log("[FINALIZE_ENROLLMENT] Transaction record inserted successfully.");
+                }
             } else {
-                console.log("[FINALIZE_ENROLLMENT] Transaction record created successfully.");
+                console.log("[FINALIZE_ENROLLMENT] Transaction record updated successfully.");
             }
         } catch (txnEx) {
             console.error("[FINALIZE_ENROLLMENT] Transaction Logic Error:", txnEx);

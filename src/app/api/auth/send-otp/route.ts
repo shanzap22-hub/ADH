@@ -18,6 +18,23 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
         }
 
+        // Check Rate Limits: Max 5 per hour
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+        const { count, error: countError } = await supabaseAdmin
+            .from("otp_rate_limits")
+            .select("*", { count: "exact", head: true })
+            .eq("email", email)
+            .gte("created_at", oneHourAgo);
+
+        if (countError) {
+            console.error("Rate limit check error:", countError);
+        } else if (count !== null && count >= 5) {
+            return NextResponse.json(
+                { error: "Too many requests. Please try again after an hour." },
+                { status: 429 }
+            );
+        }
+
         // Generate 6 digit code
         const code = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -42,6 +59,9 @@ export async function POST(req: Request) {
             console.error("DB Insert Error:", error);
             throw new Error("Database error while generating OTP");
         }
+
+        // Log OTP request for rate limiting
+        await supabaseAdmin.from("otp_rate_limits").insert({ email });
 
         // Send Email
         const sent = await sendVerificationOTP(email, code);
