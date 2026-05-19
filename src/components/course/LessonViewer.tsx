@@ -100,12 +100,12 @@ export const LessonViewer = ({
     return (
         <div className="flex-1 bg-white dark:bg-slate-900">
             {/* Lesson Header */}
-            <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <div className="py-3 px-4 md:px-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <div>
-                    <div className="text-sm font-medium text-orange-600 dark:text-orange-400 mb-2">
+                    <div className="text-xs font-semibold text-orange-600 dark:text-orange-400 mb-1">
                         Lesson {lessonNumber}
                     </div>
-                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+                    <h1 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white">
                         {title}
                     </h1>
                 </div>
@@ -131,7 +131,10 @@ export const LessonViewer = ({
             </div>
 
             {/* Video Player */}
-            <div className="relative aspect-video bg-slate-900">
+            <div 
+                className="relative aspect-video bg-slate-900 w-full mx-auto overflow-hidden flex-none"
+                style={{ maxHeight: 'calc(100vh - 200px)', maxWidth: 'calc((100vh - 200px) * 16 / 9)' }}
+            >
                 {cleanUrl ? (
                     <>
                         {isBunnyVideo && bunnyVideoId ? (
@@ -139,6 +142,7 @@ export const LessonViewer = ({
                             <div className="w-full h-full">
                                 <BunnyVideoPlayer
                                     videoId={bunnyVideoId}
+                                    className="w-full h-full border-none rounded-none"
                                     courseId={courseId}
                                     title={title}
                                     initialTime={lastPlayedSecond}

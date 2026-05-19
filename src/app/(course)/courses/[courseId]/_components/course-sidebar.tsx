@@ -47,8 +47,8 @@ export const CourseSidebar = async ({
     }
 
     return (
-        <div className="h-full border-r flex flex-col overflow-y-auto shadow-sm">
-            <div className="p-8 flex flex-col border-b">
+        <div className="h-full border-r flex flex-col overflow-y-auto shadow-sm bg-white dark:bg-slate-950">
+            <div className="p-5 flex flex-col border-b">
                 <CourseSidebarBackButton />
                 <h1 className="font-semibold">
                     {course.title}
@@ -56,7 +56,7 @@ export const CourseSidebar = async ({
                 {/* Progress Bar can go here */}
             </div>
             <div className="flex flex-col w-full">
-                {course.chapters.map((chapter: any) => (
+                {course.chapters.map((chapter: any, index: number) => (
                     <CourseSidebarItem
                         key={chapter.id}
                         id={chapter.id}
@@ -64,6 +64,7 @@ export const CourseSidebar = async ({
                         isCompleted={completedChapters.has(chapter.id)}
                         courseId={course.id}
                         isLocked={!chapter.is_free && !hasPurchase}
+                        isFirst={index === 0}
                     />
                 ))}
             </div>

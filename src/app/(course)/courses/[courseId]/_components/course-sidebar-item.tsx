@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle, Lock, PlayCircle } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,7 @@ interface CourseSidebarItemProps {
     isCompleted: boolean;
     courseId: string;
     isLocked: boolean;
+    isFirst?: boolean;
 };
 
 export const CourseSidebarItem = ({
@@ -19,12 +20,15 @@ export const CourseSidebarItem = ({
     isCompleted,
     courseId,
     isLocked,
+    isFirst
 }: CourseSidebarItemProps) => {
     const pathname = usePathname();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     const Icon = isLocked ? Lock : (isCompleted ? CheckCircle : PlayCircle);
-    const isActive = pathname?.includes(id);
+    const activeLessonId = searchParams?.get('lesson');
+    const isActive = activeLessonId === id || (!activeLessonId && isFirst);
 
     const onClick = () => {
         router.push(`/courses/${courseId}/learn?lesson=${id}`);

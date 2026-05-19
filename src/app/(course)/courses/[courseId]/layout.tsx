@@ -93,14 +93,14 @@ export default async function CourseLayout({
                 <TopHeader />
             </div> */}
 
-            <div className="hidden md:flex h-full w-80 flex-col fixed inset-y-0 z-40">
+            <div className="hidden md:flex h-full w-64 flex-col fixed inset-y-0 z-40">
                 <CourseSidebar
                     course={course}
                     progressCount={progressCount}
                 />
             </div>
             {/* Adjusted padding: removed pt-[80px] since header is gone */}
-            <main className="md:pl-80 h-full pb-20 md:pb-0">
+            <main className="md:pl-64 h-full pb-20 md:pb-0">
                 {children}
             </main>
 

@@ -223,12 +223,12 @@ export const BunnyVideoPlayer = ({
     }
 
     return (
-        <div className={cn("relative aspect-video bg-slate-900 rounded-2xl overflow-hidden group", className)}>
+        <div className={cn("relative aspect-video bg-slate-900 rounded-lg overflow-hidden group", className)}>
             {/* Cinematic skeleton instead of MetaballLoader */}
             {!isReady && !urlError && (
                 <div className="absolute inset-0 z-10 bg-slate-900 animate-pulse flex items-center justify-center">
                     <div className="flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 rounded-full border-4 border-orange-500/20 border-t-orange-500 animate-spin" />
+                        <div className="w-12 h-12 rounded-full border-4 border-orange-500/20 border-t-orange-500 animate-spin" />
                         <p className="text-slate-400 text-xs font-medium animate-pulse">Initializing Secure Player...</p>
                     </div>
                 </div>
