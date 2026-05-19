@@ -104,8 +104,13 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
             }
 
             // Initialize Razorpay
+            const rzpKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+            if (!rzpKey) {
+                throw new Error("Razorpay Key ID is missing in environment variables. Payment cannot be initialized.");
+            }
+
             const options = {
-                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                key: rzpKey,
                 amount: amount,
                 currency: currency,
                 name: "ADH CONNECT",
