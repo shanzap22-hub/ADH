@@ -122,21 +122,21 @@ export const RitualEditor = ({ ritual }: RitualEditorProps) => {
                         
                         <div className="flex flex-col gap-3">
                             {/* Audio Preview or Upload Placeholder */}
-                            <div className="p-4 rounded-2xl border-2 border-dashed border-slate-100 bg-slate-50/50 flex flex-col items-center justify-center gap-3">
+                            <div className="p-4 rounded-2xl border-2 border-dashed border-slate-100 bg-slate-50/50 flex flex-col items-center justify-center gap-3 w-full overflow-hidden">
                                 {audioUrl ? (
-                                    <div className="w-full space-y-3">
-                                        <div className="flex items-center gap-3 bg-white p-3 rounded-xl border shadow-sm">
-                                            <div className="w-10 h-10 bg-violet-100 rounded-full flex items-center justify-center">
+                                    <div className="w-full space-y-3 overflow-hidden">
+                                        <div className="flex items-center gap-3 bg-white p-3 rounded-xl border shadow-sm w-full">
+                                            <div className="shrink-0 w-10 h-10 bg-violet-100 rounded-full flex items-center justify-center">
                                                 <Music className="h-5 w-5 text-violet-600" />
                                             </div>
-                                            <div className="flex-1 overflow-hidden">
+                                            <div className="flex-1 min-w-0 overflow-hidden">
                                                 <p className="text-[10px] font-black text-slate-400 uppercase truncate">Current Audio URL</p>
                                                 <p className="text-xs font-bold text-slate-600 truncate">{audioUrl}</p>
                                             </div>
                                             <Button 
                                                 variant="ghost" 
                                                 size="icon" 
-                                                className="h-8 w-8 text-rose-500"
+                                                className="shrink-0 h-8 w-8 text-rose-500"
                                                 onClick={() => setAudioUrl("")}
                                             >
                                                 <X className="h-4 w-4" />
