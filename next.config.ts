@@ -44,7 +44,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      bodySizeLimit: '10mb', // Increase from default 1mb to support larger images
+      bodySizeLimit: '100mb', // Increase from default 10mb to support larger files like audio/video
     },
   },
 
