@@ -19,8 +19,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 224 71% 4%;
 
-    /* Primary — Lovable Purple */
-    --primary: 262 83% 58%;
+    /* Primary — Vibrant Pink to match new button theme */
+    --primary: 333 71% 51%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary */
@@ -42,17 +42,17 @@
     /* Border & Input */
     --border: 240 6% 90%;
     --input: 240 6% 90%;
-    --ring: 262 83% 58%;
+    --ring: 333 71% 51%;
 
     /* Border Radius — rounder = more premium */
     --radius: 0.75rem;
 
     /* Custom Brand Tokens */
-    --brand: 262 83% 58%;
-    --brand-light: 262 83% 96%;
-    --brand-dark: 262 83% 38%;
-    --gradient-start: 262 83% 58%;
-    --gradient-end: 291 64% 62%;
+    --brand: 333 71% 51%;
+    --brand-light: 333 71% 96%;
+    --brand-dark: 333 71% 38%;
+    --gradient-start: 333 71% 51%;
+    --gradient-end: 24 95% 53%;
   }
 
   .dark {
@@ -67,8 +67,8 @@
     --popover: 222 47% 7%;
     --popover-foreground: 210 40% 98%;
 
-    /* Primary — Lovable Purple (same in dark) */
-    --primary: 262 83% 68%;
+    /* Primary — Vibrant Pink (same in dark) */
+    --primary: 333 71% 61%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary */
@@ -90,12 +90,12 @@
     /* Border & Input */
     --border: 217 33% 14%;
     --input: 217 33% 14%;
-    --ring: 262 83% 68%;
+    --ring: 333 71% 61%;
 
     /* Custom Brand Tokens Dark */
-    --brand: 262 83% 68%;
-    --brand-light: 262 50% 18%;
-    --brand-dark: 262 83% 80%;
+    --brand: 333 71% 61%;
+    --brand-light: 333 50% 18%;
+    --brand-dark: 333 71% 80%;
   }
 }
 
@@ -247,8 +247,8 @@ main, [data-page] {
 
 .gradient-text {
   background: linear-gradient(135deg,
-    hsl(262 83% 58%),
-    hsl(291 64% 62%)
+    hsl(333 71% 51%),
+    hsl(24 95% 53%)
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -266,8 +266,8 @@ main, [data-page] {
   border-radius: inherit;
   padding: 1px;
   background: linear-gradient(135deg,
-    hsl(262 83% 58% / 0.5),
-    hsl(291 64% 62% / 0.3)
+    hsl(333 71% 51% / 0.5),
+    hsl(24 95% 53% / 0.3)
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box,
                 linear-gradient(#fff 0 0);

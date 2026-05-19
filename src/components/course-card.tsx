@@ -47,7 +47,7 @@ const CourseCardComponent = ({
                     relative h-full flex flex-col overflow-hidden rounded-2xl
                     border border-slate-200/80 dark:border-slate-700/50
                     bg-white dark:bg-slate-900
-                    shadow-sm hover:shadow-xl hover:shadow-violet-500/10 dark:hover:shadow-violet-900/20
+                    shadow-sm hover:shadow-xl hover:shadow-pink-500/10 dark:hover:shadow-pink-900/20
                     transition-all duration-300 ease-out
                     hover:-translate-y-1
                     ${backgroundClass || ""}
@@ -76,7 +76,7 @@ const CourseCardComponent = ({
                         {!isLocked && (
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
                                 <div className="w-12 h-12 rounded-full bg-white/95 shadow-lg flex items-center justify-center transform scale-75 group-hover:scale-100 transition-transform duration-300">
-                                    <Play className="h-5 w-5 text-violet-600 fill-violet-600 ml-0.5" />
+                                    <Play className="h-5 w-5 text-pink-600 fill-pink-600 ml-0.5" />
                                 </div>
                             </div>
                         )}
@@ -117,8 +117,7 @@ const CourseCardComponent = ({
                         <h3 className={`
                             line-clamp-2 text-sm font-semibold leading-snug min-h-[40px]
                             text-slate-800 dark:text-slate-100
-                            group-hover:text-violet-700 dark:group-hover:text-violet-400
-                            transition-colors duration-200
+                            group-hover:text-pink-600 dark:group-hover:text-pink-400
                             ${titleClass || ""}
                         `}>
                             {title}
@@ -140,7 +139,7 @@ const CourseCardComponent = ({
                                         <span className="text-slate-500 dark:text-slate-400">Progress</span>
                                         <span className={isCompleted
                                             ? "text-emerald-600 dark:text-emerald-400 font-semibold"
-                                            : "text-violet-600 dark:text-violet-400 font-semibold"
+                                            : "text-pink-600 dark:text-pink-400 font-semibold"
                                         }>
                                             {Math.round(progress!)}%
                                         </span>
@@ -157,8 +156,8 @@ const CourseCardComponent = ({
                                         {isLocked ? "Upgrade Required" : "Start Learning"}
                                     </span>
                                     {!isLocked && (
-                                        <div className="w-7 h-7 rounded-full bg-violet-50 dark:bg-violet-950/50 group-hover:bg-violet-600 flex items-center justify-center transition-all duration-200 border border-violet-200 dark:border-violet-800 group-hover:border-violet-600">
-                                            <ArrowRight className="h-3 w-3 text-violet-500 group-hover:text-white transition-colors duration-200" />
+                                        <div className="w-7 h-7 rounded-full bg-pink-50 dark:bg-pink-950/50 group-hover:bg-pink-600 flex items-center justify-center transition-all duration-200 border border-pink-200 dark:border-pink-800 group-hover:border-pink-600">
+                                            <ArrowRight className="h-3 w-3 text-pink-500 group-hover:text-white transition-colors duration-200" />
                                         </div>
                                     )}
                                 </div>
@@ -167,7 +166,7 @@ const CourseCardComponent = ({
                     </div>
 
                     {/* Bottom accent line on hover */}
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-violet-500 to-purple-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
                 </div>
             </Link>
         </>

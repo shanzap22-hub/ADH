@@ -89,7 +89,7 @@ export const TopHeader = () => {
                                         className={cn(
                                             "flex items-center gap-2.5 px-4 py-2 rounded-2xl text-sm font-bold transition-all duration-300 relative group",
                                             isActive
-                                                ? "text-fuchsia-600 dark:text-fuchsia-400 bg-fuchsia-500/5 dark:bg-fuchsia-500/10"
+                                                ? "text-pink-600 dark:text-pink-400 bg-pink-500/5 dark:bg-pink-500/10"
                                                 : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                                         )}
                                     >
@@ -99,7 +99,7 @@ export const TopHeader = () => {
                                         )} />
                                         <span>{item.label}</span>
                                         {isActive && (
-                                            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 rounded-t-md bg-gradient-to-r from-violet-600 to-fuchsia-600" />
+                                            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 rounded-t-md bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500" />
                                         )}
                                     </Link>
                                 );
@@ -121,7 +121,7 @@ export const TopHeader = () => {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button
-                                    className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white text-sm font-black hover:scale-105 active:scale-95 transition-all shadow-lg shadow-fuchsia-500/20"
+                                    className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-900 via-pink-600 to-orange-500 text-white text-sm font-black hover:scale-105 active:scale-95 transition-all shadow-lg shadow-pink-500/20"
                                     aria-label="User menu"
                                 >
                                     {user?.email ? getInitials(user.email) : "U"}
@@ -141,7 +141,7 @@ export const TopHeader = () => {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     onClick={() => router.push("/settings")}
-                                    className="rounded-2xl cursor-pointer py-3 px-4 font-bold text-sm hover:bg-violet-500/5 focus:bg-violet-500/5 transition-colors"
+                                    className="rounded-2xl cursor-pointer py-3 px-4 font-bold text-sm hover:bg-pink-500/5 focus:bg-pink-500/5 transition-colors"
                                 >
                                     Settings
                                 </DropdownMenuItem>

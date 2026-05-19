@@ -122,12 +122,15 @@ export default async function Dashboard() {
     const firstName = profile?.full_name?.split(" ")[0] || "Student";
 
     return (
-        <div className="min-h-screen bg-[#f7f6ff] dark:bg-slate-950 pb-28 md:pb-8">
+        <div className="min-h-screen bg-[#f7f6ff] dark:bg-slate-950 pb-28 md:pb-8 relative overflow-hidden">
+            {/* Background Glow */}
+            <div className="absolute top-[-5%] right-[-10%] w-[50%] h-[40%] rounded-full bg-pink-500/10 blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-orange-500/10 blur-[120px] pointer-events-none" />
             {/* ─────────────────────────── MOBILE LAYOUT ─────────────────────── */}
             <div className="md:hidden px-4 pt-4 space-y-4">
 
                 {/* 1. Compact Stats Card */}
-                <div className="rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 p-4 text-white shadow-lg shadow-violet-500/20 relative overflow-hidden">
+                <div className="rounded-2xl bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 p-4 text-white shadow-lg shadow-pink-500/20 relative overflow-hidden">
                     {/* Decorative blob */}
                     <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10 blur-2xl pointer-events-none" />
 
@@ -167,7 +170,7 @@ export default async function Dashboard() {
                 {/* 3. Community Feed — 3 posts */}
                 <div>
                     <div className="flex items-center justify-between mb-3">
-                        <h2 className="text-base font-bold bg-gradient-to-r from-violet-700 to-fuchsia-600 bg-clip-text text-transparent">
+                        <h2 className="text-base font-bold bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 bg-clip-text text-transparent">
                             Community Feed
                         </h2>
                     </div>
@@ -177,7 +180,7 @@ export default async function Dashboard() {
                 {/* 4. See More button */}
                 {filteredPosts.length > 3 && (
                     <Link href="/community">
-                        <button className="w-full py-3 rounded-2xl border border-violet-200 dark:border-violet-800/50 bg-white dark:bg-slate-900 text-violet-600 dark:text-violet-400 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-colors">
+                        <button className="w-full py-3 rounded-2xl border border-pink-200 dark:border-pink-800/50 bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-pink-50 dark:hover:bg-pink-950/30 transition-colors">
                             See All Posts ({filteredPosts.length})
                             <ArrowRight className="h-4 w-4" />
                         </button>
@@ -188,11 +191,11 @@ export default async function Dashboard() {
                 <div>
                     <div className="flex items-center justify-between mb-3">
                         <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-violet-500" />
+                            <Clock className="w-4 h-4 text-pink-500" />
                             Continue Learning
                         </h2>
                         <Link href="/courses">
-                            <Button variant="ghost" size="sm" className="text-violet-600 dark:text-violet-400 h-8 text-xs px-2">
+                            <Button variant="ghost" size="sm" className="text-pink-600 dark:text-pink-400 h-8 text-xs px-2">
                                 View All
                             </Button>
                         </Link>
@@ -200,10 +203,10 @@ export default async function Dashboard() {
                     {coursesInProgress.length > 0 ? (
                         <CoursesList items={coursesInProgress.slice(0, 3) as any[]} />
                     ) : (
-                        <div className="text-center py-8 rounded-2xl border border-dashed border-violet-200 dark:border-violet-800/50 bg-violet-50/50 dark:bg-violet-950/20">
-                            <BookOpen className="w-7 h-7 text-violet-300 dark:text-violet-700 mx-auto mb-2" />
+                        <div className="text-center py-8 rounded-2xl border border-dashed border-pink-200 dark:border-pink-800/50 bg-pink-50/50 dark:bg-pink-950/20">
+                            <BookOpen className="w-7 h-7 text-pink-300 dark:text-pink-700 mx-auto mb-2" />
                             <p className="text-sm text-slate-500 dark:text-slate-400">No courses in progress</p>
-                            <Link href="/courses" className="text-sm font-bold text-violet-600 dark:text-violet-400 hover:underline mt-1 inline-block">
+                            <Link href="/courses" className="text-sm font-bold text-pink-600 dark:text-pink-400 hover:underline mt-1 inline-block">
                                 Browse Courses →
                             </Link>
                         </div>
@@ -218,7 +221,7 @@ export default async function Dashboard() {
                     {/* Left — Feed */}
                     <div className="col-span-8 space-y-6">
                         <div>
-                            <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-700 via-purple-600 to-fuchsia-500 bg-clip-text text-transparent tracking-tight">
+                            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 bg-clip-text text-transparent tracking-tight">
                                 Community Feed
                             </h1>
                             <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
@@ -229,7 +232,7 @@ export default async function Dashboard() {
                         <FeedView posts={filteredPosts} isAdmin={false} currentUserId={user.id} limit={3} />
                         {filteredPosts.length > 3 && (
                             <Link href="/community">
-                                <Button variant="outline" className="w-full border-violet-200 text-violet-600 hover:bg-violet-50 font-semibold">
+                                <Button variant="outline" className="w-full border-pink-200 text-pink-600 hover:bg-pink-50 font-semibold">
                                     View All Posts ({filteredPosts.length}) →
                                 </Button>
                             </Link>
@@ -239,7 +242,7 @@ export default async function Dashboard() {
                     {/* Right — Stats + Learning */}
                     <div className="col-span-4 space-y-6">
                         {/* Welcome Card */}
-                        <Card className="overflow-hidden border-none shadow-lg bg-gradient-to-br from-[#2e1065] via-[#4c1d95] to-[#581c87] text-white relative">
+                        <Card className="overflow-hidden border-none shadow-lg bg-gradient-to-br from-indigo-900 via-pink-600 to-orange-500 text-white relative">
                             <div className="absolute top-[-50%] right-[-50%] w-full h-full rounded-full bg-white/10 blur-3xl pointer-events-none" />
                             <CardContent className="p-5 relative z-10">
                                 <div className="flex items-center gap-3 mb-4">
@@ -279,11 +282,11 @@ export default async function Dashboard() {
                         <div>
                             <div className="flex items-center justify-between mb-3">
                                 <h3 className="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2 text-sm">
-                                    <Clock className="w-4 h-4 text-violet-500" />
+                                    <Clock className="w-4 h-4 text-pink-500" />
                                     Continue Learning
                                 </h3>
                                 <Link href="/courses">
-                                    <Button variant="ghost" size="sm" className="text-violet-600 dark:text-violet-400 h-8 text-xs px-2">
+                                    <Button variant="ghost" size="sm" className="text-pink-600 dark:text-pink-400 h-8 text-xs px-2">
                                         View All
                                     </Button>
                                 </Link>
@@ -291,10 +294,10 @@ export default async function Dashboard() {
                             {coursesInProgress.length > 0 ? (
                                 <CoursesList items={coursesInProgress.slice(0, 3) as any[]} />
                             ) : (
-                                <div className="text-center p-6 border border-dashed border-violet-200 dark:border-violet-800/50 rounded-2xl bg-violet-50/50 dark:bg-violet-950/20">
-                                    <BookOpen className="w-7 h-7 text-violet-300 dark:text-violet-700 mx-auto mb-2" />
+                                <div className="text-center p-6 border border-dashed border-pink-200 dark:border-pink-800/50 rounded-2xl bg-pink-50/50 dark:bg-pink-950/20">
+                                    <BookOpen className="w-7 h-7 text-pink-300 dark:text-pink-700 mx-auto mb-2" />
                                     <p className="text-sm text-slate-500 dark:text-slate-400">No courses in progress</p>
-                                    <Link href="/courses" className="text-sm font-bold text-violet-600 hover:underline mt-1 inline-block">
+                                    <Link href="/courses" className="text-sm font-bold text-pink-600 hover:underline mt-1 inline-block">
                                         Browse Courses →
                                     </Link>
                                 </div>

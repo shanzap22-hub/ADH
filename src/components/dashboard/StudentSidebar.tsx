@@ -60,7 +60,7 @@ export const StudentSidebar = ({
     return (
         <div className="h-full flex flex-col overflow-y-auto bg-white dark:bg-slate-950 border-r border-slate-200/60 dark:border-slate-800/60">
             <div className="px-8 py-8 border-b border-slate-200/60 dark:border-slate-800/60">
-                <p className="text-[11px] font-black uppercase tracking-[0.2em] bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 bg-clip-text text-transparent">
                     ADH Connect
                 </p>
             </div>
@@ -78,7 +78,7 @@ export const StudentSidebar = ({
                             className={cn(
                                 "group relative flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all duration-300 select-none",
                                 isActive
-                                    ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/25 scale-[1.02]"
+                                    ? "bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 text-white shadow-lg shadow-pink-500/25 scale-[1.02]"
                                     : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-100"
                             )}
                             style={{ WebkitTapHighlightColor: "transparent" }}
@@ -98,7 +98,7 @@ export const StudentSidebar = ({
                 {is_super_admin && (
                     <Link href="/admin" className="block">
                         <Button variant="outline" size="sm" className="w-full justify-start gap-3 h-12 rounded-2xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all">
-                            <Shield className="h-4 w-4 text-violet-500" />
+                            <Shield className="h-4 w-4 text-pink-500" />
                             Admin Center
                         </Button>
                     </Link>
@@ -107,7 +107,7 @@ export const StudentSidebar = ({
                 {is_instructor && (
                     <Link href="/instructor/courses" className="block">
                         <Button variant="outline" size="sm" className="w-full justify-start gap-3 h-12 rounded-2xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all">
-                            <GraduationCap className="h-4 w-4 text-fuchsia-500" />
+                            <GraduationCap className="h-4 w-4 text-orange-500" />
                             Instructor Mode
                         </Button>
                     </Link>

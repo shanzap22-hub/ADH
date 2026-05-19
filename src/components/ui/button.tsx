@@ -10,9 +10,9 @@ const buttonVariants = cva(
     {
         variants: {
             variant: {
-                // Purple gradient primary — most prominent action
+                // The new beautiful global theme gradient for all standard buttons
                 default:
-                    "bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800 shadow-sm shadow-violet-500/20 hover:shadow-md hover:shadow-violet-500/25",
+                    "bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 text-white hover:opacity-90 shadow-sm shadow-pink-500/20 active:scale-95 transition-all",
                 // Danger
                 destructive:
                     "bg-rose-500 text-white hover:bg-rose-600 shadow-sm shadow-rose-500/20",
@@ -27,10 +27,10 @@ const buttonVariants = cva(
                     "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100",
                 // Link
                 link:
-                    "text-violet-600 dark:text-violet-400 underline-offset-4 hover:underline p-0 h-auto",
-                // Gradient CTA — for hero sections
+                    "text-indigo-600 dark:text-indigo-400 underline-offset-4 hover:underline p-0 h-auto",
+                // Gradient CTA — same as default now
                 gradient:
-                    "bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-700 hover:to-purple-700 shadow-md shadow-violet-500/25 hover:shadow-lg hover:shadow-violet-500/30",
+                    "bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 text-white hover:opacity-90 shadow-md shadow-pink-500/25 hover:shadow-lg hover:shadow-pink-500/30",
             },
             size: {
                 default: "h-10 px-4 py-2",

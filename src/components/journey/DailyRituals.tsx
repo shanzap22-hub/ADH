@@ -339,7 +339,7 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                             </DialogTrigger>
                             <DialogContent className="rounded-[2.5rem] max-w-sm">
                                 <DialogHeader>
-                                    <DialogTitle className="text-xl font-black">Update Current Revenue</DialogTitle>
+                                    <DialogTitle className="text-xl font-black text-slate-800">Update Current Revenue</DialogTitle>
                                 </DialogHeader>
                                 <div className="py-4 space-y-4">
                                     <div className="space-y-2">
@@ -352,7 +352,7 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                             className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none font-bold text-lg"
                                         />
                                     </div>
-                                    <Button onClick={updateRevenue} disabled={isLoading} className="w-full h-12 rounded-xl bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 hover:from-indigo-950 hover:via-pink-700 hover:to-orange-600 border-none text-white font-black">
+                                    <Button onClick={updateRevenue} disabled={isLoading} className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 border-none text-white font-black shadow-md shadow-emerald-500/20">
                                         {isLoading ? "Updating..." : "Confirm Update"}
                                     </Button>
                                 </div>
@@ -400,7 +400,7 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Listen to Audio Section */}
                     {listenRitual && (
-                        <div className="relative overflow-hidden rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-950 p-6 group shadow-xl">
+                        <div className="relative overflow-hidden rounded-[2.5rem] border border-rose-100 dark:border-rose-900/30 bg-rose-50/50 dark:bg-rose-950/10 p-6 sm:p-8 group shadow-xl">
                             <div className="flex items-start justify-between mb-4">
                                 <div className="h-14 w-14 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-600 shadow-inner">
                                     <Headphones className="h-7 w-7" />
@@ -418,8 +418,8 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                             </div>
                             <div className="space-y-4">
                                 <div>
-                                    <h4 className="text-sm font-black uppercase tracking-wide">{listenRitual.ritual_name}</h4>
-                                    <p className="text-xs text-slate-500 truncate">Audio Guide • Essential Learning</p>
+                                    <h4 className="text-sm font-black uppercase tracking-wide text-rose-900 dark:text-rose-400">{listenRitual.ritual_name}</h4>
+                                    <p className="text-xs text-rose-700/60 dark:text-rose-400/60 truncate">Audio Guide • Essential Learning</p>
                                 </div>
                                 <Button 
                                     onClick={toggleAudio}
@@ -460,7 +460,7 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
 
                     {/* 20 Goals Section */}
                     {twentyGoalsRitual && (
-                        <div className="relative overflow-hidden rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-950 p-6 group shadow-xl">
+                        <div className="relative overflow-hidden rounded-[2.5rem] border border-indigo-100 dark:border-indigo-900/30 bg-indigo-50/50 dark:bg-indigo-950/10 p-6 sm:p-8 group shadow-xl">
                             <div className="flex items-start justify-between mb-4">
                                 <div className="h-14 w-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 shadow-inner">
                                     <FileText className="h-7 w-7" />
@@ -478,8 +478,8 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                             </div>
                             <div className="space-y-4">
                                 <div>
-                                    <h4 className="text-sm font-black uppercase tracking-wide">{twentyGoalsRitual.ritual_name}</h4>
-                                    <p className="text-xs text-slate-500">Handwritten offline or Online</p>
+                                    <h4 className="text-sm font-black uppercase tracking-wide text-indigo-900 dark:text-indigo-400">{twentyGoalsRitual.ritual_name}</h4>
+                                    <p className="text-xs text-indigo-700/60 dark:text-indigo-400/60">Handwritten offline or Online</p>
                                 </div>
                                 <div className="flex flex-col gap-3">
                                     <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-center">
@@ -616,34 +616,34 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                                     })}
                                                 </div>
                                             </div>
-                                            <div className="p-6 md:p-8 pt-0 flex justify-end gap-3 mt-auto border-t border-slate-100 dark:border-slate-800/60 pt-4">
+                                            <div className="p-4 md:p-8 pt-0 flex flex-col sm:flex-row justify-end gap-3 mt-auto border-t border-slate-100 dark:border-slate-800/60 sm:pt-4">
                                                 {isHistoryMode ? (
                                                     <>
-                                                        <Button variant="ghost" onClick={() => setIsWritingGoalsOnline(false)} className="rounded-2xl px-8">Close</Button>
+                                                        <Button variant="ghost" onClick={() => setIsWritingGoalsOnline(false)} className="rounded-2xl w-full sm:w-auto px-8">Close</Button>
                                                         <Button onClick={() => {
                                                             setIsHistoryMode(false);
                                                             setSelectedDate(new Date().toISOString().split('T')[0]);
-                                                        }} className="bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 hover:from-indigo-950 hover:via-pink-700 hover:to-orange-600 border-none text-white rounded-2xl px-8 font-black shadow-xl shadow-pink-500/20">
+                                                        }} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl w-full sm:w-auto px-8 font-black shadow-md shadow-indigo-500/20">
                                                             <Edit3 className="h-4 w-4 mr-2" /> Write Today's Goals
                                                         </Button>
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <div className="flex-1">
+                                                        <div className="flex-1 w-full sm:w-auto mb-2 sm:mb-0">
                                                             <Button variant="outline" onClick={() => {
                                                                 setIsHistoryMode(true);
                                                                 const d = new Date(selectedDate);
                                                                 d.setDate(d.getDate() - 1);
                                                                 setSelectedDate(d.toISOString().split('T')[0]);
-                                                            }} className="rounded-2xl px-4 text-slate-500 border-slate-200 dark:border-slate-800">
+                                                            }} className="w-full sm:w-auto rounded-2xl px-4 text-slate-500 border-slate-200 dark:border-slate-800">
                                                                 View History
                                                             </Button>
                                                         </div>
-                                                        <Button variant="ghost" onClick={() => setIsWritingGoalsOnline(false)} className="rounded-2xl px-4 md:px-8">Close</Button>
+                                                        <Button variant="ghost" onClick={() => setIsWritingGoalsOnline(false)} className="rounded-2xl w-full sm:w-auto px-4 md:px-8">Close</Button>
                                                         <Button onClick={() => {
                                                             toast.success(`Goals saved for ${new Date(selectedDate).toLocaleDateString()}!`);
                                                             setIsWritingGoalsOnline(false);
-                                                        }} className="bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 hover:from-indigo-950 hover:via-pink-700 hover:to-orange-600 border-none text-white rounded-2xl px-6 md:px-12 font-black shadow-xl shadow-pink-500/20">
+                                                        }} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl w-full sm:w-auto px-6 md:px-12 font-black shadow-md shadow-indigo-500/20">
                                                             Save Goals
                                                         </Button>
                                                     </>
@@ -660,14 +660,14 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                 {/* Affirmations Section */}
                 {affirmationRitual && (
                     <div className="space-y-3">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-950 group gap-4 shadow-xl">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 sm:p-8 rounded-[2.5rem] border border-violet-100 dark:border-violet-900/30 bg-violet-50/50 dark:bg-violet-950/10 group gap-4 shadow-xl">
                             <div className="flex items-center gap-4 flex-1 min-w-0">
                                 <div className="h-16 w-16 rounded-2xl bg-violet-500/10 flex items-center justify-center shrink-0 group-hover:rotate-12 transition-transform shadow-inner">
                                     <Volume2 className="h-8 w-8 text-violet-600" />
                                 </div>
                                 <div className="text-left flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <h4 className="text-sm font-black uppercase tracking-wide">Daily Affirmations</h4>
+                                        <h4 className="text-sm font-black uppercase tracking-wide text-violet-900 dark:text-violet-400">Daily Affirmations</h4>
                                         <Dialog open={isEditingAffirmations} onOpenChange={setIsEditingAffirmations}>
                                             <DialogTrigger asChild>
                                                 <button className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
@@ -687,9 +687,9 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                                         className="w-full h-full rounded-[2rem] border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus-visible:ring-violet-500 p-8 text-lg font-medium leading-relaxed resize-none"
                                                     />
                                                 </div>
-                                                <div className="p-8 pt-0 flex justify-end gap-3">
-                                                    <Button variant="ghost" onClick={() => setIsEditingAffirmations(false)} className="rounded-2xl px-8">Cancel</Button>
-                                                    <Button onClick={saveAffirmations} disabled={isLoading} className="bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 hover:from-indigo-950 hover:via-pink-700 hover:to-orange-600 border-none text-white rounded-2xl px-12 font-black shadow-xl shadow-pink-500/20">
+                                                <div className="p-4 sm:p-8 pt-0 flex flex-col sm:flex-row justify-end gap-3 mt-4 sm:mt-0">
+                                                    <Button variant="ghost" onClick={() => setIsEditingAffirmations(false)} className="rounded-2xl w-full sm:w-auto px-8">Cancel</Button>
+                                                    <Button onClick={saveAffirmations} disabled={isLoading} className="bg-violet-600 hover:bg-violet-700 border-none text-white rounded-2xl w-full sm:w-auto px-12 font-black shadow-md shadow-violet-500/20">
                                                         {isLoading ? "Saving..." : "Save Affirmations"}
                                                     </Button>
                                                 </div>
@@ -720,7 +720,7 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                                         "{affirmations}"
                                                     </div>
                                                     <div className="sticky bottom-0 pt-6 bg-inherit">
-                                                        <Button onClick={speakAffirmations} className="w-full rounded-2xl h-14 bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 hover:from-indigo-950 hover:via-pink-700 hover:to-orange-600 border-none text-white font-black gap-3 shadow-xl shadow-pink-500/20">
+                                                        <Button onClick={speakAffirmations} className="w-full rounded-2xl h-14 bg-violet-600 hover:bg-violet-700 border-none text-white font-black gap-3 shadow-md shadow-violet-500/20">
                                                             {isGeneratingTTS ? (
                                                                 <><span className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Preparing Audio...</>
                                                             ) : isAffirmationsPlaying ? (

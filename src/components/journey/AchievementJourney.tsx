@@ -41,15 +41,15 @@ export const AchievementJourney = ({ currentLevelIndex, milestoneNames }: Achiev
                     <span className="text-xs font-black">{Math.round(progress)}%</span>
                 </div>
             </CardHeader>
-            <CardContent className="p-4 pt-8 md:pt-12 pb-6 md:pb-10">
-                <div className="relative flex items-center justify-between gap-4 md:gap-10 overflow-x-auto pb-6 scrollbar-hide px-4 md:px-10">
+            <CardContent className="p-4 pt-8 md:pt-12 pb-6 md:pb-10 overflow-visible">
+                <div className="relative flex items-center justify-between gap-4 md:gap-10 overflow-x-auto pb-6 scrollbar-hide px-6 md:px-12 py-4 -mx-2 md:-mx-4">
                     {/* Connecting Line Background */}
-                    <div className="absolute top-[36px] md:top-[52px] left-10 md:left-20 right-10 md:right-20 h-1.5 md:h-2 bg-slate-100 dark:bg-slate-800 rounded-full -z-0" />
+                    <div className="absolute top-[52px] md:top-[68px] left-12 md:left-24 right-12 md:right-24 h-1.5 md:h-2 bg-slate-100 dark:bg-slate-800 rounded-full -z-0" />
                     
                     {/* Active Connecting Line */}
                     <div 
-                        className="absolute top-[36px] md:top-[52px] left-10 md:left-20 h-1.5 md:h-2 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-full -z-0 transition-all duration-1000 shadow-[0_0_15px_rgba(124,58,237,0.4)]"
-                        style={{ width: `calc(${progress}% - ${typeof window !== 'undefined' && window.innerWidth < 768 ? '40px' : '80px'})` }}
+                        className="absolute top-[52px] md:top-[68px] left-12 md:left-24 h-1.5 md:h-2 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-full -z-0 transition-all duration-1000 shadow-[0_0_15px_rgba(124,58,237,0.4)]"
+                        style={{ width: `calc(${progress}% - ${typeof window !== 'undefined' && window.innerWidth < 768 ? '48px' : '96px'})` }}
                     />
 
                     {milestones.map((m, i) => {

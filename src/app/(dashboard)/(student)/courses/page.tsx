@@ -51,10 +51,10 @@ export default async function CoursesPage() {
         <div className="min-h-screen bg-[#f7f6ff] dark:bg-slate-950 pb-28 md:pb-8">
             {/* Page Header */}
             <div className="px-4 md:px-8 pt-5 md:pt-8 pb-4">
-                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-violet-700 via-purple-600 to-fuchsia-500 bg-clip-text text-transparent">
+                <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
                     My Courses
                 </h1>
-                <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
+                <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mt-0.5">
                     {courses.length > 0 ? `${courses.length} course${courses.length === 1 ? '' : 's'} available` : 'Explore your learning journey'}
                 </p>
             </div>

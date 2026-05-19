@@ -101,7 +101,7 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
                                     <div className={cn(
                                         "w-[60px] h-[60px] rounded-full flex items-center justify-center shadow-xl transition-all duration-500 -mt-10 border-[6px] border-[#f7f6ff] dark:border-slate-950",
                                         isActive
-                                            ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 scale-105 shadow-fuchsia-500/30"
+                                            ? "bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 scale-105 shadow-pink-500/30"
                                             : "bg-slate-900 dark:bg-slate-100 hover:scale-105"
                                     )}>
                                         <Icon className={cn(
@@ -111,7 +111,7 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
                                     </div>
                                     <span className={cn(
                                         "text-[11px] font-bold mt-1.5 tracking-tight transition-colors duration-300",
-                                        isActive ? "text-fuchsia-600 dark:text-fuchsia-400" : "text-slate-600 dark:text-slate-400"
+                                        isActive ? "text-pink-600 dark:text-pink-400" : "text-slate-600 dark:text-slate-400"
                                     )}>
                                         {item.label}
                                     </span>
@@ -127,7 +127,7 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
                                 className={cn(
                                     "relative z-10 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-all duration-300",
                                     isActive
-                                        ? "text-fuchsia-600 dark:text-fuchsia-400"
+                                        ? "text-pink-600 dark:text-pink-400"
                                         : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                                 )}
                                 style={{ WebkitTapHighlightColor: "transparent" }}
