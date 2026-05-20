@@ -104,9 +104,9 @@ export function PostCard({ post, isAdmin, currentUserId }: PostCardProps) {
 
                 <div className="flex items-start gap-4">
                     <Avatar className="h-10 w-10 border-2 border-white dark:border-slate-700 shadow-sm">
-                        <AvatarImage src={post.author.avatar_url || ""} />
+                        <AvatarImage src={post.author?.avatar_url || ""} />
                         <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-white">
-                            {post.author.full_name?.[0]?.toUpperCase() || "A"}
+                            {post.author?.full_name?.[0]?.toUpperCase() || "A"}
                         </AvatarFallback>
                     </Avatar>
 
@@ -114,7 +114,7 @@ export function PostCard({ post, isAdmin, currentUserId }: PostCardProps) {
                         <div className="flex items-center justify-between pr-8">
                             <div>
                                 <h3 className="font-semibold text-slate-900 dark:text-slate-100">
-                                    {post.author.full_name || "Admin"}
+                                    {post.author?.full_name || "Admin"}
                                 </h3>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
                                     {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
