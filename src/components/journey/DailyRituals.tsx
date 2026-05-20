@@ -31,6 +31,12 @@ interface DailyRitualsProps {
 
 export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
     const [rituals, setRituals] = useState(initialRituals);
+    
+    // Sync when initialRituals changes (e.g. Next.js re-fetching page data)
+    useEffect(() => {
+        setRituals(initialRituals);
+    }, [initialRituals]);
+
     const [affirmations, setAffirmations] = useState("");
     const [isEditingAffirmations, setIsEditingAffirmations] = useState(false);
     const [isAudioPlaying, setIsAudioPlaying] = useState(false);

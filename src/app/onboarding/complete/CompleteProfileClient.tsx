@@ -243,6 +243,7 @@ export default function CompleteProfilePage() {
                             <Input
                                 id="fullName"
                                 placeholder="Enter your full name"
+                                autoComplete="name"
                                 value={formData.fullName}
                                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                                 required
@@ -261,6 +262,7 @@ export default function CompleteProfilePage() {
                                 <Input
                                     id="email"
                                     placeholder="Enter your email address"
+                                    autoComplete="username email"
                                     value={formData.email}
                                     onChange={handleEmailChange}
                                     disabled={isSubmitting || isEmailVerified}

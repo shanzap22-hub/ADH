@@ -10,7 +10,13 @@ export async function toggleRitualAction(ritualId: string, isCompleted: boolean)
 
     if (!user) throw new Error("Unauthorized");
 
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    const formatter = new Intl.DateTimeFormat('en-CA', { 
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit' 
+    });
+    const today = formatter.format(new Date());
 
     if (isCompleted) {
         // Ritual log add ചെയ്യുന്നു
@@ -114,6 +120,7 @@ export async function toggleRitualAction(ritualId: string, isCompleted: boolean)
 
     revalidatePath("/profile");
     revalidatePath("/dashboard");
+    revalidatePath("/my-journey");
     return { success: true };
 }
 

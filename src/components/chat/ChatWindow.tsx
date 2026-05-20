@@ -979,7 +979,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
             </div>
 
             {/* Input Area */}
-            <div className="p-3 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] md:pb-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shrink-0">
+            <div className="p-3 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] md:pb-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shrink-0">
 
                 {/* Replying Banner */}
                 {replyingTo && (
@@ -1088,6 +1088,9 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                             <Input
                                 placeholder="Type a message..."
                                 value={inputText}
+                                autoComplete="on"
+                                autoCorrect="on"
+                                spellCheck={true}
                                 onChange={(e) => setInputText(e.target.value)}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && !e.shiftKey) {

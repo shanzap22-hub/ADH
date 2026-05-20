@@ -470,7 +470,7 @@ export function AIChatInterface({ onBack, onClose }: AIChatInterfaceProps) {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 pb-6 border-t bg-white dark:bg-slate-900 shrink-0">
+            <div className="p-4 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] md:pb-6 border-t bg-white dark:bg-slate-900 shrink-0">
                 <div className="max-w-3xl mx-auto space-y-2">
 
                     {/* Image Preview Area */}
@@ -523,6 +523,9 @@ export function AIChatInterface({ onBack, onClose }: AIChatInterfaceProps) {
                             <Textarea
                                 ref={textareaRef}
                                 value={input}
+                                autoComplete="on"
+                                autoCorrect="on"
+                                spellCheck={true}
                                 onChange={(e) => setInput(e.target.value)}
                                 placeholder={imageUrl || localImagePreview ? "Add a description about the issue..." : "Type your message..."}
                                 className="min-h-[40px] max-h-[120px] resize-none border-0 bg-transparent focus-visible:ring-0 px-0 shadow-none py-2.5 overflow-y-auto"
