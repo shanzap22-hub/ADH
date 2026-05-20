@@ -134,7 +134,7 @@ export const GoalCard = () => {
 
                     {/* Bottom Left Branding */}
                     <div className="absolute bottom-5 left-7" style={{ opacity: 0.12 }}>
-                        <p className="text-[7px] text-white font-bold uppercase tracking-[0.3em]">ATCESS Digital Hub</p>
+                        <p className="text-[7px] text-white font-bold uppercase tracking-[0.3em]">ADH Connect</p>
                     </div>
                 </div>
 

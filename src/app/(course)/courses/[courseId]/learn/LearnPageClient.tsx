@@ -41,7 +41,7 @@ export default function LearnPageClient({
     // Navigation handlers
     const handlePrevious = () => {
         if (currentIndex > 0) {
-            const prevModule = Modules[currentIndex - 1];
+            const prevChapter = chapters[currentIndex - 1];
             router.push(`/courses/${courseId}/learn?lesson=${prevChapter.id}`);
         }
     };

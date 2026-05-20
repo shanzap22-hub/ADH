@@ -1,18 +1,40 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Moon, Sun, Bell, Info, Shield, LogOut, Mail, Smartphone } from "lucide-react";
+import { Moon, Sun, Bell, Info, Shield, LogOut, Mail, Smartphone, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { toast } from "sonner";
+import { getBlockedUsersWithProfiles, unblockUser } from "@/actions/chat-actions";
 
 export default function SettingsPage() {
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [emailNotifs, setEmailNotifs] = useState(true);
     const [pushNotifs, setPushNotifs] = useState(true);
+    const [blockedUsers, setBlockedUsers] = useState<{ id: string; full_name: string; avatar_url: string | null }[]>([]);
+
+    useEffect(() => {
+        getBlockedUsersWithProfiles().then((res) => {
+            if (res.success && res.data) {
+                setBlockedUsers(res.data);
+            }
+        });
+    }, []);
+
+    const handleUnblockUser = async (userId: string, userName: string) => {
+        if (confirm(`Are you sure you want to unblock ${userName || 'this user'}?`)) {
+            const res = await unblockUser(userId);
+            if (res.success) {
+                setBlockedUsers(prev => prev.filter(u => u.id !== userId));
+                toast.success(`${userName || 'User'} has been unblocked.`);
+            } else {
+                toast.error(res.error || "Failed to unblock user");
+            }
+        }
+    };
 
     // Initialize Theme & Notification Preferences from localStorage
     useEffect(() => {
@@ -125,6 +147,53 @@ export default function SettingsPage() {
                             }}
                         />
                     </div>
+                </CardContent>
+            </Card>
+
+            {/* Blocked Users Section - ബ്ലോക്ക് ചെയ്ത യൂസർമാരുടെ വിവരങ്ങൾ ഇവിടെ കാണിക്കാം */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+                        <Ban className="h-5 w-5" />
+                        Blocked Users
+                    </CardTitle>
+                    <CardDescription>
+                        Manage users you have blocked in community chats. Blocked users cannot send you messages.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {blockedUsers.length === 0 ? (
+                        /* ബ്ലോക്ക് ചെയ്ത യൂസർമാർ ആരുമില്ലെങ്കിൽ ഈ മെസ്സേജ് കാണിക്കും */
+                        <p className="text-sm text-slate-500 py-2">No blocked users.</p>
+                    ) : (
+                        /* ബ്ലോക്ക് ചെയ്ത യൂസർമാർ ഉണ്ടെങ്കിൽ അവരുടെ ലിസ്റ്റ് കാണിക്കുകയും അൺബ്ലോക്ക് ചെയ്യാനുള്ള സൗകര്യം നൽകുകയും ചെയ്യും */
+                        <div className="space-y-3">
+                            {blockedUsers.map((user) => (
+                                <div key={user.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-bold text-sm text-slate-600 dark:text-slate-300 overflow-hidden">
+                                            {user.avatar_url ? (
+                                                <img src={user.avatar_url} alt={user.full_name} className="h-full w-full object-cover" />
+                                            ) : (
+                                                user.full_name?.charAt(0).toUpperCase() || "U"
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium">{user.full_name || "Unknown User"}</p>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleUnblockUser(user.id, user.full_name)}
+                                        className="text-xs border-rose-200 hover:bg-rose-50 text-rose-600 hover:text-rose-700 dark:border-rose-950 dark:hover:bg-rose-950/30"
+                                    >
+                                        Unblock
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 

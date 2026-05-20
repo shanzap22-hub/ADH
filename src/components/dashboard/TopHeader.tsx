@@ -70,9 +70,9 @@ export const TopHeader = () => {
                                 <Image
                                     src="/logo.png"
                                     alt="ADH Connect"
-                                    width={120}
-                                    height={36}
-                                    className="h-9 w-auto object-contain transition-transform group-hover:scale-105 duration-300"
+                                    width={160}
+                                    height={48}
+                                    className="h-12 w-auto object-contain transition-transform group-hover:scale-105 duration-300"
                                     priority
                                 />
                             </div>

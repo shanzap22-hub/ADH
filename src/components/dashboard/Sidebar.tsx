@@ -21,7 +21,7 @@ const routes = [
     { label: "Enroll Students",icon: UserPlus,    href: "/instructor/enroll",       color: "text-emerald-400"},
     { label: "Mind Maps",      icon: Network,     href: "/instructor/mind-maps",    color: "text-pink-400"   },
     { label: "Master Notes",   icon: FileText,    href: "/instructor/notes",        color: "text-teal-400"   },
-    { label: "Settings",       icon: Settings,    href: "/instructor/settings",     color: "text-slate-400"  },
+    { label: "Settings",       icon: Settings,    href: "/settings",            color: "text-slate-400"  },
 ];
 
 interface SidebarProps {

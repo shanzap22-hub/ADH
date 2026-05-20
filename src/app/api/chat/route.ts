@@ -1,11 +1,15 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createClient } from '@/lib/supabase/server';
-import { revalidatePath } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
 
-// Allow streaming responses up to 30 seconds
-export const maxDuration = 30;
+// Streaming response - allow up to 60 seconds
+export const maxDuration = 60;
+
+// --- TOKEN BUDGET CONFIG (Gemini Free Tier Friendly) ---
+const DAILY_MESSAGE_LIMIT = 50; // ഓരോ user-നും ദിവസം 50 messages
+const MAX_HISTORY_MESSAGES = 8; // Context-ന് അവസാന 8 messages മാത്രം (token save)
+const MAX_OUTPUT_TOKENS = 2048; // ഡീറ്റെയിൽഡ് answers-ന് enough, free tier-ന് safe
 
 async function fetchImageAsBase64(url: string) {
     try {
@@ -27,12 +31,11 @@ async function fetchImageAsBase64(url: string) {
 
 export async function POST(req: Request) {
     try {
-        // Check if API key exists
+        // API Key check
         const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-
         if (!apiKey) {
             console.error('[AI Chat] GEMINI_API_KEY is missing!');
-            return new Response(JSON.stringify({ error: 'AI Configuration Missing (GEMINI_API_KEY)' }), {
+            return new Response(JSON.stringify({ error: 'AI Configuration Missing' }), {
                 status: 503,
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -48,36 +51,66 @@ export async function POST(req: Request) {
             return new Response('Unauthorized', { status: 401 });
         }
 
-        // 1.5. CHECK TIER PERMISSION for AI
+        // --- TIER ACCESS CHECK ---
         const { data: profile } = await supabase
             .from("profiles")
-            .select("membership_tier")
+            .select("membership_tier, role")
             .eq("id", user.id)
             .single();
 
         const tier = profile?.membership_tier || "bronze";
+        const userRole = profile?.role || "student";
 
-        const { data: tierSettings } = await supabase
-            .from("tier_pricing")
-            .select("has_ai_access")
-            .eq("tier", tier)
-            .single();
+        // Admin/Instructor/Super Admin → always allow
+        const isPrivileged = ['super_admin', 'admin', 'instructor'].includes(userRole);
 
-        if (!tierSettings?.has_ai_access) {
-            console.warn(`[AI Chat] Access Denied for Tier: ${tier}`);
+        if (!isPrivileged) {
+            const { data: tierSettings } = await supabase
+                .from("tier_pricing")
+                .select("has_ai_access")
+                .eq("tier", tier)
+                .single();
+
+            if (!tierSettings?.has_ai_access) {
+                return new Response(JSON.stringify({
+                    error: `AI access is restricted for ${tier} tier. Please upgrade.`
+                }), {
+                    status: 403,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+        }
+
+        // --- DAILY USAGE LIMIT CHECK ---
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+        const { data: usageRecord } = await supabase
+            .from('ai_usage_daily')
+            .select('id, message_count')
+            .eq('user_id', user.id)
+            .eq('date', today)
+            .maybeSingle();
+
+        const currentCount = usageRecord?.message_count || 0;
+
+        if (currentCount >= DAILY_MESSAGE_LIMIT && !isPrivileged) {
+            console.warn(`[AI Chat] Daily limit reached for user ${user.id}: ${currentCount}/${DAILY_MESSAGE_LIMIT}`);
             return new Response(JSON.stringify({
-                error: `AI access is restricted for ${tier} tier. Please upgrade.`
+                error: `Daily message limit reached (${DAILY_MESSAGE_LIMIT}/day). Please try again tomorrow.`,
+                limitReached: true,
+                currentCount,
+                limit: DAILY_MESSAGE_LIMIT
             }), {
-                status: 403,
+                status: 429,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
 
-        // 1. Get the new user message
+        // --- PROCESS MESSAGE ---
         const lastMessage = messages[messages.length - 1];
         const imageUrl = data?.imageUrl;
 
-        // 2. Save USER message to Supabase with explicit timestamp
+        // Save USER message to DB
         const userMessageTimestamp = new Date().toISOString();
         const { error: userInsertError } = await supabase.from('ai_chat_messages').insert({
             user_id: user.id,
@@ -91,26 +124,21 @@ export async function POST(req: Request) {
             console.error('[AI Chat] Failed to save user message:', userInsertError);
             throw new Error('Failed to save message to database');
         }
-        console.log('[AI Chat] User message saved successfully');
 
-
-        // 3. Fetch chat history for context
+        // --- FETCH WINDOWED HISTORY (Token Optimization) ---
+        // അവസാന MAX_HISTORY_MESSAGES messages മാത്രം fetch ചെയ്യുന്നു (full history അല്ല)
         const { data: history } = await supabase
             .from('ai_chat_messages')
             .select('role, content, image_url')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
-            .limit(10);
+            .limit(MAX_HISTORY_MESSAGES);
 
-        // 4. System instruction (Moved below for RAG context injection)
-
-        // 5. Initialize Google Generative AI with system instruction
+        // --- RAG: KNOWLEDGE BASE CONTEXT ---
         const genAI = new GoogleGenerativeAI(apiKey);
-
-        // RAG: Retrieve Context 
         let retrievedContext = "";
+
         try {
-            console.log('[AI Chat] Retrieving relevant context...');
             const embeddingModel = genAI.getGenerativeModel({ model: "embedding-001" });
             const embeddingResult = await embeddingModel.embedContent(lastMessage.content);
             const embedding = embeddingResult.embedding.values;
@@ -124,13 +152,12 @@ export async function POST(req: Request) {
             if (!matchError && documents && documents.length > 0) {
                 retrievedContext = documents.map((doc: any) => doc.content).join("\n\n");
                 console.log(`[AI Chat] Found ${documents.length} relevant context chunks.`);
-            } else {
-                console.log('[AI Chat] No relevant context found or RAG not set up.');
             }
         } catch (ragError) {
             console.warn('[AI Chat] RAG process failed (ignoring):', ragError);
         }
 
+        // --- SYSTEM PROMPT ---
         const systemInstruction = `System Prompt for ADH CONNECT AI Coach
 You are ADH CONNECT, an intelligent AI facilitator for the ADH Learning Management System (LMS). Your role is to help students with their courses, answer questions, provide motivation, and support their learning journey.
 
@@ -150,33 +177,26 @@ BEHAVIORAL GUIDELINES:
   - If the context answers the user's question, cite it indirectly (e.g., "According to the course notes...").
   - If the context is empty or irrelevant, fall back completely to your general knowledge.
 
-IMAGE PROCESSING INSTRUCTIONS:
-... (same as before) ...
-
-VOICE INPUT HANDLING:
-... (same as before) ...
-
 RESPONSE FORMAT:
-... (same as before) ...`;
+- Use Markdown formatting for better readability
+- Use **bold** for key terms and important points
+- Use bullet points and numbered lists for steps
+- Use code blocks for any code examples
+- Keep responses concise but complete
+- Use headings (##) for long responses with multiple sections
 
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
-            systemInstruction: systemInstruction
-        });
+${retrievedContext ? `\n[Context from Knowledge Base]:\n${retrievedContext}` : ''}`;
 
-        // 6. Build conversation history in Gemini format
+        // --- BUILD CHAT HISTORY (Windowed) ---
         const chatHistory: any[] = [];
-        // History is now fetched Newest -> Oldest. 
-        // We need to reverse it to be Oldest -> Newest for the AI context window.
-
-        // Skip the first message (index 0) because that is the message we JUST inserted, 
-        // which we will append manually later as currentPromptText.
+        // History: Newest → Oldest. Skip current message (index 0), then reverse.
         const rawHistory = history && history.length > 0 ? history.slice(1).reverse() : [];
 
         for (const msg of rawHistory) {
             const role = msg.role === 'user' ? 'user' : 'model';
             const text = msg.content || '[Image Attachment]';
 
+            // Merge consecutive same-role messages
             if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === role) {
                 chatHistory[chatHistory.length - 1].parts[0].text += "\n\n" + text;
             } else {
@@ -187,131 +207,141 @@ RESPONSE FORMAT:
             }
         }
 
-        // 7. Ensure history ends with Model and prepare Prompt
+        // --- PREPARE PROMPT ---
         let currentPromptText = lastMessage.content;
 
-        // INJECT CONTEXT
-        if (retrievedContext) {
-            currentPromptText = `[Context from Knowledge Base]:\n${retrievedContext}\n\n[User Question]:\n${currentPromptText}`;
-        }
-
-        // We already skipped the current message in rawHistory, so if the history still 
-        // ends with a 'user' message, we merge it to ensure the latest prompt contains all trailing user context.
+        // Handle dangling user messages at end of history
         if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === 'user') {
             const lastUserMsg = chatHistory.pop();
             currentPromptText = lastUserMsg.parts[0].text + "\n\n" + currentPromptText;
-            console.log('[AI Chat] Merged dangling user history into current prompt');
         }
 
-        console.log('[AI Chat] Final Chat history length:', chatHistory.length);
-        console.log('[AI Chat] User prompt (with context):', currentPromptText.substring(0, 100) + "...");
-
-        // 8. Start chat with sanitized history (Note: This object is created here but we use create new one in helper below)
-        const chat = model.startChat({
-            history: chatHistory,
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 1024,
-            }
-        });
-
-        // 9. Prepare message parts (Text + optional Image)
+        // Message parts (Text + optional Image)
         const messageParts: any[] = [{ text: currentPromptText }];
 
         if (imageUrl) {
-            console.log('[AI Chat] Fetching image content for Gemini...');
             const imagePart = await fetchImageAsBase64(imageUrl);
             if (imagePart) {
                 messageParts.push(imagePart);
-                console.log('[AI Chat] Image attached to prompt');
             } else {
-                console.warn('[AI Chat] Failed to attach image');
-                // Inform the model that the image failed to load, so it can apologize
                 messageParts.push({ text: "\n[System Note: The user attempted to upload an image but it failed to load. Please inform the user.]" });
             }
         }
 
-        // 9. Send message WITHOUT STREAMING (fixes Vercel serverless SSE issue)
-        console.log('[AI Chat] Sending message (non-stream mode)...');
+        // --- GENERATE RESPONSE WITH STREAMING ---
+        console.log('[AI Chat] Starting streaming response...');
 
-        let fullText = "";
+        const encoder = new TextEncoder();
 
-        try {
-            // Helper to try generation
-            const generateResponse = async (modelName: string, parts: any[]) => {
-                const model = genAI.getGenerativeModel({
-                    model: modelName,
-                    systemInstruction: systemInstruction
-                });
+        const stream = new ReadableStream({
+            async start(controller) {
+                let fullText = "";
 
-                const chat = model.startChat({
-                    history: chatHistory,
-                    generationConfig: {
-                        temperature: 0.7,
-                        maxOutputTokens: 1024,
+                try {
+                    const generateStream = async (modelName: string) => {
+                        const model = genAI.getGenerativeModel({
+                            model: modelName,
+                            systemInstruction: systemInstruction
+                        });
+
+                        const chat = model.startChat({
+                            history: chatHistory,
+                            generationConfig: {
+                                temperature: 0.7,
+                                maxOutputTokens: MAX_OUTPUT_TOKENS,
+                            }
+                        });
+
+                        const result = await chat.sendMessageStream(messageParts);
+
+                        for await (const chunk of result.stream) {
+                            const chunkText = chunk.text();
+                            if (chunkText) {
+                                fullText += chunkText;
+                                controller.enqueue(encoder.encode(chunkText));
+                            }
+                        }
+                    };
+
+                    try {
+                        // Primary: gemini-2.5-flash
+                        await generateStream('gemini-2.5-flash');
+                    } catch (flashError: any) {
+                        console.warn('[AI Chat] gemini-2.5-flash failed:', flashError.message);
+                        // Fallback: gemini-2.0-flash
+                        fullText = ""; // Reset
+                        await generateStream('gemini-2.0-flash');
                     }
-                });
 
-                const result = await chat.sendMessage(parts);
-                const response = await result.response;
-                return response.text();
-            };
+                } catch (genError: any) {
+                    console.error('[AI Chat] Gemini Generation Error:', genError);
 
-            try {
-                // Attempt 1: Gemini 2.5 Flash (Stable 2026 Model)
-                console.log('[AI Chat] Attempting with gemini-2.5-flash...');
-                fullText = await generateResponse('gemini-2.5-flash', messageParts);
+                    // User-friendly error message (no internal details leaked)
+                    if (genError.message?.includes('safety')) {
+                        fullText = "I cannot answer this request due to safety guidelines.";
+                    } else {
+                        fullText = "Sorry, I encountered an error. Please try again.";
+                    }
+                    controller.enqueue(encoder.encode(fullText));
+                }
 
-            } catch (flashError: any) {
-                console.warn('[AI Chat] gemini-2.5-flash failed:', flashError.message);
+                // --- SAVE AI RESPONSE TO DB ---
+                try {
+                    const aiResponseTimestamp = new Date().toISOString();
+                    await supabase.from('ai_chat_messages').insert({
+                        user_id: user.id,
+                        role: 'assistant',
+                        content: fullText,
+                        created_at: aiResponseTimestamp
+                    });
 
-                // Attempt 2: gemini-3-flash-preview (Latest Frontier)
-                console.log('[AI Chat] Falling back to gemini-3-flash-preview...');
-                fullText = await generateResponse('gemini-3-flash-preview', messageParts);
+                    // --- UPDATE DAILY USAGE COUNTER ---
+                    // Approximate token count: ~4 chars per token
+                    const approxInputTokens = Math.ceil(currentPromptText.length / 4);
+                    const approxOutputTokens = Math.ceil(fullText.length / 4);
+
+                    if (usageRecord) {
+                        // Update existing record
+                        await supabase
+                            .from('ai_usage_daily')
+                            .update({
+                                message_count: currentCount + 1,
+                                total_input_tokens: (usageRecord as any).total_input_tokens + approxInputTokens || approxInputTokens,
+                                total_output_tokens: (usageRecord as any).total_output_tokens + approxOutputTokens || approxOutputTokens,
+                                updated_at: new Date().toISOString()
+                            })
+                            .eq('id', usageRecord.id);
+                    } else {
+                        // Insert new daily record
+                        await supabase
+                            .from('ai_usage_daily')
+                            .insert({
+                                user_id: user.id,
+                                date: today,
+                                message_count: 1,
+                                total_input_tokens: approxInputTokens,
+                                total_output_tokens: approxOutputTokens
+                            });
+                    }
+                } catch (saveError) {
+                    console.error('[AI Chat] Failed to save AI response or update usage:', saveError);
+                }
+
+                controller.close();
             }
-
-        } catch (genError: any) {
-            console.error('[AI Chat] Gemini Generation Error:', genError);
-
-            // TEMPORARY DEBUGGING: Expose error to user
-            fullText = `Technical Error: ${genError.message || JSON.stringify(genError)}`;
-
-            if (genError.message?.includes('safety')) {
-                fullText = "I cannot answer this request due to safety guidelines (**Safety Block**).";
-            }
-        }
-
-        console.log('[AI Chat] Response received, length:', fullText.length);
-
-        // 11. Save AI response to database with explicit timestamp
-        const aiResponseTimestamp = new Date().toISOString();
-        const { error: aiInsertError } = await supabase.from('ai_chat_messages').insert({
-            user_id: user.id,
-            role: 'assistant',
-            content: fullText,
-            created_at: aiResponseTimestamp
         });
 
-        if (aiInsertError) {
-            console.error('[AI Chat] Failed to save AI response:', aiInsertError);
-            throw new Error('Failed to save AI response to database');
-        }
-        console.log('[AI Chat] AI response saved successfully at', aiResponseTimestamp);
-
-        // CRITICAL: Force cache invalidation for chat history
-        revalidatePath('/api/chat/history');
-        console.log('[AI Chat] Cache invalidated for history endpoint');
-
-        // 12. Return complete response (no streaming)
-        return Response.json({
-            success: true,
-            message: fullText,
-            timestamp: new Date().toISOString()
+        return new Response(stream, {
+            headers: {
+                'Content-Type': 'text/plain; charset=utf-8',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Transfer-Encoding': 'chunked'
+            }
         });
 
     } catch (error: any) {
         console.error('[AI Chat] Error:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
+        return new Response(JSON.stringify({ error: 'Something went wrong. Please try again.' }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });

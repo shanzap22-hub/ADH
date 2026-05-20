@@ -28,7 +28,7 @@ export const CourseTOCPreview = ({ chapters, courseId }: CourseTOCPreviewProps) 
             </h3>
 
             <div className="space-y-3">
-                {Modules.map((chapter, index) => {
+                {chapters.map((chapter, index) => {
                     const isLocked = chapter.isLocked;
 
                     const ChapterInner = (
@@ -76,7 +76,7 @@ export const CourseTOCPreview = ({ chapters, courseId }: CourseTOCPreviewProps) 
                 })}
             </div>
 
-            {Modules.length === 0 && (
+            {chapters.length === 0 && (
                 <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                     No Modules available yet
                 </div>

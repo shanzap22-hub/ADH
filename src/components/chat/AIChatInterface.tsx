@@ -1,18 +1,20 @@
 "use client";
 
 import { useWebSpeech } from "@/hooks/use-web-speech";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea"; // Better for chat input
-import { Mic, Send, Image as ImageIcon, Loader2, Bot, StopCircle, User, ArrowLeft, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Mic, Send, Image as ImageIcon, Loader2, Bot, StopCircle, User, ArrowLeft, X, Copy, Check } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { uploadToR2 } from "@/actions/r2";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface AIChatInterfaceProps {
     onBack?: () => void;
+    onClose?: () => void;
 }
 
 interface Message {
@@ -23,10 +25,11 @@ interface Message {
     created_at?: string;
 }
 
-export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
+export function AIChatInterface({ onBack, onClose }: AIChatInterfaceProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [input, setInput] = useState("");
+    const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
 
     // Voice Hook
     const { isListening, transcript, startListening, stopListening, isSupported } = useWebSpeech();
@@ -57,7 +60,7 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
         }
     }, [transcript, isListening]);
 
-    // Auto-resize textarea when input changes (including voice input)
+    // Auto-resize textarea when input changes
     useEffect(() => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
@@ -65,9 +68,9 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
         }
     }, [input]);
 
-    const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
         messagesEndRef.current?.scrollIntoView({ behavior });
-    };
+    }, []);
 
     // Load chat history on mount
     useEffect(() => {
@@ -90,26 +93,26 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
         };
 
         loadHistory();
-    }, []);
+    }, [scrollToBottom]);
 
-    // Scroll automatically when messages change
+    // Auto-scroll on new messages
     useEffect(() => {
         scrollToBottom();
-    }, [messages]);
+    }, [messages, scrollToBottom]);
 
     // Handle File Selection & Upload
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // 1. Show Local Preview Immediately
+        // 1. Show Local Preview
         const reader = new FileReader();
         reader.onload = (e) => {
             setLocalImagePreview(e.target?.result as string);
         };
         reader.readAsDataURL(file);
 
-        // 2. Upload to BunnyCDN
+        // 2. Upload to R2/CDN
         setUploading(true);
         const formData = new FormData();
         formData.append("file", file);
@@ -119,23 +122,22 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
 
             if (result.url) {
                 setImageUrl(result.url);
-                toast.success("Image attached! You can now add a description.");
-                // Focus the textarea so the user knows they can type a text description
+                toast.success("Image attached!");
                 setTimeout(() => {
                     if (textareaRef.current) {
                         textareaRef.current.focus();
                     }
                 }, 100);
             } else {
-                throw new Error(data.error || "Upload failed");
+                // BUG FIX: 'data' → 'result' (was causing ReferenceError)
+                throw new Error(result.error || "Upload failed");
             }
         } catch (err: any) {
             toast.error("Upload failed", { description: err.message });
-            setLocalImagePreview(null); // Clear preview on error
+            setLocalImagePreview(null);
             setImageUrl(null);
         } finally {
             setUploading(false);
-            // Reset input so same file can be selected again if needed
             if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
@@ -143,6 +145,14 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
     const clearImage = () => {
         setImageUrl(null);
         setLocalImagePreview(null);
+    };
+
+    // Copy AI message to clipboard
+    const handleCopyMessage = (msgId: string, content: string) => {
+        navigator.clipboard.writeText(content);
+        setCopiedMsgId(msgId);
+        toast.success("Copied!");
+        setTimeout(() => setCopiedMsgId(null), 2000);
     };
 
     const onSubmit = async (e?: React.FormEvent) => {
@@ -162,7 +172,7 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
 
         setMessages(prev => [...prev, userMessage]);
 
-        // Save Context
+        // Save Context for error recovery
         const currentInput = input;
         const currentImageUrl = imageUrl;
 
@@ -170,6 +180,15 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
         setInput("");
         clearImage();
         setIsLoading(true);
+
+        // Add placeholder AI message for streaming
+        const aiTempId = (Date.now() + 1).toString();
+        setMessages(prev => [...prev, {
+            id: aiTempId,
+            role: 'assistant',
+            content: '',
+            created_at: new Date().toISOString()
+        }]);
 
         try {
             const response = await fetch('/api/chat', {
@@ -187,26 +206,54 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
+
+                // Handle daily limit reached
+                if (response.status === 429 && errorData.limitReached) {
+                    toast.error(`Daily limit reached (${errorData.limit}/day)`, {
+                        description: "Please try again tomorrow."
+                    });
+                }
+
                 throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
             }
 
-            const data = await response.json();
+            // --- STREAMING RESPONSE HANDLING ---
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
 
-            if (!data.success) {
-                throw new Error(data.error || 'AI response failed');
+            if (!reader) {
+                throw new Error('No response body');
             }
 
-            // Replace optimistic message or just append AI response
-            // Ideally backend returns true ID, but for now we trust persistence happened
+            let fullText = "";
 
-            const aiMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                role: 'assistant',
-                content: data.message,
-                created_at: new Date().toISOString()
-            };
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
 
-            setMessages(prev => [...prev, aiMessage]);
+                const chunk = decoder.decode(value, { stream: true });
+                fullText += chunk;
+
+                // Update the placeholder AI message with accumulated text
+                setMessages(prev =>
+                    prev.map(m =>
+                        m.id === aiTempId
+                            ? { ...m, content: fullText }
+                            : m
+                    )
+                );
+            }
+
+            // If somehow empty response
+            if (!fullText.trim()) {
+                setMessages(prev =>
+                    prev.map(m =>
+                        m.id === aiTempId
+                            ? { ...m, content: "Sorry, I couldn't generate a response. Please try again." }
+                            : m
+                    )
+                );
+            }
 
         } catch (error: any) {
             console.error('[AI Coach] Error:', error);
@@ -216,11 +263,11 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
             setInput(currentInput);
             if (currentImageUrl) {
                 setImageUrl(currentImageUrl);
-                setLocalImagePreview(currentImageUrl); // Restoration might need fetch if it was local URL
+                setLocalImagePreview(currentImageUrl);
             }
 
-            // Remove optimistic message
-            setMessages(prev => prev.filter(m => m.id !== tempId));
+            // Remove optimistic messages
+            setMessages(prev => prev.filter(m => m.id !== tempId && m.id !== aiTempId));
 
         } finally {
             setIsLoading(false);
@@ -234,13 +281,22 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
         }
     };
 
+    // --- STARTER PROMPTS (empty state) ---
+    const starterPrompts = [
+        "📱 Meta Ads-ൽ ഒരു Campaign സെറ്റപ്പ് ചെയ്യാൻ എന്ത് ചെയ്യണം?",
+        "🤖 AI Tools ഉപയോഗിച്ച് Content Create ചെയ്യാൻ സഹായിക്കൂ",
+        "📊 Digital Marketing-ന്റെ Basics explain ചെയ്യൂ",
+        "🎯 Course Module-ൽ doubt ഉണ്ട്, help വേണം"
+    ];
+
     return (
         <div className="flex flex-col h-full bg-white dark:bg-slate-950">
             {/* Header */}
-            <header className="sticky top-0 h-14 border-b flex items-center px-4 bg-white dark:bg-slate-900 shrink-0 shadow-sm z-20">
+            <header className="sticky top-0 h-14 border-b flex items-center justify-between px-4 bg-white dark:bg-slate-900 shrink-0 shadow-sm z-20">
                 <div className="flex items-center gap-3">
                     {onBack && (
                         <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="md:hidden -ml-2 text-slate-500"
@@ -260,38 +316,68 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
                         <p className="text-xs text-slate-500">Your personal Program facilitator</p>
                     </div>
                 </div>
+                {onClose && (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 rounded-full w-9 h-9 flex items-center justify-center"
+                        onClick={onClose}
+                    >
+                        <X className="w-5 h-5" />
+                    </Button>
+                )}
             </header>
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 bg-slate-50/50 dark:bg-black/20">
                 <div className="space-y-6 max-w-3xl mx-auto pb-4 pt-4">
+
+                    {/* Empty State with Starter Prompts */}
                     {messages.length === 0 && !isLoading && (
-                        <div className="text-center text-slate-500 mt-20 flex flex-col items-center">
-                            <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
+                        <div className="text-center text-slate-500 mt-12 flex flex-col items-center">
+                            <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-950/30 rounded-full flex items-center justify-center mb-6">
                                 <Bot className="w-10 h-10 text-indigo-400" />
                             </div>
-                            <h3 className="text-xl font-medium text-slate-700 mb-2">Hello! How can I help you?</h3>
-                            <p className="text-sm max-w-xs">Ask doubts, upload screenshots, or get Program guidance.</p>
+                            <h3 className="text-xl font-medium text-slate-700 dark:text-slate-200 mb-2">Hello! How can I help you?</h3>
+                            <p className="text-sm max-w-xs mb-6">Ask doubts, upload screenshots, or get Program guidance.</p>
+
+                            {/* Starter Prompt Buttons */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-md w-full">
+                                {starterPrompts.map((prompt, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => {
+                                            setInput(prompt);
+                                            setTimeout(() => textareaRef.current?.focus(), 50);
+                                        }}
+                                        className="text-left text-xs px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 hover:border-indigo-300 dark:hover:border-indigo-800 transition-all text-slate-600 dark:text-slate-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+                                    >
+                                        {prompt}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     )}
 
                     {messages.map(m => (
-                        <div key={m.id} className={cn("flex gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300", m.role === "user" ? "flex-row-reverse" : "flex-row")}>
+                        <div key={m.id} className={cn("flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300", m.role === "user" ? "flex-row-reverse" : "flex-row")}>
                             {/* Avatar */}
                             <div className={cn(
                                 "w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1 shadow-sm",
-                                m.role === "user" ? "bg-slate-200" : "bg-indigo-100"
+                                m.role === "user" ? "bg-slate-200 dark:bg-slate-700" : "bg-indigo-100 dark:bg-indigo-900/30"
                             )}>
-                                {m.role === "user" ? <User className="w-4 h-4 text-slate-600" /> : <Bot className="w-4 h-4 text-indigo-600" />}
+                                {m.role === "user" ? <User className="w-4 h-4 text-slate-600 dark:text-slate-300" /> : <Bot className="w-4 h-4 text-indigo-600" />}
                             </div>
 
                             {/* Bubble */}
                             <div className={cn(
-                                "rounded-2xl px-5 py-3 max-w-[80%] text-sm shadow-sm",
+                                "rounded-2xl px-5 py-3 max-w-[85%] text-sm shadow-sm relative group",
                                 m.role === "user"
                                     ? "bg-indigo-600 text-white rounded-tr-none"
-                                    : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-100 rounded-tl-none"
+                                    : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-tl-none"
                             )}>
+                                {/* Image */}
                                 {m.image_url && (
                                     <div className="mb-3 rounded-lg overflow-hidden bg-black/5 dark:bg-white/5 border border-white/10 relative">
                                         <Image
@@ -305,17 +391,75 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
                                         />
                                     </div>
                                 )}
-                                <div className="whitespace-pre-wrap leading-relaxed break-words break-all">{m.content}</div>
+
+                                {/* Content: Markdown for AI, plain text for User */}
+                                {m.role === "assistant" ? (
+                                    <div className="prose prose-sm dark:prose-invert prose-slate max-w-none prose-p:my-1.5 prose-ul:my-1.5 prose-ol:my-1.5 prose-li:my-0.5 prose-headings:my-2 prose-pre:my-2 prose-code:text-xs prose-pre:bg-slate-900 prose-pre:dark:bg-slate-950 prose-code:before:content-none prose-code:after:content-none break-words">
+                                        {m.content ? (
+                                            <ReactMarkdown
+                                                remarkPlugins={[remarkGfm]}
+                                                components={{
+                                                    // Custom code block with copy button
+                                                    pre: ({ children }) => (
+                                                        <div className="relative group/code">
+                                                            <pre className="!rounded-lg !text-xs overflow-x-auto">{children}</pre>
+                                                        </div>
+                                                    ),
+                                                    // Inline code styling
+                                                    code: ({ children, className }) => {
+                                                        const isBlock = className?.includes('language-');
+                                                        if (isBlock) {
+                                                            return <code className={cn(className, "text-xs")}>{children}</code>;
+                                                        }
+                                                        return (
+                                                            <code className="bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-xs font-mono text-pink-600 dark:text-pink-400">
+                                                                {children}
+                                                            </code>
+                                                        );
+                                                    },
+                                                    // Links open in new tab
+                                                    a: ({ href, children }) => (
+                                                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline">
+                                                            {children}
+                                                        </a>
+                                                    )
+                                                }}
+                                            >
+                                                {m.content}
+                                            </ReactMarkdown>
+                                        ) : (
+                                            <span className="text-slate-400 italic">Thinking...</span>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="whitespace-pre-wrap leading-relaxed break-words">{m.content}</div>
+                                )}
+
+                                {/* Copy button for AI messages */}
+                                {m.role === "assistant" && m.content && (
+                                    <button
+                                        onClick={() => handleCopyMessage(m.id, m.content)}
+                                        className="absolute -bottom-3 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full p-1.5 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-600"
+                                        title="Copy message"
+                                    >
+                                        {copiedMsgId === m.id ? (
+                                            <Check className="w-3 h-3 text-emerald-500" />
+                                        ) : (
+                                            <Copy className="w-3 h-3 text-slate-400" />
+                                        )}
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))}
 
-                    {isLoading && (
-                        <div className="flex justify-start gap-4">
-                            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 mt-1">
+                    {/* Streaming indicator (shown while loading and no AI content yet) */}
+                    {isLoading && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant' && !messages[messages.length - 1]?.content && (
+                        <div className="flex justify-start gap-3">
+                            <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center shrink-0 mt-1">
                                 <Bot className="w-4 h-4 text-indigo-600" />
                             </div>
-                            <div className="bg-white border rounded-2xl rounded-tl-none px-4 py-3 flex items-center shadow-sm">
+                            <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl rounded-tl-none px-4 py-3 flex items-center shadow-sm">
                                 <Loader2 className="w-4 h-4 animate-spin text-slate-400 mr-2" />
                                 <span className="text-xs text-slate-400">Thinking...</span>
                             </div>
@@ -390,7 +534,7 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
                         </div>
 
                         <div className="flex items-center gap-1 shrink-0">
-                            {/* Send Button (Only if input exists) */}
+                            {/* Send Button */}
                             {(input.trim() || imageUrl) && (
                                 <Button
                                     type="submit"
@@ -405,10 +549,9 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
                                 </Button>
                             )}
 
-                            {/* Voice Input (Always visible if supported) */}
+                            {/* Voice Input */}
                             {isSupported && (
                                 <div className={cn("flex items-center gap-1", (input.trim() || imageUrl) ? "order-1 mr-1" : "")}>
-                                    {/* Language Switcher - Always visible to allow switching mid-sentence */}
                                     <Button
                                         type="button"
                                         variant="ghost"
@@ -434,9 +577,11 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
                                     </Button>
                                 </div>
                             )}
-                        </div>
                     </form>
-                    {/* Branding Removed as per user request */}
+                    {/* AI generated disclaimer - ഗൂഗിൾ പ്ലേ സ്റ്റോർ പോളിസി അനുസരിച്ച് AI നിർദ്ദേശങ്ങൾക്കുള്ള ഡിസ്ക്ലൈമർ */}
+                    <p className="text-[10px] text-center text-slate-400 dark:text-slate-500 mt-2">
+                        Disclaimer: ADH AI Coach generated response. Double check critical information.
+                    </p>
                 </div>
             </div>
         </div >

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
     LayoutDashboard, BookOpen, Video, MessageSquare,
     Users, User, LogOut, Shield, GraduationCap, ChevronRight
@@ -59,12 +60,6 @@ export const StudentSidebar = ({
 
     return (
         <div className="h-full flex flex-col overflow-y-auto bg-white dark:bg-slate-950 border-r border-slate-200/60 dark:border-slate-800/60">
-            <div className="px-8 py-8 border-b border-slate-200/60 dark:border-slate-800/60">
-                <p className="text-[11px] font-black uppercase tracking-[0.2em] bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 bg-clip-text text-transparent">
-                    ADH Connect
-                </p>
-            </div>
-
             <div className="flex flex-col flex-1 px-4 py-6 gap-2">
                 {visibleRoutes.map((route) => {
                     const isActive = optimisticPath === route.href || (route.href !== "/dashboard" && route.href !== "/my-journey" && optimisticPath?.startsWith(route.href + "/"));

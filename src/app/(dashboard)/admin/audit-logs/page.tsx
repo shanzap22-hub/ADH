@@ -11,7 +11,7 @@ export default async function AuditLogsPage() {
 
     // Fetch logs
     const { data: logs, error } = await supabase
-        .from('audit_logs')
+        .from('admin_audit_log')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
@@ -23,7 +23,7 @@ export default async function AuditLogsPage() {
     let logsWithProfile: any[] = [];
 
     if (logs && logs.length > 0) {
-        const userIds = Array.from(new Set(logs.map((l: any) => l.user_id).filter(Boolean)));
+        const userIds = Array.from(new Set(logs.map((l: any) => l.admin_id).filter(Boolean)));
 
         if (userIds.length > 0) {
             const { data: profiles } = await supabase
@@ -33,7 +33,7 @@ export default async function AuditLogsPage() {
 
             logsWithProfile = logs.map((log: any) => ({
                 ...log,
-                profile: profiles?.find((p: any) => p.id === log.user_id)
+                profile: profiles?.find((p: any) => p.id === log.admin_id)
             }));
         } else {
             logsWithProfile = logs;
@@ -67,7 +67,7 @@ export default async function AuditLogsPage() {
                                     </TableCell>
                                     <TableCell>
                                         <div className="font-medium text-sm">{log.profile?.full_name || "Unknown"}</div>
-                                        <div className="text-xs text-muted-foreground">{log.profile?.email || log.user_id}</div>
+                                        <div className="text-xs text-muted-foreground">{log.profile?.email || log.admin_id}</div>
                                     </TableCell>
                                     <TableCell>
                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -75,7 +75,7 @@ export default async function AuditLogsPage() {
                                         </span>
                                     </TableCell>
                                     <TableCell className="text-sm">
-                                        {log.entity_type}
+                                        {log.resource_type}
                                     </TableCell>
                                     <TableCell className="text-xs font-mono text-gray-500 max-w-[300px] truncate" title={JSON.stringify(log.details, null, 2)}>
                                         {JSON.stringify(log.details)}

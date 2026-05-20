@@ -33,9 +33,16 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // 2. Access check — use JWT metadata for speed and reliability
-        const userRole = user.app_metadata?.role || "student";
-        const userTier = user.app_metadata?.membership_tier || "free";
+        // 2. Access check — profiles table-ൽ നിന്ന് role/tier fetch ചെയ്യുക
+        //    (JWT app_metadata often outdated/empty ആകാറുണ്ട്, profiles table ആണ് source of truth)
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("role, membership_tier")
+            .eq("id", user.id)
+            .single();
+
+        const userRole = profile?.role || "student";
+        const userTier = profile?.membership_tier || "bronze";
         
         console.log(`[SIGNED_URL] Request for video: ${videoId}, user: ${user.id}, role: ${userRole}, tier: ${userTier}`);
 

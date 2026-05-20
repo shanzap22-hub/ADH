@@ -25,11 +25,11 @@ export async function logAudit({
 }) {
     try {
         const supabase = createAdminClient();
-        await supabase.from('audit_logs').insert({
-            user_id: userId,
+        await supabase.from('admin_audit_log').insert({
+            admin_id: userId,
             action,
-            entity_type: entityType,
-            entity_id: entityId,
+            resource_type: entityType,
+            resource_id: entityId,
             details
         });
         console.log(`[AUDIT] ${action} logged for user ${userId}`);

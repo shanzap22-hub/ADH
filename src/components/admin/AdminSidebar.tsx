@@ -19,6 +19,7 @@ import {
     Bell,
     GraduationCap,
     Target,
+    CreditCard,
 } from "lucide-react";
 
 const routes = [
@@ -105,6 +106,12 @@ const routes = [
         icon: Bell,
         href: "/admin/notifications",
         color: "text-red-500",
+    },
+    {
+        label: "Payment Links",
+        icon: CreditCard,
+        href: "/admin/payment-links",
+        color: "text-blue-500",
     },
     {
         label: "Settings",

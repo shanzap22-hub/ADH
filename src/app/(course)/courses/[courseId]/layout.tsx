@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { CourseSidebar } from "./_components/course-sidebar";
 // import { TopHeader } from "@/components/dashboard/TopHeader";
 import { BottomNav } from "@/components/dashboard/BottomNav";
+import { FloatingAIChat } from "@/components/chat/FloatingAIChat";
 
 export default async function CourseLayout({
     children,
@@ -19,7 +20,7 @@ export default async function CourseLayout({
     //     return redirect("/");
     //   }
 
-    const { data: Program } = await supabase
+    const { data: course } = await supabase
         .from("courses")
         .select(`
         *,
@@ -106,6 +107,9 @@ export default async function CourseLayout({
 
             {/* Added BottomNav for mobile navigation */}
             <BottomNav permissions={permissions} />
+
+            {/* Floating AI Chat Widget */}
+            <FloatingAIChat isAllowed={permissions.canViewChat} />
         </div>
     )
 }

@@ -6,12 +6,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // import Image from "next/image"; // Removed unused import
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Mic, Image as ImageIcon, X, Loader2, ArrowLeft, Users, Trash2, Reply, MoreHorizontal, Bell, BellOff, RefreshCw, ZoomIn } from "lucide-react";
+import { Send, Mic, Image as ImageIcon, X, Loader2, ArrowLeft, Users, Trash2, Reply, MoreHorizontal, Bell, BellOff, RefreshCw, ZoomIn, ShieldAlert, Ban } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { deleteChatMessage, sendChatMessage, toggleChatMute, getChatMuteStatus, uploadChatMedia } from "@/actions/chat-actions";
+import { deleteChatMessage, sendChatMessage, toggleChatMute, getChatMuteStatus, uploadChatMedia, blockUser, reportMessage, getBlockedUsers } from "@/actions/chat-actions";
 import { toast } from "sonner";
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -70,6 +70,48 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [selectedImage, setSelectedImageState] = useState<string | null>(null);
+    const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set());
+
+    // Fetch blocked users on mount
+    useEffect(() => {
+        getBlockedUsers().then((res) => {
+            if (res.success && res.data) {
+                setBlockedUserIds(new Set(res.data));
+            }
+        });
+    }, []);
+
+    const handleBlockUser = async (userId: string, userName: string) => {
+        if (confirm(`Are you sure you want to block ${userName || 'this user'}? You will no longer see their messages.`)) {
+            const res = await blockUser(userId);
+            if (res.success) {
+                setBlockedUserIds(prev => {
+                    const next = new Set(prev);
+                    next.add(userId);
+                    return next;
+                });
+                toast.success(`${userName || 'User'} has been blocked.`);
+            } else {
+                toast.error(res.error || "Failed to block user");
+            }
+        }
+    };
+
+    const handleReportMessage = async (messageId: string) => {
+        const reason = prompt("Please enter the reason for reporting this message:");
+        if (reason === null) return; // cancelled
+        if (!reason.trim()) {
+            toast.error("Please enter a reason for reporting");
+            return;
+        }
+
+        const res = await reportMessage(messageId, reason);
+        if (res.success) {
+            toast.success("Message has been reported to administrators.");
+        } else {
+            toast.error(res.error || "Failed to report message");
+        }
+    };
 
     // Wrapper to handle history state for full screen image
     const setSelectedImage = (url: string | null, e?: React.MouseEvent | React.TouchEvent) => {
@@ -791,7 +833,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                         <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
                     </div>
                 )}
-                {messages.map((msg) => {
+                {messages.filter(msg => !blockedUserIds.has(msg.sender_id)).map((msg) => {
                     const isMe = msg.sender_id === currentUserId;
 
                     // Debug: Log image messages
@@ -907,6 +949,24 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                                                         <Trash2 className="w-4 h-4 mr-2" />
                                                         Delete
                                                     </DropdownMenuItem>
+                                                )}
+                                                {!isMe && (
+                                                    <>
+                                                        <DropdownMenuItem
+                                                            onClick={() => handleReportMessage(msg.id)}
+                                                            className="text-amber-600 focus:text-amber-600"
+                                                        >
+                                                            <ShieldAlert className="w-4 h-4 mr-2" />
+                                                            Report Message
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onClick={() => handleBlockUser(msg.sender_id, msg.sender?.full_name || "User")}
+                                                            className="text-red-600 focus:text-red-600"
+                                                        >
+                                                            <Ban className="w-4 h-4 mr-2" />
+                                                            Block User
+                                                        </DropdownMenuItem>
+                                                    </>
                                                 )}
                                             </DropdownMenuContent>
                                         </DropdownMenu>

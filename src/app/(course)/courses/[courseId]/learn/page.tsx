@@ -82,10 +82,10 @@ export default async function LearnPage({
         `)
         .eq("id", courseId)
         .eq("chapters.is_published", true)
-        .order("position", { foreignTable: "Modules", ascending: true })
+        .order("position", { foreignTable: "chapters", ascending: true })
         .single();
 
-    if (!Program || !course.chapters) {
+    if (!course || !course.chapters) {
         return redirect(`/courses/${courseId}`);
     }
 
@@ -118,7 +118,7 @@ export default async function LearnPage({
 
     // If no lesson specified, redirect to first lesson
     if (!lesson && chaptersWithStatus.length > 0) {
-        return redirect(`/courses/${courseId}/learn?lesson=${ModulesWithStatus[0].id}`);
+        return redirect(`/courses/${courseId}/learn?lesson=${chaptersWithStatus[0].id}`);
     }
 
     return (

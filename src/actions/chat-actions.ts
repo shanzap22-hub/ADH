@@ -203,3 +203,115 @@ export async function sendChatMessage(
 
     return { success: true, data };
 }
+
+export async function blockUser(blockedId: string): Promise<{ success: boolean; error?: string }> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    if (user.id === blockedId) return { success: false, error: "You cannot block yourself" };
+
+    const { error } = await supabase
+        .from('blocked_users')
+        .insert({ blocker_id: user.id, blocked_id: blockedId });
+
+    if (error) {
+        console.error("Block User Error:", error);
+        return { success: false, error: error.message };
+    }
+
+    return { success: true };
+}
+
+export async function unblockUser(blockedId: string): Promise<{ success: boolean; error?: string }> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const { error } = await supabase
+        .from('blocked_users')
+        .delete()
+        .eq('blocker_id', user.id)
+        .eq('blocked_id', blockedId);
+
+    if (error) {
+        console.error("Unblock User Error:", error);
+        return { success: false, error: error.message };
+    }
+
+    return { success: true };
+}
+
+export async function getBlockedUsers(): Promise<{ success: boolean; data?: string[]; error?: string }> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const { data, error } = await supabase
+        .from('blocked_users')
+        .select('blocked_id')
+        .eq('blocker_id', user.id);
+
+    if (error) {
+        console.error("Get Blocked Users Error:", error);
+        return { success: false, error: error.message };
+    }
+
+    return { success: true, data: data.map(d => d.blocked_id) };
+}
+
+export async function getBlockedUsersWithProfiles(): Promise<{ success: boolean; data?: { id: string; full_name: string | null; avatar_url: string | null }[]; error?: string }> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const { data: blocks, error: blockError } = await supabase
+        .from('blocked_users')
+        .select('blocked_id')
+        .eq('blocker_id', user.id);
+
+    if (blockError) {
+        console.error("Get Blocked Users error:", blockError);
+        return { success: false, error: blockError.message };
+    }
+
+    if (!blocks || blocks.length === 0) {
+        return { success: true, data: [] };
+    }
+
+    const blockedIds = blocks.map(b => b.blocked_id);
+    const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', blockedIds);
+
+    if (profileError) {
+        console.error("Get Blocked Profiles error:", profileError);
+        return { success: false, error: profileError.message };
+    }
+
+    const formattedData = profiles.map(p => ({
+        id: p.id,
+        full_name: p.full_name || 'User',
+        avatar_url: p.avatar_url || null
+    }));
+
+    return { success: true, data: formattedData };
+}
+
+export async function reportMessage(messageId: string, reason: string): Promise<{ success: boolean; error?: string }> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const { error } = await supabase
+        .from('message_reports')
+        .insert({ reporter_id: user.id, message_id: messageId, reason });
+
+    if (error) {
+        console.error("Report Message Error:", error);
+        return { success: false, error: error.message };
+    }
+
+    return { success: true };
+}
