@@ -25,7 +25,7 @@ export default function InstructorCoursesLoading() {
                 ))}
             </div>
 
-            {/* Courses Grid Skeleton */}
+            {/* Programs Grid Skeleton */}
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                     <div key={i} className="h-[350px] rounded-2xl bg-slate-900/50 border border-slate-800 overflow-hidden space-y-4">

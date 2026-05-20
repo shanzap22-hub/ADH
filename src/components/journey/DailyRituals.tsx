@@ -373,7 +373,7 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
             </CardHeader>
             <CardContent className="pt-6 space-y-8 p-8">
                 
-                {/* Goal Card Section */}
+                {/* Goal Card Section — My Destination */}
                 {goalCardRitual && (
                     <div className="space-y-4">
                         <div className="flex items-center justify-between px-2">
@@ -482,8 +482,8 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
                                     <p className="text-xs text-indigo-700/60 dark:text-indigo-400/60">Handwritten offline or Online</p>
                                 </div>
                                 <div className="flex flex-col gap-3">
-                                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-center">
-                                        <p className="text-[11px] font-bold text-slate-400 italic">"Keep your vision clear and written"</p>
+                                    <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-center">
+                                        <p className="text-[11px] font-bold text-amber-700 dark:text-amber-500 italic">"Please use the online goal book ONLY when it is not possible to write in your offline physical goal book."</p>
                                     </div>
                                      <Dialog open={isWritingGoalsOnline} onOpenChange={(open) => {
                                         setIsWritingGoalsOnline(open);

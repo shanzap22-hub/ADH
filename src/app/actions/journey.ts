@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export async function toggleRitualAction(ritualId: string, isCompleted: boolean) {
@@ -12,7 +13,7 @@ export async function toggleRitualAction(ritualId: string, isCompleted: boolean)
     const today = new Date().toISOString().split('T')[0];
 
     if (isCompleted) {
-        // Add log
+        // Ritual log add ചെയ്യുന്നു
         const { error } = await supabase
             .from("user_daily_ritual_logs")
             .insert({
@@ -21,12 +22,12 @@ export async function toggleRitualAction(ritualId: string, isCompleted: boolean)
                 completed_date: today
             });
         
-        if (error && error.code !== '23505') { // Ignore duplicate key errors
+        if (error && error.code !== '23505') {
             console.error("Error toggling ritual:", error);
             return { success: false, error: error.message };
         }
     } else {
-        // Remove log
+        // Ritual log remove ചെയ്യുന്നു
         const { error } = await supabase
             .from("user_daily_ritual_logs")
             .delete()
@@ -40,7 +41,78 @@ export async function toggleRitualAction(ritualId: string, isCompleted: boolean)
         }
     }
 
+    // --- Threshold-Based Gamification ---
+    // ഇന്ന് എത്ര rituals complete ചെയ്തു എന്ന് count ചെയ്യുന്നു
+    const supabaseAdmin = createAdminClient();
+
+    const { data: todayLogs } = await supabaseAdmin
+        .from("user_daily_ritual_logs")
+        .select("ritual_id")
+        .eq("user_id", user.id)
+        .eq("completed_date", today);
+
+    const completedCount = todayLogs?.length || 0;
+
+    // Points threshold: 2 completed = 5, 4 completed = 10
+    let newDailyPoints = 0;
+    if (completedCount >= 4) {
+        newDailyPoints = 10;
+    } else if (completedCount >= 2) {
+        newDailyPoints = 5;
+    }
+
+    // ഇന്ന് ഈ reason-ൽ ഇതിന് മുൻപ് എത്ര പോയിന്റ് കൊടുത്തിരുന്നു?
+    const startOfDay = new Date();
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    const { data: existingEntries } = await supabaseAdmin
+        .from("gamification_ledger")
+        .select("id, points")
+        .eq("user_id", user.id)
+        .eq("reason", "Daily Ritual Milestone")
+        .gte("created_at", startOfDay.toISOString());
+
+    const oldPoints = existingEntries?.reduce((sum, e) => sum + e.points, 0) || 0;
+
+    // പോയിന്റ് മാറ്റം ആവശ്യമാണെങ്കിൽ മാത്രം update ചെയ്യുന്നു
+    if (newDailyPoints !== oldPoints) {
+        // പഴയ entries delete ചെയ്യുന്നു
+        if (existingEntries && existingEntries.length > 0) {
+            const ids = existingEntries.map(e => e.id);
+            await supabaseAdmin
+                .from("gamification_ledger")
+                .delete()
+                .in("id", ids);
+        }
+
+        // പുതിയ entry insert ചെയ്യുന്നു (0 ആണെങ്കിൽ insert ചെയ്യേണ്ട)
+        if (newDailyPoints > 0) {
+            await supabaseAdmin
+                .from("gamification_ledger")
+                .insert({
+                    user_id: user.id,
+                    points: newDailyPoints,
+                    reason: "Daily Ritual Milestone",
+                    metadata: { completed_count: completedCount, date: today }
+                });
+        }
+
+        // Profile score recalculate ചെയ്യുന്നു — ledger-ൽ നിന്ന് total sum എടുക്കുന്നു
+        const { data: allLedger } = await supabaseAdmin
+            .from("gamification_ledger")
+            .select("points")
+            .eq("user_id", user.id);
+
+        const totalScore = allLedger?.reduce((sum, e) => sum + e.points, 0) || 0;
+
+        await supabaseAdmin
+            .from("profiles")
+            .update({ gamification_score: totalScore })
+            .eq("id", user.id);
+    }
+
     revalidatePath("/profile");
+    revalidatePath("/dashboard");
     return { success: true };
 }
 

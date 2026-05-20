@@ -215,7 +215,7 @@ export default async function HomePage() {
               </span>
             </Button>
           </RazorpayButtonWrapper>
-          <p className="text-slate-500 text-sm mt-6 font-medium">Instant access to all courses & private community</p>
+          <p className="text-slate-500 text-sm mt-6 font-medium">Instant access to all Programs & private community</p>
         </div>
       </section>
 

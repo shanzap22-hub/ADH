@@ -38,7 +38,7 @@ export async function POST(
 
         const options = {
             amount: amount,
-            currency: "INR", // Safety: Use INR as courses are priced in Rupees
+            currency: "INR", // Safety: Use INR as programs are priced in Rupees
             // Razorpay primarily supports INR. Using USD would cause overcharging (e.g. 5000 INR -> 5000 USD).
             // We force INR to be safe.
             receipt: courseId,

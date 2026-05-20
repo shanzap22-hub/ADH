@@ -140,7 +140,7 @@ export function ManualEnrollmentForm() {
                                 </SelectContent>
                             </Select>
                             <FormDescription className="text-slate-400">
-                                This will grant access to all courses and features in this tier.
+                                This will grant access to all Programs and features in this tier.
                             </FormDescription>
                             <FormMessage />
                         </FormItem>

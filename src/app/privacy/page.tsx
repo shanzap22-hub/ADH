@@ -23,14 +23,14 @@ export default function PrivacyPage() {
                             <section>
                                 <h2 className="text-2xl font-bold text-white mb-4">2. Information We Collect</h2>
                                 <p>
-                                    We collect personal information that you voluntarily provide to us when you register on ADH CONNECT, enroll in courses, or participate in our community. The personal information we collect includes:
+                                    We collect personal information that you voluntarily provide to us when you register on ADH CONNECT, enroll in Programs, or participate in our community. The personal information we collect includes:
                                 </p>
                                 <ul className="list-disc pl-6 mt-3 space-y-2">
                                     <li><strong>Contact Information:</strong> Name, email address, phone number</li>
                                     <li><strong>Account Credentials:</strong> Username and password</li>
                                     <li><strong>Payment Information:</strong> Billing details processed securely through Razorpay</li>
                                     <li><strong>Profile Information:</strong> WhatsApp number for community access</li>
-                                    <li><strong>Usage Data:</strong> Course progress, completion status, engagement metrics</li>
+                                    <li><strong>Usage Data:</strong> Program progress, completion status, engagement metrics</li>
                                 </ul>
                             </section>
 
@@ -40,12 +40,12 @@ export default function PrivacyPage() {
                                     We use the information we collect or receive for the following purposes:
                                 </p>
                                 <ul className="list-disc pl-6 mt-3 space-y-2">
-                                    <li>To provide access to ADH CONNECT courses and community</li>
+                                    <li>To provide access to ADH CONNECT Programs and community</li>
                                     <li>To process your payments and manage your enrollment</li>
-                                    <li>To send you course updates, educational content, and important notices</li>
-                                    <li>To improve our platform and course offerings</li>
+                                    <li>To send you Program updates, educational content, and important notices</li>
+                                    <li>To improve our platform and Program offerings</li>
                                     <li>To respond to your inquiries and provide customer support</li>
-                                    <li>To track course completion and issue certificates</li>
+                                    <li>To track Program completion and issue certificates</li>
                                 </ul>
                             </section>
 

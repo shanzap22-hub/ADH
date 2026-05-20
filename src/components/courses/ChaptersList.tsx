@@ -51,7 +51,7 @@ export const ChaptersList = ({
 
         setChapters(items);
 
-        const bulkUpdateData = updatedChapters.map((chapter) => ({
+        const bulkUpdateData = updatedModules.map((chapter) => ({
             id: chapter.id,
             position: items.findIndex((item) => item.id === chapter.id)
         }));
@@ -65,10 +65,10 @@ export const ChaptersList = ({
 
     return (
         <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="chapters">
+            <Droppable droppableId="Modules">
                 {(provided) => (
                     <div {...provided.droppableProps} ref={provided.innerRef}>
-                        {chapters.map((chapter, index) => (
+                        {Modules.map((chapter, index) => (
                             <Draggable
                                 key={chapter.id}
                                 draggableId={chapter.id}

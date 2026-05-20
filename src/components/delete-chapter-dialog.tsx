@@ -36,7 +36,7 @@ export const DeleteChapterDialog = ({
         try {
             setIsDeleting(true);
 
-            const response = await fetch(`/api/courses/${courseId}/chapters/${chapterId}`, {
+            const response = await fetch(`/api/courses/${courseId}/Modules/${chapterId}`, {
                 method: "DELETE",
             });
 
@@ -44,7 +44,7 @@ export const DeleteChapterDialog = ({
                 throw new Error("Failed to delete chapter");
             }
 
-            toast.success("Chapter deleted successfully");
+            toast.success("Module deleted successfully");
             router.refresh();
         } catch (error) {
             toast.error("Failed to delete chapter");
@@ -69,7 +69,7 @@ export const DeleteChapterDialog = ({
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This will permanently delete the chapter <strong>"{chapterTitle}"</strong> and its video.
+                        This will permanently delete the Module <strong>"{chapterTitle}"</strong> and its video.
                         This action cannot be undone.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
@@ -80,7 +80,7 @@ export const DeleteChapterDialog = ({
                         disabled={isDeleting}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                        {isDeleting ? "Deleting..." : "Delete Chapter"}
+                        {isDeleting ? "Deleting..." : "Delete Module"}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

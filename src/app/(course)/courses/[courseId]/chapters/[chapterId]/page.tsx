@@ -17,7 +17,7 @@ export default async function ChapterDetailPage({
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
-        // Fetch course and chapter details
+        // Fetch Program and chapter details
         const { data: chapter, error: chapterError } = await supabase
             .from("chapters")
             .select(`
@@ -113,7 +113,7 @@ export default async function ChapterDetailPage({
                                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-white p-6 text-center">
                                     <div className="mb-4 text-4xl">🔒</div>
                                     <h2 className="text-xl font-bold mb-2">Lesson Locked</h2>
-                                    <p className="text-slate-400 mb-6 max-w-md">Enroll in this course to get access to this lesson and all other content.</p>
+                                    <p className="text-slate-400 mb-6 max-w-md">Enroll in this Program to get access to this lesson and all other content.</p>
                                     <Link href={`/courses/${courseId}`}>
                                         <Button className="font-bold bg-white text-black hover:bg-slate-200">
                                             Subscribe Now
@@ -197,7 +197,7 @@ export default async function ChapterDetailPage({
                                 </Tabs>
                             </div>
 
-                            {/* Sidebar (Optional - Course items could be shown here as sidebar) */}
+                            {/* Sidebar (Optional - Program items could be shown here as sidebar) */}
                             {/* For now leaving empty or could show Up Next */}
                         </div>
 

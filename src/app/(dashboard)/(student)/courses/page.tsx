@@ -23,7 +23,7 @@ export default async function CoursesPage() {
     let fetchError: string | null = null;
 
     try {
-        // Fetch courses with tier-based access
+        // Fetch programs with tier-based access
         const { getUserAccessibleCourses } = await import("@/actions/get-user-accessible-courses");
         courses = await getUserAccessibleCourses(user.id);
         console.log("[COURSES_PAGE] Fetched courses:", { count: courses.length });
@@ -52,10 +52,10 @@ export default async function CoursesPage() {
             {/* Page Header */}
             <div className="px-4 md:px-8 pt-5 md:pt-8 pb-4">
                 <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-                    My Courses
+                    My Programs
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mt-0.5">
-                    {courses.length > 0 ? `${courses.length} course${courses.length === 1 ? '' : 's'} available` : 'Explore your learning journey'}
+                    {courses.length > 0 ? `${courses.length} program${courses.length === 1 ? '' : 's'} available` : 'Explore your learning journey'}
                 </p>
             </div>
 
@@ -66,14 +66,14 @@ export default async function CoursesPage() {
                         <div className="flex items-start gap-3">
                             <AlertCircle className="h-5 w-5 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
                             <div>
-                                <p className="font-semibold text-rose-900 dark:text-rose-200 text-sm">Unable to load courses</p>
+                                <p className="font-semibold text-rose-900 dark:text-rose-200 text-sm">Unable to load Programs</p>
                                 <p className="text-xs text-rose-700 dark:text-rose-400 mt-0.5">{fetchError}</p>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* Courses List */}
+                {/* programs List */}
                 {!fetchError && courses.length > 0 && (
                     <CoursesList items={coursesWithData} />
                 )}
@@ -84,9 +84,9 @@ export default async function CoursesPage() {
                         <div className="w-16 h-16 mx-auto rounded-2xl bg-violet-50 dark:bg-violet-950/50 flex items-center justify-center mb-4">
                             <BookOpen className="h-8 w-8 text-violet-300 dark:text-violet-600" />
                         </div>
-                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">No Courses Yet</h3>
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">No Programs Yet</h3>
                         <p className="text-slate-500 dark:text-slate-400 text-sm max-w-xs mx-auto">
-                            We are updating our course catalog. Check back soon!
+                            We are updating our Program catalog. Check back soon!
                         </p>
                     </div>
                 )}

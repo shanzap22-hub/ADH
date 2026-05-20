@@ -20,7 +20,7 @@ export default async function CreateCoursePage() {
         .single();
 
     if (!profile || (profile.role !== 'instructor' && profile.role !== 'super_admin')) {
-        // Students cannot create courses - redirect to dashboard
+        // Students cannot create programs - redirect to dashboard
         redirect("/dashboard");
     }
 

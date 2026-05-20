@@ -50,7 +50,7 @@ export const getCourses = async (searchQuery?: string): Promise<Course[]> => {
             return [];
         }
 
-        // Map courses with published chapter count
+        // Map programs with published chapter count
         const coursesWithCount = courses.map((course: any) => ({
             id: course.id,
             title: course.title,

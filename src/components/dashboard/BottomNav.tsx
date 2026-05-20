@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 const ALL_NAV_ITEMS = [
     { label: "Home",       icon: Home,           href: "/dashboard", perm: null          },
     { label: "My Journey", icon: GraduationCap,  href: "/my-journey",   perm: null          },
-    { label: "Courses",    icon: BookOpen,       href: "/courses",   perm: null,  isCenter: true },
+    { label: "Programs",    icon: BookOpen,       href: "/courses",   perm: null,  isCenter: true },
     { label: "Live",       icon: Video,          href: "/live",      perm: "canViewLive" },
     { label: "Chat",       icon: MessageCircle,  href: "/chat",      perm: "canViewChat" },
 ];

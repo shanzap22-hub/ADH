@@ -19,7 +19,7 @@ export default async function CourseLayout({
     //     return redirect("/");
     //   }
 
-    const { data: course } = await supabase
+    const { data: Program } = await supabase
         .from("courses")
         .select(`
         *,

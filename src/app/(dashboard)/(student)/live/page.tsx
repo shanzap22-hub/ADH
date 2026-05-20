@@ -5,8 +5,9 @@ import Image from "next/image";
 import { format } from "date-fns";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Video, Sparkles, Clock } from "lucide-react";
+import { Video, Sparkles, Clock, Calendar } from "lucide-react";
 import Link from "next/link";
+import { awardPointsAction } from "@/app/actions/gamification";
 import { createClient } from "@/lib/supabase/client";
 import { LiveCountDown } from "@/components/live/LiveCountDown";
 import { ReschedulePicker } from "@/components/booking/ReschedulePicker";
@@ -312,7 +313,15 @@ export default function LivePage() {
 
                                     <CardFooter className="px-5 pb-5 pt-0">
                                         {latestSession ? (
-                                            <a href={latestSession.join_url} target="_blank" rel="noreferrer" className="w-full">
+                                            <a 
+                                                href={latestSession.join_url} 
+                                                target="_blank" 
+                                                rel="noreferrer" 
+                                                className="w-full"
+                                                onClick={() => {
+                                                    awardPointsAction(20, "Attended Weekly Live Session", { meeting_id: latestSession.id }, false);
+                                                }}
+                                            >
                                                 <Button className="w-full bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 hover:from-indigo-950 hover:via-pink-700 hover:to-orange-600 border-none text-white shadow-lg shadow-pink-500/20 py-5 text-base font-bold tracking-wide transition-all hover:translate-y-[-1px]">
                                                     JOIN WORKSHOP
                                                 </Button>

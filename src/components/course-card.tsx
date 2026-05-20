@@ -127,7 +127,7 @@ const CourseCardComponent = ({
                         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                             <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-50 dark:bg-slate-800">
                                 <BookOpen className="h-3 w-3" />
-                                <span>{chaptersLength} {chaptersLength === 1 ? "Chapter" : "Chapters"}</span>
+                                <span>{chaptersLength} {chaptersLength === 1 ? "Chapter" : "Modules"}</span>
                             </div>
                         </div>
 

@@ -93,7 +93,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                     <Search className="h-5 w-5 text-slate-400" />
                     <Input
                         autoFocus
-                        placeholder="Search courses, community, and more..."
+                        placeholder="Search programs, community, and more..."
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         className="border-0 focus-visible:ring-0 text-base"
@@ -150,11 +150,11 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                                 <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">Quick Links</h4>
                                 <div className="space-y-1">
                                     <button
-                                        onClick={() => handleResultClick("/courses")}
+                                        onClick={() => handleResultClick("/Programs")}
                                         className="w-full text-left px-3 py-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 transition flex items-center gap-2 text-sm"
                                     >
                                         <BookOpen className="h-4 w-4 text-slate-400" />
-                                        <span>Browse All Courses</span>
+                                        <span>Browse All Programs</span>
                                     </button>
                                     <button
                                         onClick={() => handleResultClick("/community")}

@@ -96,7 +96,7 @@ export default function SettingsPage() {
                         <div className="space-y-0.5">
                             <h3 className="font-medium">Email Notifications</h3>
                             <p className="text-sm text-slate-500">
-                                Receive updates about your courses and community.
+                                Receive updates about your Programs and community.
                             </p>
                         </div>
                         <Switch

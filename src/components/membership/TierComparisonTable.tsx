@@ -94,10 +94,10 @@ export function TierComparisonTable({ tiers, onSelectTier }: TierComparisonProps
                                 )}
                             </div>
 
-                            {/* Course Count */}
+                            {/* Program Count */}
                             <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                                 {tierData.courseCount === 999
-                                    ? "All Courses"
+                                    ? "All Programs"
                                     : `${tierData.courseCount} Course${tierData.courseCount > 1 ? "s" : ""
                                     }`}
                             </div>

@@ -20,7 +20,7 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Search for courses by title or description
+        // Search for programs by title or description
         console.log("[Search API] Searching for:", query);
 
         const { data: courses, error } = await supabase
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: "Search failed", details: error.message }, { status: 500 });
         }
 
-        return NextResponse.json({ courses: courses || [] });
+        return NextResponse.json({ courses: programs || [] });
     } catch (error) {
         console.error("Search API error:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });

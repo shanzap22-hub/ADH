@@ -116,11 +116,11 @@ export default async function Dashboard() {
 
     // Stats
     const coursesInProgress = courses.filter(c => (c.progress ?? 0) < 100);
-    const totalChapters     = courses.reduce((acc, c) => acc + c.chapters.length, 0);
-    const completedChapters = courses.reduce((acc, c) => {
+    const totalModules      = courses.reduce((acc, c) => acc + c.chapters.length, 0);
+    const completedModules = courses.reduce((acc, c) => {
         return acc + Math.round(((c.progress ?? 0) / 100) * c.chapters.length);
     }, 0);
-    const overallPercent = Math.round((completedChapters / (totalChapters || 1)) * 100);
+    const overallPercent = Math.round((completedModules / (totalModules || 1)) * 100);
 
     const firstName = profile?.full_name?.split(" ")[0] || "Student";
 
@@ -144,14 +144,22 @@ export default async function Dashboard() {
                         </div>
                         <div className="flex items-center gap-3">
                             <div className="text-center">
-                                <div className="text-xl font-bold">{coursesInProgress.length}</div>
-                                <div className="text-[10px] text-white/70 font-medium">Active</div>
+                                <div className="text-xl font-bold flex items-center gap-1 justify-center text-yellow-300">
+                                    <span className="text-sm">🏆</span>
+                                    {profile?.gamification_score || 0}
+                                </div>
+                                <div className="text-[10px] text-yellow-100/70 font-medium">Points</div>
                             </div>
                             <div className="w-px h-8 bg-white/20" />
-                            <div className="text-center">
+                             <div className="text-center">
+                                <div className="text-xl font-bold">{coursesInProgress.length}</div>
+                                <div className="text-[10px] text-white/70 font-medium">Active</div>
+                             </div>
+                             <div className="w-px h-8 bg-white/20" />
+                             <div className="text-center">
                                 <div className="text-xl font-bold">{overallPercent}%</div>
                                 <div className="text-[10px] text-white/70 font-medium">Progress</div>
-                            </div>
+                             </div>
                         </div>
                     </div>
 
@@ -208,9 +216,9 @@ export default async function Dashboard() {
                     ) : (
                         <div className="text-center py-8 rounded-2xl border border-dashed border-pink-200 dark:border-pink-800/50 bg-pink-50/50 dark:bg-pink-950/20">
                             <BookOpen className="w-7 h-7 text-pink-300 dark:text-pink-700 mx-auto mb-2" />
-                            <p className="text-sm text-slate-500 dark:text-slate-400">No courses in progress</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">No Programs in progress</p>
                             <Link href="/courses" className="text-sm font-bold text-pink-600 dark:text-pink-400 hover:underline mt-1 inline-block">
-                                Browse Courses →
+                                Browse Programs →
                             </Link>
                         </div>
                     )}
@@ -266,7 +274,7 @@ export default async function Dashboard() {
                                     <Progress value={overallPercent} className="h-1.5 bg-black/20 [&>div]:bg-white" />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-2 gap-2 mb-2">
                                     <div className="bg-white/10 p-2.5 rounded-xl text-center border border-white/10">
                                         <BookOpen className="w-4 h-4 mx-auto text-white/80 mb-1" />
                                         <div className="text-lg font-bold">{coursesInProgress.length}</div>
@@ -274,8 +282,15 @@ export default async function Dashboard() {
                                     </div>
                                     <div className="bg-white/10 p-2.5 rounded-xl text-center border border-white/10">
                                         <TrendingUp className="w-4 h-4 mx-auto text-white/80 mb-1" />
-                                        <div className="text-lg font-bold">{completedChapters}</div>
-                                        <div className="text-[9px] uppercase text-white/60 font-bold tracking-wider">Chapters Done</div>
+                                        <div className="text-lg font-bold">{completedModules}</div>
+                                        <div className="text-[9px] uppercase text-white/60 font-bold tracking-wider">Modules Done</div>
+                                    </div>
+                                </div>
+                                <div className="bg-yellow-500/20 p-2.5 rounded-xl text-center border border-yellow-500/30 flex items-center justify-center gap-2">
+                                    <span className="text-xl">🏆</span>
+                                    <div>
+                                        <div className="text-lg font-bold text-yellow-300">{profile?.gamification_score || 0}</div>
+                                        <div className="text-[9px] uppercase text-yellow-200/80 font-bold tracking-wider">Reward Points</div>
                                     </div>
                                 </div>
                             </CardContent>
@@ -299,9 +314,9 @@ export default async function Dashboard() {
                             ) : (
                                 <div className="text-center p-6 border border-dashed border-pink-200 dark:border-pink-800/50 rounded-2xl bg-pink-50/50 dark:bg-pink-950/20">
                                     <BookOpen className="w-7 h-7 text-pink-300 dark:text-pink-700 mx-auto mb-2" />
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">No courses in progress</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">No Programs in progress</p>
                                     <Link href="/courses" className="text-sm font-bold text-pink-600 hover:underline mt-1 inline-block">
-                                        Browse Courses →
+                                        Browse Programs →
                                     </Link>
                                 </div>
                             )}

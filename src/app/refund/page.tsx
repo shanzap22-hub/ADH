@@ -25,7 +25,7 @@ export default function RefundPage() {
                                 <div className="p-6 bg-green-500/10 border border-green-500/30 rounded-lg">
                                     <p className="text-white font-semibold mb-2">✓ Risk-Free Purchase</p>
                                     <p>
-                                        We offer a <strong>14-day money-back guarantee</strong> on all course purchases. If you're not completely satisfied with your ADH CONNECT experience within 14 days of your purchase, we'll provide a full refund—no questions asked.
+                                        We offer a <strong>14-day money-back guarantee</strong> on all Program purchases. If you're not completely satisfied with your ADH CONNECT experience within 14 days of your purchase, we'll provide a full refund—no questions asked.
                                     </p>
                                 </div>
                             </section>
@@ -40,7 +40,7 @@ export default function RefundPage() {
                                         <div>
                                             <h3 className="font-semibold text-white mb-1">Purchase with Confidence</h3>
                                             <p className="text-sm">
-                                                After enrolling in ADH CONNECT, you have a full 14 days to explore our courses, community resources, and learning materials.
+                                                After enrolling in ADH CONNECT, you have a full 14 days to explore our Programs, community resources, and learning materials.
                                             </p>
                                         </div>
                                     </div>
@@ -131,7 +131,7 @@ export default function RefundPage() {
                                     <li>Requests made after the 14-day guarantee period</li>
                                     <li>Change of mind after the 14-day period has elapsed</li>
                                     <li>Promotional or discounted purchases (unless specified otherwise)</li>
-                                    <li>Partial refunds for incomplete course consumption</li>
+                                    <li>Partial refunds for incomplete Program consumption</li>
                                 </ul>
                             </section>
 

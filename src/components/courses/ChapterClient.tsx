@@ -106,7 +106,7 @@ export function ChapterClient({ initialChapter, attachments, courseId, chapterId
             // This clears the dirty state and makes future comparisons accurate
             setChapterData(data);
 
-            toast.success("Chapter saved successfully!");
+            toast.success("Module saved successfully!");
             setHasUnsavedChanges(false);
             router.refresh();
         } catch (error: any) {
@@ -144,7 +144,7 @@ export function ChapterClient({ initialChapter, attachments, courseId, chapterId
                         className="flex items-center text-sm hover:opacity-75 transition"
                     >
                         <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to course setup
+                        Back to Program setup
                     </Link>
                 </div>
 
@@ -189,13 +189,13 @@ export function ChapterClient({ initialChapter, attachments, courseId, chapterId
 
             {/* Rest of the page content */}
             <div className="flex flex-col gap-y-2 mb-6">
-                <h1 className="text-2xl font-medium">Chapter Creation/Edit</h1>
+                <h1 className="text-2xl font-medium">Module Creation/Edit</h1>
                 <span className="text-sm text-muted-foreground">
                     Complete all fields and click Save Chapter.
                 </span>
             </div>
 
-            {/* Chapter forms */}
+            {/* Module forms */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                     <div>
@@ -267,7 +267,7 @@ export function ChapterClient({ initialChapter, attachments, courseId, chapterId
                                 Resources & Attachments
                             </h2>
                         </div>
-                        {/* Attachments still auto-save (separate from chapter data) */}
+                        {/* Attachments still auto-save (separate from Module data) */}
                         <ChapterAttachmentsForm
                             initialData={chapterData}
                             courseId={courseId}

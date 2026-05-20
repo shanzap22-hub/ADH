@@ -19,7 +19,7 @@ export default async function MyJourneyPage() {
     // Fetch Profile & Membership
     const { data: profile } = await supabase
         .from("profiles")
-        .select("membership_tier, full_name")
+        .select("membership_tier, full_name, gamification_score")
         .eq("id", user.id)
         .single();
 
@@ -119,11 +119,8 @@ export default async function MyJourneyPage() {
     const currentTierName = tierNames[profile?.membership_tier || "free"] || "Member";
 
     // Progress Calculation
-    const milestonesCount = availableMilestones.length;
-    const milestoneProgress = (milestones.length > 0) ? (milestones.length / milestonesCount) : 0;
-    const revenueProgress = Math.min(1, Number(incomeData?.current_amount || 0) / Number(incomeData?.target_amount || 100000));
     const ritualProgress = ritualData.length > 0 ? (ritualData.filter(r => r.is_completed).length / ritualData.length) : 0;
-    const overallProgress = (milestoneProgress * 40) + (revenueProgress * 40) + (ritualProgress * 20);
+    const overallProgress = ritualProgress * 100;
 
     return (
         <div className="p-6 space-y-8 max-w-7xl mx-auto pb-24">
@@ -143,7 +140,6 @@ export default async function MyJourneyPage() {
                         </p>
                     </div>
                 </div>
-                
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-3 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl p-3 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-lg">
                         <div className="text-right">
@@ -153,8 +149,13 @@ export default async function MyJourneyPage() {
                         <MembershipBadge tier={profile?.membership_tier || "bronze"} size="lg" />
                     </div>
 
+                    <div className="hidden lg:flex flex-col items-center bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 p-3 rounded-2xl shadow-xl shadow-amber-500/5 px-6">
+                        <span className="text-[10px] font-black uppercase tracking-widest opacity-80 flex items-center gap-1">🏆 Points</span>
+                        <span className="text-xl font-black">{profile?.gamification_score || 0}</span>
+                    </div>
+
                     <div className="hidden lg:flex flex-col items-center bg-violet-600 text-white p-3 rounded-2xl shadow-xl shadow-violet-500/20 px-6">
-                        <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Overall Progress</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Daily Task Progress</span>
                         <span className="text-xl font-black">{Math.round(overallProgress)}%</span>
                     </div>
                 </div>

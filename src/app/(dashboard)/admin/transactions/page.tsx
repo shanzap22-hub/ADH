@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import TransactionsManager from "@/components/admin/transactions-manager";
+import PointsLedger from "@/components/admin/PointsLedger";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const dynamic = 'force-dynamic';
 

@@ -115,7 +115,7 @@ export async function GET(req: Request) {
                 if (manualEmails.length > 0) {
                     const { data: emailProfiles } = await supabase
                         .from('profiles')
-                        .select('id, email, membership_tier, phone_number, whatsapp_number, full_name')
+                        .select('id, email, membership_tier, phone_number, whatsapp_number, full_name, gamification_score')
                         .in('email', manualEmails);
 
                     if (emailProfiles) {
@@ -130,7 +130,7 @@ export async function GET(req: Request) {
 
                 if (uniqueIds.length > 0) {
 
-                    // 1. Fetch Progress Data (Completed Chapters)
+                    // 1. Fetch Progress Data (Completed Modules)
                     let progressData: any[] = [];
                     try {
                         const { data: progress } = await supabase
@@ -145,19 +145,34 @@ export async function GET(req: Request) {
 
                     // 2. Fetch Profiles for these users
                     let profiles: any[] = [];
+                    let ledgerScores = new Map<string, number>();
+
                     if (uniqueIds.length > 0) {
                         try {
                             const { data: fetchedProfiles } = await supabase
                                 .from('profiles')
-                                .select('id, email, membership_tier, phone_number, whatsapp_number, full_name')
+                                .select('id, email, membership_tier, phone_number, whatsapp_number, full_name, gamification_score')
                                 .in('id', uniqueIds as string[]);
                             profiles = fetchedProfiles || [];
+
+                            // Fetch REAL gamification scores from ledger to prevent sync issues
+                            const { data: ledgerData } = await supabase
+                                .from('gamification_ledger')
+                                .select('user_id, points')
+                                .in('user_id', uniqueIds as string[]);
+                            
+                            if (ledgerData) {
+                                ledgerData.forEach((row: any) => {
+                                    const current = ledgerScores.get(row.user_id) || 0;
+                                    ledgerScores.set(row.user_id, current + row.points);
+                                });
+                            }
                         } catch (e) {
-                            console.error("Profile fetch error", e);
+                            console.error("Profile/Ledger fetch error", e);
                         }
                     }
 
-                    // 3. Fetch Tier Access & Chapter Counts
+                    // 3. Fetch Tier Access & Module Counts
                     const plans = Array.from(new Set(transactions.map((t: any) => (t.membership_plan || "").toLowerCase()).filter(p => p)));
 
                     // Add tiers from profiles
@@ -167,10 +182,10 @@ export async function GET(req: Request) {
 
                     const uniquePlans = Array.from(new Set(plans));
 
-                    const tierCoursesMap = new Map<string, string[]>(); // tier -> [course_id, ...]
+                    const tierProgramsMap = new Map<string, string[]>(); // tier -> [course_id, ...]
 
                     if (uniquePlans.length > 0) {
-                        // Also fetch course titles for later mapping inside loop
+                        // Also fetch Program titles for later mapping inside loop
                         const { data: tierAccess } = await supabase
                             .from('course_tier_access')
                             .select('tier, course_id, courses(id, title)')
@@ -184,10 +199,10 @@ export async function GET(req: Request) {
                         });
                     }
 
-                    // Fetch ALL Courses Info (Titles and total chapters)
-                    // Efficiently: Get all course_ids from tierCoursesMap
+                    // Fetch ALL programs Info (Titles and total Modules)
+                    // Efficiently: Get all course_ids from tierProgramsMap
                     const allCourseIds = new Set<string>();
-                    tierCoursesMap.forEach((ids) => ids.forEach(id => allCourseIds.add(id)));
+                    tierProgramsMap.forEach((ids) => ids.forEach(id => allCourseIds.add(id)));
 
                     const courseInfoMap = new Map<string, { title: string, totalChapters: number }>();
                     const chapterToCourseMap = new Map<string, string>(); // chapter_id -> course_id (for progress mapping)
@@ -227,6 +242,14 @@ export async function GET(req: Request) {
                             profile = profiles.find((p: any) => p.id === t.user_id);
                             if (!profile && t.student_email) {
                                 profile = emailMap.get(t.student_email) || profiles.find((p: any) => p.email === t.student_email);
+                            }
+                            
+                            // Override gamification_score with dynamic ledger sum if available
+                            if (profile && profile.id) {
+                                const realScore = ledgerScores.get(profile.id);
+                                if (realScore !== undefined) {
+                                    profile.gamification_score = realScore;
+                                }
                             }
                         }
 

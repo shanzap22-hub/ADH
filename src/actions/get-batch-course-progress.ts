@@ -6,7 +6,7 @@ export interface CourseProgress {
 }
 
 /**
- * Calculates progress for multiple courses in a single set of database queries.
+ * Calculates progress for multiple programs in a single set of database queries.
  * This avoids the N+1 query problem.
  */
 export async function getBatchCourseProgress(userId: string, courseIds: string[]): Promise<Record<string, number>> {
@@ -41,7 +41,7 @@ export async function getBatchCourseProgress(userId: string, courseIds: string[]
             return {};
         }
 
-        // 3. Map completed chapter IDs for quick lookup
+        // 3. Map completed Module IDs for quick lookup
         const completedChapterIds = new Set(userProgress?.map(p => p.chapter_id) || []);
 
         // 4. Group chapters by course and count completions

@@ -44,7 +44,7 @@ export default async function AdminAnalyticsPage() {
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
+                        <CardTitle className="text-sm font-medium">Total Programs</CardTitle>
                         <BookOpen className="h-4 w-4 text-purple-600" />
                     </CardHeader>
                     <CardContent>
@@ -60,7 +60,7 @@ export default async function AdminAnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{totalEnrollments || 0}</div>
-                        <p className="text-xs text-muted-foreground">Course enrollments</p>
+                        <p className="text-xs text-muted-foreground">Program enrollments</p>
                     </CardContent>
                 </Card>
 
@@ -75,7 +75,7 @@ export default async function AdminAnalyticsPage() {
                                 ? Math.round((totalEnrollments || 0) / totalCourses)
                                 : 0}
                         </div>
-                        <p className="text-xs text-muted-foreground">Per course</p>
+                        <p className="text-xs text-muted-foreground">Per program</p>
                     </CardContent>
                 </Card>
             </div>

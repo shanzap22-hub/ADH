@@ -62,7 +62,7 @@ export const DescriptionForm = ({
             if (error) {
                 toast.error("Something went wrong", { description: error.message });
             } else {
-                toast.success("Course updated");
+                toast.success("Program updated");
                 toggleEdit();
                 router.refresh();
             }
@@ -74,7 +74,7 @@ export const DescriptionForm = ({
     return (
         <div className="mt-6 border bg-slate-100 rounded-md p-4 dark:bg-slate-900">
             <div className="font-medium flex items-center justify-between">
-                Course description
+                Program description
                 <Button onClick={toggleEdit} variant="ghost">
                     {isEditing ? (
                         <>Cancel</>

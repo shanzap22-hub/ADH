@@ -114,7 +114,7 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
                 amount: amount,
                 currency: currency,
                 name: "ADH CONNECT",
-                description: "Premium Course Bundle - Meta Marketing, AI & Leadership",
+                description: "Premium Program Bundle - Meta Marketing, AI & Leadership",
                 order_id: orderId,
                 prefill: {
                     contact: whatsapp,
@@ -149,7 +149,7 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
                             throw new Error("Payment verification failed");
                         }
 
-                        // STEP 2: Finalize enrollment (create user, enroll in courses)
+                        // STEP 2: Finalize enrollment (create user, enroll in Programs)
                         const finalizeRes = await fetch("/api/enrollment/finalize", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },

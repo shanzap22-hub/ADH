@@ -14,7 +14,7 @@ export default async function EnrollPage() {
         return redirect("/login");
     }
 
-    // (Updated) Courses no longer needed here as we select Tier directly
+    // (Updated) programs no longer needed here as we select Tier directly
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 p-6 space-y-6">
@@ -23,7 +23,7 @@ export default async function EnrollPage() {
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 bg-clip-text text-transparent">
                     Manual Enrollment
                 </h1>
-                <p className="text-slate-400 mt-1">Grant course access to students without payment</p>
+                <p className="text-slate-400 mt-1">Grant Program access to students without payment</p>
             </div>
 
             {/* Enrollment Form */}

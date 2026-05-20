@@ -21,11 +21,11 @@ export default async function CourseIdPage({
         return redirect("/");
     }
 
-    const { data: course } = await supabase
+    const { data: Program } = await supabase
         .from("courses")
         .select("*, chapters(*)")
         .eq("id", courseId)
-        .order("position", { foreignTable: "chapters", ascending: true })
+        .order("position", { foreignTable: "Modules", ascending: true })
         .single();
 
     if (!course) {
@@ -51,7 +51,7 @@ export default async function CourseIdPage({
             <div className="flex items-center justify-between">
                 <div className="flex flex-col gap-y-2">
                     <h1 className="text-2xl font-medium">
-                        Course Setup
+                        Program Setup
                     </h1>
                     <span className="text-sm text-slate-700">
                         Complete all fields and publish when ready
@@ -97,10 +97,10 @@ export default async function CourseIdPage({
                                 <ListChecks className="h-5 w-5 text-sky-700 dark:text-sky-300" />
                             </div>
                             <h2 className="text-xl font-medium">
-                                Course chapters
+                                Program Modules
                             </h2>
                         </div>
-                        {/* ChaptersForm */}
+                        {/* ModulesForm */}
                         <ChaptersForm
                             initialData={course}
                             courseId={course.id}

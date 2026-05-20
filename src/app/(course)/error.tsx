@@ -13,7 +13,7 @@ export default function CourseError({
     reset: () => void;
 }) {
     useEffect(() => {
-        console.error("[Course Error]:", error);
+        console.error("[Program Error]:", error);
     }, [error]);
 
     return (
@@ -50,7 +50,7 @@ export default function CourseError({
                     <Link href="/courses">
                         <Button variant="outline" size="lg" className="gap-2 w-full">
                             <ArrowLeft className="w-4 h-4" />
-                            Back to Courses
+                            Back to Programs
                         </Button>
                     </Link>
                 </div>

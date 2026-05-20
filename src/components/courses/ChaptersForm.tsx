@@ -66,7 +66,7 @@ export const ChaptersForm = ({
       if (error) {
         toast.error("Something went wrong", { description: error.message });
       } else {
-        toast.success("Chapter created");
+        toast.success("Module created");
         toggleCreating();
         router.refresh();
       }
@@ -107,14 +107,14 @@ export const ChaptersForm = ({
         </div>
       )}
       <div className="font-medium flex items-center justify-between">
-        Course chapters
+        Program Modules
         <Button onClick={toggleCreating} variant="ghost">
           {isCreating ? (
             <>Cancel</>
           ) : (
             <>
               <PlusCircle className="h-4 w-4 mr-2" />
-              Add chapter
+              Add module
             </>
           )}
         </Button>
@@ -131,7 +131,7 @@ export const ChaptersForm = ({
                   <FormControl>
                     <Input
                       disabled={isSubmitting}
-                      placeholder="e.g. 'Introduction to the course'"
+                      placeholder="e.g. 'Introduction to the program'"
                       {...field}
                     />
                   </FormControl>
@@ -153,7 +153,7 @@ export const ChaptersForm = ({
           "text-sm mt-2",
           !initialData.chapters.length && "text-slate-500 italic"
         )}>
-          {!initialData.chapters.length && "No chapters"}
+          {!initialData.chapters.length && "No Modules"}
           <ChaptersList
             onEdit={onEdit}
             onReorder={onReorder}
@@ -164,7 +164,7 @@ export const ChaptersForm = ({
       )}
       {!isCreating && (
         <p className="text-xs text-muted-foreground mt-4">
-          Drag and drop to reorder the chapters
+          Drag and drop to reorder the Modules
         </p>
       )}
     </div>

@@ -42,7 +42,7 @@ export const CoursePublishButton = ({
 
             setIsPublished(newPublishState);
             toast.success(
-                newPublishState ? "Course published" : "Course unpublished"
+                newPublishState ? "Program published" : "Program unpublished"
             );
             router.refresh();
         } catch (error) {

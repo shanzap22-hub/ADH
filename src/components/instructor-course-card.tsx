@@ -64,7 +64,7 @@ export const InstructorCourseCard = ({
                             <div className="flex items-center gap-x-2 text-slate-400">
                                 <BookOpen className="h-4 w-4 text-orange-400" />
                                 <span className="font-medium">
-                                    {chaptersLength} {chaptersLength === 1 ? "Chapter" : "Chapters"}
+                                    {chaptersLength} {chaptersLength === 1 ? "Chapter" : "Modules"}
                                 </span>
                             </div>
 

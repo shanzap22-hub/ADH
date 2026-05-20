@@ -46,7 +46,7 @@ export const ImageForm = ({
             if (error) {
                 toast.error("Something went wrong", { description: error.message });
             } else {
-                toast.success("Course updated");
+                toast.success("Program updated");
                 toggleEdit();
                 router.refresh();
             }
@@ -58,7 +58,7 @@ export const ImageForm = ({
     return (
         <div className="mt-6 border bg-slate-100 rounded-md p-4 dark:bg-slate-900">
             <div className="font-medium flex items-center justify-between">
-                Course image
+                Program image
                 <Button onClick={toggleEdit} variant="ghost">
                     {isEditing && (
                         <>Cancel</>

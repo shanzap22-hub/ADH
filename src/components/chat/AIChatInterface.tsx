@@ -257,7 +257,7 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
                             ADH AI Coach
                             <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">BETA</span>
                         </h1>
-                        <p className="text-xs text-slate-500">Your personal course facilitator</p>
+                        <p className="text-xs text-slate-500">Your personal Program facilitator</p>
                     </div>
                 </div>
             </header>
@@ -271,7 +271,7 @@ export function AIChatInterface({ onBack }: AIChatInterfaceProps) {
                                 <Bot className="w-10 h-10 text-indigo-400" />
                             </div>
                             <h3 className="text-xl font-medium text-slate-700 mb-2">Hello! How can I help you?</h3>
-                            <p className="text-sm max-w-xs">Ask doubts, upload screenshots, or get course guidance.</p>
+                            <p className="text-sm max-w-xs">Ask doubts, upload screenshots, or get Program guidance.</p>
                         </div>
                     )}
 

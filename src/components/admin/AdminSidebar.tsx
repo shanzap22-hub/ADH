@@ -18,6 +18,7 @@ import {
     Link as LinkIcon,
     Bell,
     GraduationCap,
+    Target,
 } from "lucide-react";
 
 const routes = [
@@ -40,7 +41,7 @@ const routes = [
         color: "text-pink-600",
     },
     {
-        label: "All Courses",
+        label: "All Programs",
         icon: BookOpen,
         href: "/instructor/courses",
         color: "text-indigo-600",
@@ -58,16 +59,16 @@ const routes = [
         color: "text-blue-600",
     },
     {
-        label: "Course Tiers",
+        label: "Program Tiers",
         icon: Settings,
         href: "/admin/course-tiers",
         color: "text-purple-600",
     },
     {
-        label: "Journey",
-        icon: GraduationCap,
-        href: "/admin/journey",
-        color: "text-emerald-500",
+        label: "My Journey Tracker",
+        icon: Target,
+        href: "/admin/my-journey",
+        color: "text-indigo-500",
     },
     {
         label: "Analytics",

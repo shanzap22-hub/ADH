@@ -41,14 +41,14 @@ export const DeleteCourseDialog = ({
             });
 
             if (!response.ok) {
-                throw new Error("Failed to delete course");
+                throw new Error("Failed to delete program");
             }
 
-            toast.success("Course deleted successfully");
+            toast.success("Program deleted successfully");
             router.refresh();
             router.push("/instructor/courses");
         } catch (error) {
-            toast.error("Failed to delete course");
+            toast.error("Failed to delete program");
             console.error(error);
         } finally {
             setIsDeleting(false);
@@ -70,7 +70,7 @@ export const DeleteCourseDialog = ({
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This will permanently delete <strong>{courseTitle}</strong> and all its chapters.
+                        This will permanently delete <strong>{courseTitle}</strong> and all its Modules.
                         All uploaded files will be removed from storage.
                     </AlertDialogDescription>
                     <div className="py-4">
@@ -102,7 +102,7 @@ export const DeleteCourseDialog = ({
                         disabled={isDeleting || confirmationText !== "DELETE"}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                        {isDeleting ? "Deleting..." : "Delete Course"}
+                        {isDeleting ? "Deleting..." : "Delete Program"}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

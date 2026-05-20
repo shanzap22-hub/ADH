@@ -48,7 +48,7 @@ export async function GET(request: Request) {
             .select('course_id, id, title')
             .in('course_id', Array.from(courseIds));
 
-        const courseTotalChapters = new Map<string, number>();
+        const courseTotalModules = new Map<string, number>();
         chapterCounts?.forEach((ch: any) => {
             const count = courseTotalChapters.get(ch.course_id) || 0;
             courseTotalChapters.set(ch.course_id, count + 1);

@@ -39,7 +39,7 @@ export const getDashboardCourses = cache(async (userId: string): Promise<Dashboa
 
         const purchasedCourseIds = purchases?.map(p => p.course_id) || [];
 
-        // 3. Get Tier-Accessible Courses (if applicable)
+        // 3. Get Tier-Accessible programs (if applicable)
         // Fetch all tier access records for this tier
         const { data: tierAccess } = await supabase
             .from("course_tier_access")
@@ -52,11 +52,11 @@ export const getDashboardCourses = cache(async (userId: string): Promise<Dashboa
         const allCourseIds = Array.from(new Set([...purchasedCourseIds, ...tierCourseIds]));
 
         if (allCourseIds.length === 0) {
-            console.log("[GET_DASHBOARD_COURSES] No accessible courses found.");
+            console.log("[GET_DASHBOARD_COURSES] No accessible programs found.");
             return [];
         }
 
-        console.log(`[GET_DASHBOARD_COURSES] Found ${allCourseIds.length} unique courses (Purchased: ${purchasedCourseIds.length}, Tier: ${tierCourseIds.length})`);
+        console.log(`[GET_DASHBOARD_COURSES] Found ${allCourseIds.length} unique programs (Purchased: ${purchasedCourseIds.length}, Tier: ${tierCourseIds.length})`);
 
         // 5. Fetch Course Details
         const { data: courses, error: coursesError } = await supabase

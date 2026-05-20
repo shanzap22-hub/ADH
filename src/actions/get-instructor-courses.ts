@@ -13,7 +13,7 @@ export type InstructorCourse = {
 
 export const getInstructorCourses = async (userId: string): Promise<InstructorCourse[]> => {
     try {
-        console.log("[GET_INSTRUCTOR_COURSES] Fetching courses for user:", userId);
+        console.log("[GET_INSTRUCTOR_COURSES] Fetching programs for user:", userId);
         const supabase = await createClient();
 
         // Check if user is super admin
@@ -58,13 +58,13 @@ export const getInstructorCourses = async (userId: string): Promise<InstructorCo
         }
 
         if (!courses) {
-            console.log("[GET_INSTRUCTOR_COURSES] No courses found");
+            console.log("[GET_INSTRUCTOR_COURSES] No programs found");
             return [];
         }
 
         console.log("[GET_INSTRUCTOR_COURSES] Found courses:", courses.length);
 
-        // Map courses with chapter count
+        // Map programs with chapter count
         const coursesWithCount = courses.map((course: any) => ({
             id: course.id,
             title: course.title,

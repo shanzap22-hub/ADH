@@ -21,11 +21,11 @@ export default async function AdminCourseIdPage({
     if (profile?.role !== 'super_admin') redirect("/dashboard");
 
     // Fetch Course Details
-    const { data: course } = await supabase
+    const { data: Program } = await supabase
         .from("courses")
         .select(`
             *,
-            chapters:chapters(id, title, is_published, position),
+            chapters:Modules(id, title, is_published, position),
             attachments:attachments(id, name),
             purchases:purchases(count)
         `)
@@ -33,7 +33,7 @@ export default async function AdminCourseIdPage({
         .single();
 
     if (!course) {
-        return <div>Course not found</div>;
+        return <div>Program not found</div>;
     }
 
     // Get enrollment count correctly (Supabase returns count as array of objects if request simple count?)
@@ -49,7 +49,7 @@ export default async function AdminCourseIdPage({
             <div className="flex items-center gap-x-4 mb-6">
                 <Link href="/admin/courses" className="flex items-center text-sm hover:opacity-75 transition">
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to all courses
+                    Back to all Programs
                 </Link>
             </div>
 
@@ -90,7 +90,7 @@ export default async function AdminCourseIdPage({
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Chapters</CardTitle>
+                        <CardTitle className="text-sm font-medium">Total Modules</CardTitle>
                         <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -113,7 +113,7 @@ export default async function AdminCourseIdPage({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-lg">Chapters</CardTitle>
+                        <CardTitle className="text-lg">Modules</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
@@ -129,7 +129,7 @@ export default async function AdminCourseIdPage({
                                 </div>
                             ))}
                             {(!course.chapters || course.chapters.length === 0) && (
-                                <p className="text-sm text-muted-foreground text-center py-4">No chapters found</p>
+                                <p className="text-sm text-muted-foreground text-center py-4">No Modules found</p>
                             )}
                         </div>
                     </CardContent>

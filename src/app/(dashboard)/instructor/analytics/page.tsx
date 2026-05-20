@@ -10,8 +10,8 @@ export default async function AnalyticsPage() {
         return redirect("/login");
     }
 
-    // Get all courses for this instructor
-    const { data: courses } = await supabase
+    // Get all programs for this instructor
+    const { data: programs } = await supabase
         .from("courses")
         .select("id")
         .eq("instructor_id", user.id);
@@ -88,8 +88,8 @@ export default async function AnalyticsPage() {
                             <BookOpen className="h-6 w-6 text-white" />
                         </div>
                         <div>
-                            <p className="text-sm text-slate-400 font-medium">Total Courses</p>
-                            <p className="text-3xl font-bold text-white">{totalCourses}</p>
+                            <p className="text-sm text-slate-400 font-medium">Total Programs</p>
+                            <p className="text-3xl font-bold text-white">{totalPrograms}</p>
                         </div>
                     </div>
                 </div>

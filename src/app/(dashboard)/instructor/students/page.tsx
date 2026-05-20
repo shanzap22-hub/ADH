@@ -78,7 +78,7 @@ export default async function StudentsPage() {
                                     <TableHead className="text-slate-300">Name</TableHead>
                                     <TableHead className="text-slate-300">Email</TableHead>
                                     <TableHead className="text-slate-300">Role</TableHead>
-                                    <TableHead className="text-slate-300">Courses</TableHead>
+                                    <TableHead className="text-slate-300">Programs</TableHead>
                                     <TableHead className="text-slate-300">Joined</TableHead>
                                     <TableHead className="text-slate-300">Actions</TableHead>
                                 </TableRow>
@@ -100,7 +100,7 @@ export default async function StudentsPage() {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-slate-400">
-                                                {purchaseCountByUser[student.id] || 0} courses
+                                                {purchaseCountByUser[student.id] || 0} Programs
                                             </TableCell>
                                             <TableCell className="text-slate-400">
                                                 <div className="flex items-center gap-2">

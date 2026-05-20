@@ -158,7 +158,7 @@ export function PrePaymentModal({ isOpen, onClose, onProceed }: PrePaymentModalP
 
                     <div className="bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/30 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm text-slate-300">Course Bundle Value</span>
+                            <span className="text-sm text-slate-300">Program Bundle Value</span>
                             <span className="text-sm text-slate-400 line-through">₹17,000</span>
                         </div>
                         {appliedCoupon && (

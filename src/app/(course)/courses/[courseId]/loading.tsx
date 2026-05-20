@@ -7,7 +7,7 @@ export default function CourseIdLoading() {
                 {/* Back Button Skeleton */}
                 <div className="h-6 w-32 bg-slate-200 dark:bg-slate-800 rounded mb-4" />
 
-                {/* Course Hero Skeleton */}
+                {/* Program Hero Skeleton */}
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm flex flex-col md:flex-row h-auto md:h-72">
                     <div className="w-full md:w-2/5 h-48 md:h-full bg-slate-200 dark:bg-slate-800" />
                     <div className="p-6 md:p-8 flex-1 space-y-4">

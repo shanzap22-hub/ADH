@@ -36,7 +36,7 @@ export const CourseEnrollButton = ({
 
             toast.success("Successfully enrolled! Redirecting to course...");
 
-            // Redirect to course player
+            // Redirect to Program player
             setTimeout(() => {
                 router.push(`/courses/${courseId}`);
                 router.refresh();

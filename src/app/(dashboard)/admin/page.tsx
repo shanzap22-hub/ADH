@@ -40,7 +40,7 @@ export default async function AdminPage() {
             color: "bg-green-500",
         },
         {
-            title: "Total Courses",
+            title: "Total Programs",
             value: totalCourses || 0,
             icon: BookOpen,
             color: "bg-purple-500",
@@ -95,14 +95,14 @@ export default async function AdminPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <Card className="hover:shadow-lg transition cursor-pointer">
                     <CardHeader>
-                        <CardTitle className="text-lg">Manage Courses</CardTitle>
+                        <CardTitle className="text-lg">Manage Programs</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-gray-600">
-                            View, edit, and delete all courses from all instructors
+                            View, edit, and delete all Programs from all instructors
                         </p>
                         <Link href="/admin/courses" className="text-purple-600 text-sm font-medium mt-2 inline-block">
-                            Go to Courses →
+                            Go to Programs →
                         </Link>
                     </CardContent>
                 </Card>

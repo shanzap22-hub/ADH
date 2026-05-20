@@ -28,7 +28,7 @@ export default function AboutPage() {
                             We Are a Movement.
                         </h1>
                         <p className="text-lg md:text-xl text-slate-300 leading-relaxed">
-                            ADH Connect isn't about selling courses. It's about giving business owners the power to control their own growth. No agencies, no excuses—just results.
+                            ADH Connect isn't about selling Programs. It's about giving business owners the power to control their own growth. No agencies, no excuses—just results.
                         </p>
                     </div>
                 </div>
@@ -125,7 +125,7 @@ export default function AboutPage() {
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Link href="/contact">
                             <Button size="lg" className="rounded-full px-8 h-12 text-base">
-                                Explore Courses <ArrowRight className="ml-2 w-4 h-4" />
+                                Explore Programs <ArrowRight className="ml-2 w-4 h-4" />
                             </Button>
                         </Link>
                         <Link href="/contact">

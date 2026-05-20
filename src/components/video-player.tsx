@@ -39,7 +39,7 @@ export const VideoPlayer = ({
                     body: JSON.stringify({ isCompleted: true })
                 });
 
-                toast.success("Chapter marked as complete!");
+                toast.success("Module marked as complete!");
 
                 if (nextChapterId) {
                     router.push(`/courses/${courseId}/chapters/${nextChapterId}`);
@@ -49,7 +49,7 @@ export const VideoPlayer = ({
                 }
             }
         } catch (error) {
-            toast.error("Failed to mark chapter as complete");
+            toast.error("Failed to mark Module as complete");
         }
     };
 
@@ -59,7 +59,7 @@ export const VideoPlayer = ({
             <div className="relative aspect-video flex items-center justify-center bg-slate-800 flex-col gap-y-2 text-secondary">
                 <Lock className="h-8 w-8" />
                 <p className="text-sm">
-                    This chapter is locked
+                    This Module is locked
                 </p>
             </div>
         );
@@ -70,7 +70,7 @@ export const VideoPlayer = ({
         return (
             <div className="relative aspect-video flex items-center justify-center bg-slate-200 flex-col gap-y-2 text-slate-500">
                 <p className="text-sm">
-                    No video provided for this chapter.
+                    No video provided for this module.
                 </p>
             </div>
         );

@@ -24,11 +24,11 @@ export const CourseTOCPreview = ({ chapters, courseId }: CourseTOCPreviewProps) 
     return (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
-                Course Content
+                Program Content
             </h3>
 
             <div className="space-y-3">
-                {chapters.map((chapter, index) => {
+                {Modules.map((chapter, index) => {
                     const isLocked = chapter.isLocked;
 
                     const ChapterInner = (
@@ -49,11 +49,11 @@ export const CourseTOCPreview = ({ chapters, courseId }: CourseTOCPreviewProps) 
                                 )}
                             </div>
 
-                            {/* Chapter Info */}
+                            {/* Module Info */}
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between mb-1">
                                     <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                                        Chapter {index + 1}
+                                        Module {index + 1}
                                     </span>
                                     <span className="text-xs text-slate-400">
                                         {chapter.duration || "0:00"}
@@ -76,9 +76,9 @@ export const CourseTOCPreview = ({ chapters, courseId }: CourseTOCPreviewProps) 
                 })}
             </div>
 
-            {chapters.length === 0 && (
+            {Modules.length === 0 && (
                 <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                    No chapters available yet
+                    No Modules available yet
                 </div>
             )}
         </div>

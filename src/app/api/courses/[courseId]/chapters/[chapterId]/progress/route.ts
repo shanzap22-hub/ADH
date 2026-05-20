@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { awardPointsAction } from "@/app/actions/gamification";
 
 export async function PUT(
     req: Request,
@@ -30,6 +31,10 @@ export async function PUT(
         if (error) {
             console.error("Progress Error", error);
             return new NextResponse("Internal Error", { status: 500 });
+        }
+
+        if (isCompleted) {
+            await awardPointsAction(10, "Completed Course Chapter", { chapter_id: chapterId }, false);
         }
 
         return NextResponse.json({ success: true });

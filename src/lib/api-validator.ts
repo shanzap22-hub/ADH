@@ -64,12 +64,12 @@ export interface ValidationError {
  * });
  * 
  * export async function POST(request: NextRequest) {
- *   const result = await validateRequest(request, courseSchema);
+ *   const result = await validateRequest(request, Programschema);
  *   if (!result.success) return result.error;
  *   
  *   // TypeScript knows exact shape of data
  *   const course = await createCourse(result.data);
- *   return NextResponse.json({ course });
+ *   return NextResponse.json({ Program });
  * }
  * ```
  */

@@ -59,9 +59,9 @@ interface Transaction {
     notes?: string;
     profiles?: {
         full_name: string;
-        email: string;
         phone_number?: string;
         whatsapp_number?: string;
+        gamification_score?: number;
     };
     student_progress?: {
         courses_enrolled: number;
@@ -450,6 +450,7 @@ export default function TransactionsManager() {
                                         <TableHead>WhatsApp</TableHead>
                                         <TableHead>Amount</TableHead>
                                         <TableHead>Plan</TableHead>
+                                        <TableHead>Points</TableHead>
                                         <TableHead>Progress</TableHead>
                                         <TableHead>Source</TableHead>
                                         <TableHead>Status</TableHead>
@@ -529,7 +530,14 @@ export default function TransactionsManager() {
                                                                 ) : "-"}
                                                             </TableCell>
                                                             <TableCell>
-                                                                {/* Only show progress on latest/main row to avoid confusion, or show for all if tracked separately? usually progress is user-level */}
+                                                                {isMain && txn.profiles ? (
+                                                                    <div className="flex items-center gap-1 font-bold text-amber-600">
+                                                                        🏆 {txn.profiles.gamification_score || 0}
+                                                                    </div>
+                                                                ) : <span className="text-muted-foreground">-</span>}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                {/* Only show progress on latest/main row to avoid confusion */}
                                                                 {isMain && txn.student_progress ? (
                                                                     <div
                                                                         className="text-xs space-y-1 cursor-pointer hover:bg-white hover:shadow-sm p-1.5 rounded-md transition-all border border-transparent hover:border-slate-200"
@@ -540,11 +548,11 @@ export default function TransactionsManager() {
                                                                         title="Click to view detailed progress"
                                                                     >
                                                                         <div className="font-medium text-blue-600 flex items-center justify-between">
-                                                                            <span>{txn.student_progress.courses_enrolled || 0} Course{txn.student_progress.courses_enrolled !== 1 ? 's' : ''}</span>
+                                                                            <span>{txn.student_progress.courses_enrolled || 0} Course{txn.student_progress.Programs_enrolled !== 1 ? 's' : ''}</span>
                                                                             <Search className="w-3 h-3 opacity-50" />
                                                                         </div>
                                                                         <div className="text-slate-600">
-                                                                            {txn.student_progress.completed_chapters}/{txn.student_progress.total_chapters} Chapters
+                                                                            {txn.student_progress.completed_chapters}/{txn.student_progress.total_chapters} Modules
                                                                         </div>
                                                                         <div className="font-semibold text-green-600">
                                                                             {txn.student_progress.completion_percentage}% Complete
@@ -718,11 +726,11 @@ export default function TransactionsManager() {
                 </DialogContent>
             </Dialog>
 
-            {/* Course Progress Detail Dialog */}
+            {/* Program Progress Detail Dialog */}
             <Dialog open={!!selectedProgress} onOpenChange={(open) => !open && setSelectedProgress(null)}>
                 <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Course Progress Details</DialogTitle>
+                        <DialogTitle>Program Progress Details</DialogTitle>
                         <DialogDescription>
                             Progress for {selectedProgress?.student}
                         </DialogDescription>
@@ -734,7 +742,7 @@ export default function TransactionsManager() {
                                 <div key={idx} className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                                     <h4 className="font-medium text-sm text-slate-800 mb-1 line-clamp-2">{course.title}</h4>
                                     <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-                                        <span>{course.completed_chapters} / {course.total_chapters} Chapters</span>
+                                        <span>{course.completed_chapters} / {course.total_chapters} Modules</span>
                                         <span className={course.percentage === 100 ? "text-green-600 font-bold" : "text-blue-600 font-semibold"}>
                                             {course.percentage}%
                                         </span>
@@ -750,7 +758,7 @@ export default function TransactionsManager() {
                             ))
                         ) : (
                             <div className="text-center py-8 text-slate-400">
-                                No specific course details available.
+                                No specific Program details available.
                             </div>
                         )}
                     </div>

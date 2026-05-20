@@ -93,9 +93,9 @@ export async function POST(req: Request) {
         }
 
 
-        // 2. Enroll in ALL Published Courses (Grant Access)
+        // 2. Enroll in ALL Published programs (Grant Access)
         // (Similar logic to Finalize Payment)
-        const { data: courses } = await supabase
+        const { data: programs } = await supabase
             .from("courses")
             .select("id")
             .eq("is_published", true);

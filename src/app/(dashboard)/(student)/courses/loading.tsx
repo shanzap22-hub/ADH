@@ -17,7 +17,7 @@ export default function CoursesLoading() {
                     ))}
                 </div>
 
-                {/* Courses Grid Skeleton */}
+                {/* Programs Grid Skeleton */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-12">
                     {Array.from({ length: 8 }).map((_, i) => (
                         <div key={i} className="rounded-2xl overflow-hidden border border-slate-200/60 dark:border-slate-700/30 bg-white dark:bg-slate-900 animate-pulse" style={{ animationDelay: `${i * 50}ms` }}>

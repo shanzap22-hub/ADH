@@ -14,7 +14,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter, usePathname } from "next/navigation";
 
 const routes = [
-    { label: "Courses",        icon: Compass,    href: "/instructor/courses",      color: "text-violet-500" },
+    { label: "Programs",        icon: Compass,    href: "/instructor/courses",      color: "text-violet-500" },
     { label: "Community",      icon: Users,       href: "/instructor/community",    color: "text-indigo-400" },
     { label: "Live Manager",   icon: Radio,       href: "/instructor/live-manager", color: "text-rose-400"   },
     { label: "Availability",   icon: Clock,       href: "/instructor/availability", color: "text-amber-400"  },

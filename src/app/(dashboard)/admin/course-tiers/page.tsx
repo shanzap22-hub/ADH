@@ -56,9 +56,9 @@ export default async function CourseTiersPage() {
                     <Settings className="h-6 w-6 text-purple-600" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold">Course Tier Management</h1>
+                    <h1 className="text-2xl font-bold">Program Tier Management</h1>
                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                        Assign courses to membership tiers
+                        Assign Programs to membership tiers
                     </p>
                 </div>
             </div>
@@ -83,7 +83,7 @@ export default async function CourseTiersPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                    {/* Course Tier Manager */}
+                    {/* Program Tier Manager */}
                     <CourseTierManager
                         courses={courses || []}
                         tierAssignments={tierAssignments || []}

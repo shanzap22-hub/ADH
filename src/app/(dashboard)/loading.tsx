@@ -67,7 +67,7 @@ export default function DashboardLoading() {
                 </Card>
             </div>
 
-            {/* Progress/Courses Skeleton */}
+            {/* Progress/Programs Skeleton */}
             <Card>
                 <CardHeader>
                     <Skeleton className="h-6 w-40 mb-2" />

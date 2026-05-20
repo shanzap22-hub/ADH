@@ -87,7 +87,7 @@ export function TierPricingEditor() {
                     <div>
                         <h2 className="text-xl font-bold">Tier Pricing Settings</h2>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                            Customize pricing and course limits for each tier
+                            Customize pricing and Program limits for each tier
                         </p>
                     </div>
                 </div>
@@ -134,17 +134,17 @@ export function TierPricingEditor() {
                                 />
                             </div>
 
-                            {/* Max Courses - HIDDEN / DEPRECATED per update
+                            {/* Max Programs - HIDDEN / DEPRECATED per update
                             <div className="space-y-2">
                                 <Label htmlFor={`max-${tier.tier}`}>
-                                    Max Courses
+                                    Max Programs
                                 </Label>
                                 <Input
                                     id={`max-${tier.tier}`}
                                     type="number"
                                     value={tier.max_courses}
                                     onChange={(e) =>
-                                        updateTier(tier.tier, 'max_courses', parseInt(e.target.value) || 0)
+                                        updateTier(tier.tier, 'max_Programs', parseInt(e.target.value) || 0)
                                     }
                                     min="0"
                                     step="1"
@@ -197,7 +197,7 @@ export function TierPricingEditor() {
                 </h4>
                 <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
                     <li>• Set any price for any tier</li>
-                    <li>• Bronze can have 10,000 courses, Diamond can have 1 course</li>
+                    <li>• Bronze can have 10,000 Programs, Diamond can have 1 course</li>
                     <li>• Completely flexible - no pre-set rules</li>
                     <li>• Changes apply immediately after saving</li>
                 </ul>

@@ -22,7 +22,7 @@ import { SearchModal } from "./SearchModal";
 const navItems = [
     { label: "Home",       icon: Home,           href: "/dashboard" },
     { label: "My Journey", icon: GraduationCap,  href: "/my-journey"   },
-    { label: "Courses",    icon: BookOpen,       href: "/courses"   },
+    { label: "Programs",    icon: BookOpen,       href: "/courses"   },
     { label: "Live",       icon: Video,          href: "/live"      },
     { label: "Chat",       icon: MessageCircle,  href: "/chat"      },
 ];

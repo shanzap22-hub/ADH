@@ -108,7 +108,7 @@ export const ChapterTabs = ({
                             <div className="text-center py-8 text-slate-500">
                                 <Download className="h-12 w-12 mx-auto mb-3 opacity-50" />
                                 <p>No resources available yet.</p>
-                                <p className="text-sm mt-2">Course materials and attachments will appear here.</p>
+                                <p className="text-sm mt-2">Program materials and attachments will appear here.</p>
                             </div>
                         )}
                     </div>

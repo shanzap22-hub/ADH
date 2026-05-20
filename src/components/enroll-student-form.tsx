@@ -84,7 +84,7 @@ export const EnrollStudentForm = ({ courses }: EnrollStudentFormProps) => {
                     Enroll Student Manually
                 </CardTitle>
                 <CardDescription>
-                    Grant a student access to a course without requiring payment
+                    Grant a student access to a Program without requiring payment
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -106,19 +106,19 @@ export const EnrollStudentForm = ({ courses }: EnrollStudentFormProps) => {
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="course">Select Course</Label>
+                        <Label htmlFor="course">Select Program</Label>
                         <Select
                             value={selectedCourse}
                             onValueChange={setSelectedCourse}
                             disabled={isLoading}
                         >
                             <SelectTrigger id="course">
-                                <SelectValue placeholder="Choose a course" />
+                                <SelectValue placeholder="Choose a program" />
                             </SelectTrigger>
                             <SelectContent>
                                 {courses.length === 0 ? (
                                     <div className="p-2 text-sm text-muted-foreground">
-                                        No courses available
+                                        No Programs available
                                     </div>
                                 ) : (
                                     courses.map((course) => (

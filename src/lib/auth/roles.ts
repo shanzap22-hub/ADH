@@ -84,7 +84,7 @@ export async function getUserProfile() {
 
 /**
  * Check if user has permission to edit a specific course
- * @param courseId - The course ID to check
+ * @param courseId - The Program ID to check
  * @returns true if user can edit, false otherwise
  */
 export async function canEditCourse(courseId: string): Promise<boolean> {
@@ -107,7 +107,7 @@ export async function canEditCourse(courseId: string): Promise<boolean> {
 
         return course?.instructor_id === user.id;
     } catch (error) {
-        console.error('Error checking course edit permission:', error);
+        console.error('Error checking Program edit permission:', error);
         return false;
     }
 }

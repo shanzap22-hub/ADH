@@ -23,22 +23,22 @@ export default function TermsPage() {
                             <section>
                                 <h2 className="text-2xl font-bold text-white mb-4">2. Use of Platform</h2>
                                 <p>
-                                    ADH CONNECT provides online courses and community access focused on social media marketing (Meta ads), AI automation, and personal branding for business owners. You agree to use the platform solely for legitimate learning purposes and in accordance with all applicable laws and regulations.
+                                    ADH CONNECT provides online Programs and community access focused on social media marketing (Meta ads), AI automation, and personal branding for business owners. You agree to use the platform solely for legitimate learning purposes and in accordance with all applicable laws and regulations.
                                 </p>
                             </section>
 
                             <section>
                                 <h2 className="text-2xl font-bold text-white mb-4">3. Intellectual Property Rights</h2>
                                 <p>
-                                    All course content, including but not limited to videos, text, graphics, logos, and software, is the exclusive property of Atcess and is protected by Indian and international copyright, trademark, and other intellectual property laws.
+                                    All Program content, including but not limited to videos, text, graphics, logos, and software, is the exclusive property of Atcess and is protected by Indian and international copyright, trademark, and other intellectual property laws.
                                 </p>
                                 <p className="mt-3">
                                     <strong>You are NOT permitted to:</strong>
                                 </p>
                                 <ul className="list-disc pl-6 mt-2 space-y-2">
-                                    <li>Share, distribute, or resell any course materials</li>
-                                    <li>Record, screenshot, or copy course videos and content</li>
-                                    <li>Use course content for commercial purposes</li>
+                                    <li>Share, distribute, or resell any Program materials</li>
+                                    <li>Record, screenshot, or copy Program videos and content</li>
+                                    <li>Use Program content for commercial purposes</li>
                                     <li>Share your account credentials with others</li>
                                 </ul>
                             </section>
@@ -53,7 +53,7 @@ export default function TermsPage() {
                             <section>
                                 <h2 className="text-2xl font-bold text-white mb-4">5. Payment and Enrollment</h2>
                                 <p>
-                                    Access to ADH CONNECT courses requires payment of the applicable fees. All payments are processed securely through Razorpay. Upon successful payment, you will receive immediate access to enrolled courses.
+                                    Access to ADH CONNECT programs requires payment of the applicable fees. All payments are processed securely through Razorpay. Upon successful payment, you will receive immediate access to enrolled Programs.
                                 </p>
                             </section>
 
@@ -80,7 +80,7 @@ export default function TermsPage() {
                             <section>
                                 <h2 className="text-2xl font-bold text-white mb-4">8. Limitation of Liability</h2>
                                 <p>
-                                    ADH CONNECT and Atcess shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use the platform or course materials.
+                                    ADH CONNECT and Atcess shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use the platform or Program materials.
                                 </p>
                             </section>
 

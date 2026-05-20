@@ -15,11 +15,11 @@ export default async function AdminCoursesPage() {
         <div className="p-6 space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">All Courses</h1>
-                    <p className="text-gray-600 mt-1">Manage all courses from all instructors</p>
+                    <h1 className="text-3xl font-bold text-gray-900">All Programs</h1>
+                    <p className="text-gray-600 mt-1">Manage all Programs from all instructors</p>
                 </div>
                 <div className="text-sm text-gray-600">
-                    Total: <span className="font-bold text-purple-600">{courses.length}</span> courses
+                    Total: <span className="font-bold text-purple-600">{courses.length}</span> Programs
                 </div>
             </div>
 
@@ -27,7 +27,7 @@ export default async function AdminCoursesPage() {
                 <Card>
                     <CardContent className="flex flex-col items-center justify-center py-12">
                         <BookOpen className="h-12 w-12 text-gray-400 mb-4" />
-                        <p className="text-gray-600">No courses found</p>
+                        <p className="text-gray-600">No Programs found</p>
                     </CardContent>
                 </Card>
             ) : (
@@ -56,7 +56,7 @@ export default async function AdminCoursesPage() {
 
                                 <div className="flex items-center gap-2 text-sm text-gray-500">
                                     <BookOpen className="h-4 w-4" />
-                                    <span>{course.chapter_count} chapters</span>
+                                    <span>{course.chapter_count} Modules</span>
                                 </div>
 
                                 <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -69,7 +69,7 @@ export default async function AdminCoursesPage() {
                                         href={`/instructor/courses/${course.id}`}
                                         className="text-sm text-purple-600 hover:text-purple-700 font-medium"
                                     >
-                                        View/Edit Course →
+                                        View/Edit Program →
                                     </Link>
                                 </div>
                             </CardContent>

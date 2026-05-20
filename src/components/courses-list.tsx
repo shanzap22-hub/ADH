@@ -58,10 +58,10 @@ export const CoursesList = ({
 
     // Defensive check
     if (!items || !Array.isArray(items)) {
-        console.error("[COURSES_LIST] Invalid items prop:", items);
+        console.error("[Programs_LIST] Invalid items prop:", items);
         return (
             <div className="text-center text-sm text-red-600 mt-10 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                Error loading courses. Please refresh the page.
+                Error loading Programs. Please refresh the page.
             </div>
         );
     }
@@ -86,7 +86,7 @@ export const CoursesList = ({
                 ))}
             </div>
 
-            {/* Courses Grid */}
+            {/* Programs Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredItems.map((item, index) => {
                     // Defensive check for each item
@@ -133,17 +133,17 @@ export const CoursesList = ({
                         <span className="text-2xl">👀</span>
                     </div>
                     <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
-                        No courses found
+                        No Programs found
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        There are no courses in the "{FILTERS.find(f => f.value === activeFilter)?.label}" category.
+                        There are no Programs in the "{FILTERS.find(f => f.value === activeFilter)?.label}" category.
                     </p>
                     {activeFilter !== "all" && (
                         <button
                             onClick={() => setActiveFilter("all")}
                             className="mt-4 text-sm font-medium text-purple-600 hover:underline"
                         >
-                            View all courses
+                            View all Programs
                         </button>
                     )}
                 </div>

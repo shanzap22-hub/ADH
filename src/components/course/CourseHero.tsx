@@ -61,7 +61,7 @@ export const CourseHero = ({
                     <div className="flex items-center gap-4 pt-2">
                         <div className="flex items-center gap-1.5 text-slate-400">
                             <BookOpen className="h-4 w-4 text-blue-400" />
-                            <span className="text-sm">{chaptersCount} Chapters</span>
+                            <span className="text-sm">{chaptersCount} Modules</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-slate-400">
                             <Clock className="h-4 w-4 text-purple-400" />

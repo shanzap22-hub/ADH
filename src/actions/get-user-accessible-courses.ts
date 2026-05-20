@@ -14,7 +14,7 @@ export interface Course {
 }
 
 /**
- * Get courses accessible to a user based on their membership tier
+ * Get programs accessible to a user based on their membership tier
  */
 export async function getUserAccessibleCourses(userId: string): Promise<Course[]> {
     try {
@@ -60,7 +60,7 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
                 return [];
             }
 
-            console.log("[getUserAccessibleCourses] Admin courses count:", allCourses?.length || 0);
+            console.log("[getUserAccessibleCourses] Admin programs count:", allCourses?.length || 0);
             return transformCourses(allCourses || []);
         }
 
@@ -82,14 +82,14 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
             .order("created_at", { ascending: false });
 
         if (coursesError) {
-            console.error("[getUserAccessibleCourses] Courses error:", coursesError);
+            console.error("[getUserAccessibleCourses] programs error:", coursesError);
             return [];
         }
 
         console.log("[getUserAccessibleCourses] Total published courses:", courses?.length || 0);
 
         if (!courses || courses.length === 0) {
-            console.log("[getUserAccessibleCourses] No published courses found");
+            console.log("[getUserAccessibleCourses] No published programs found");
             return [];
         }
 
@@ -102,7 +102,7 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
             console.error("[getUserAccessibleCourses] Tier access error:", tierError);
         }
 
-        console.log("[getUserAccessibleCourses] Tier access records:", tierAccess?.length || 0);
+        console.log("[getUserAccessiblePrograms] Tier access records:", tierAccess?.length || 0);
 
         // Create a map of course_id -> allowed tiers
         const courseAccessMap = new Map<string, string[]>();
@@ -148,7 +148,7 @@ export async function getUserAccessibleCourses(userId: string): Promise<Course[]
 
 /**
  * Get exact tier match (NO HIERARCHY)
- * Users only see courses assigned to their specific tier
+ * Users only see programs assigned to their specific tier
  */
 function getTierHierarchy(_tier: string): string[] {
     // Return only the user's exact tier - NO hierarchy

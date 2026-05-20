@@ -57,7 +57,7 @@ export const ChapterAccessForm = ({
     return (
         <div className="mt-6 border bg-slate-100 rounded-md p-4 dark:bg-slate-900">
             <div className="font-medium flex items-center justify-between">
-                Chapter access
+                Module access
                 <Button onClick={toggleEdit} variant="ghost">
                     {isEditing ? (
                         <>Cancel</>
@@ -72,9 +72,9 @@ export const ChapterAccessForm = ({
             {!isEditing && (
                 <p className="text-sm mt-2">
                     {initialData.is_free ? (
-                        <>This chapter is free for preview</>
+                        <>This Module is free for preview</>
                     ) : (
-                        <>This chapter is not free</>
+                        <>This Module is not free</>
                     )}
                 </p>
             )}
@@ -94,7 +94,7 @@ export const ChapterAccessForm = ({
                                     </FormControl>
                                     <div className="space-y-1 leading-none">
                                         <FormDescription>
-                                            Check this box if you want to make this chapter free for preview
+                                            Check this box if you want to make this Module free for preview
                                         </FormDescription>
                                     </div>
                                 </FormItem>

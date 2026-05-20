@@ -27,7 +27,7 @@ export default async function CoursesPage() {
 
         userId = user.id;
         courses = await getInstructorCourses(userId);
-        console.log("[COURSES_PAGE] Courses fetched:", courses.length);
+        console.log("[COURSES_PAGE] courses fetched:", courses.length);
     } catch (error) {
         console.error("[COURSES_PAGE] Fatal error during fetch:", error);
         return redirect("/login");
@@ -42,14 +42,14 @@ export default async function CoursesPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 bg-clip-text text-transparent">
-                        My Courses
+                        My Programs
                     </h1>
-                    <p className="text-slate-400 mt-1">Manage and create your courses</p>
+                    <p className="text-slate-400 mt-1">Manage and create your Programs</p>
                 </div>
                 <Link href="/instructor/create">
                     <Button className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700 text-white font-semibold shadow-lg shadow-orange-500/20">
                         <PlusCircle className="h-4 w-4 mr-2" />
-                        New Course
+                        New Program
                     </Button>
                 </Link>
             </div>
@@ -63,7 +63,7 @@ export default async function CoursesPage() {
                             <BookOpen className="h-6 w-6 text-white" />
                         </div>
                         <div>
-                            <p className="text-sm text-slate-400 font-medium">Total Courses</p>
+                            <p className="text-sm text-slate-400 font-medium">Total Programs</p>
                             <p className="text-3xl font-bold text-white">{courses.length}</p>
                         </div>
                     </div>
@@ -96,19 +96,19 @@ export default async function CoursesPage() {
                 </div>
             </div>
 
-            {/* Courses Grid */}
+            {/* programs Grid */}
             {courses.length === 0 ? (
                 <div className="flex h-[400px] items-center justify-center rounded-2xl border-2 border-dashed border-slate-700/50 bg-slate-900/30 backdrop-blur-sm">
                     <div className="text-center space-y-4">
                         <BookOpen className="h-16 w-16 text-slate-600 mx-auto" />
                         <div>
-                            <p className="text-lg font-semibold text-slate-300">No courses yet</p>
-                            <p className="text-slate-500 mt-1">Create your first course to get started!</p>
+                            <p className="text-lg font-semibold text-slate-300">No Programs yet</p>
+                            <p className="text-slate-500 mt-1">Create your first Program to get started!</p>
                         </div>
                         <Link href="/instructor/create">
                             <Button className="mt-4 bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700">
                                 <PlusCircle className="h-4 w-4 mr-2" />
-                                Create Course
+                                Create Program
                             </Button>
                         </Link>
                     </div>

@@ -118,7 +118,7 @@ export const secureBrowser = {
     },
 
     /**
-     * Open course external link (pre-validated for course URLs)
+     * Open course external link (pre-validated for Program URLs)
      */
     async openCourseResource(resourceUrl: string): Promise<void> {
         // Validate it's an HTTPS URL
@@ -130,11 +130,11 @@ export const secureBrowser = {
         const url = new URL(resourceUrl);
         if (url.hostname.includes('adh.today')) {
             await this.open(resourceUrl, {
-                title: 'Course Resource',
+                title: 'Program Resource',
                 toolbarColor: '#4f46e5',
             });
         } else {
-            // For external course resources, ask user
+            // For external Program resources, ask user
             const confirmed = confirm(
                 `This will open an external website:\n${url.hostname}\n\nDo you want to continue?`
             );

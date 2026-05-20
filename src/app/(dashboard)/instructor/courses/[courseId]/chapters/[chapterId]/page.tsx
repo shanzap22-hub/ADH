@@ -25,7 +25,7 @@ export default async function ChapterIdPage({
         return redirect("/");
     }
 
-    // Get chapter attachments
+    // Get Module attachments
     const { data: attachmentsData } = await supabase
         .from("attachments")
         .select("id, name, url") // url, not file_url

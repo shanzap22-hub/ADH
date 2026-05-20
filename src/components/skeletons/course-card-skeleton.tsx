@@ -34,7 +34,7 @@ export function CourseCardSkeleton() {
     );
 }
 
-export function CoursesListSkeleton({ count = 8 }: { count?: number }) {
+export function ProgramsListSkeleton({ count = 8 }: { count?: number }) {
     return (
         <div className="space-y-6">
             {/* Filter Bar Skeleton */}
@@ -45,7 +45,7 @@ export function CoursesListSkeleton({ count = 8 }: { count?: number }) {
                 <Skeleton className="h-7 w-16 rounded-full" />
             </div>
 
-            {/* Courses Grid Skeleton */}
+            {/* Programs Grid Skeleton */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {Array.from({ length: count }).map((_, i) => (
                     <CourseCardSkeleton key={i} />

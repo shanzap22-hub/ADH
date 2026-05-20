@@ -126,7 +126,7 @@ export const ChapterAttachmentsForm = ({
     return (
         <div className="mt-6 border bg-slate-100 dark:bg-slate-800 rounded-md p-4">
             <div className="font-medium flex items-center justify-between mb-2 text-slate-900 dark:text-slate-100">
-                Chapter attachments
+                Module attachments
                 <div className="flex gap-2">
                     {/* File Upload Button */}
                     <Button onClick={toggleEdit} variant="ghost" size="sm">

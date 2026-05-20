@@ -46,7 +46,7 @@ export const ChapterListStudent = ({
             ))}
             {items.length === 0 && (
                 <div className="text-sm text-muted-foreground italic">
-                    No chapters available yet.
+                    No Modules available yet.
                 </div>
             )}
         </div>

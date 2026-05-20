@@ -67,7 +67,7 @@ export default async function UnitPlayerPage({
     // Resume position — restored from DB for "continue where you left off" feature
     const lastPlayedSecond = progress?.last_played_second || 0;
 
-    // Get all units in this chapter for navigation
+    // Get all units in this Module for navigation
     const { data: allUnits } = await supabase
         .from("units")
         .select("id, position")
