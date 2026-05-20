@@ -220,15 +220,14 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                             console.warn("OneSignal.User.addTag not available");
                         }
                     } else {
-                        // UNMUTE: Remove Tag
-                        if (OneSignal.User && typeof OneSignal.User.removeTag === 'function') {
-                            OneSignal.User.removeTag(tagKey);
-                            console.log(`OneSignal Tag Removed: ${tagKey}`);
-                        } else if ((OneSignal as any).deleteTag) {
-                            // Fallback for older versions
-                            (OneSignal as any).deleteTag(tagKey);
+                        // UNMUTE: Set Tag to false
+                        if (OneSignal.User && typeof OneSignal.User.addTag === 'function') {
+                            OneSignal.User.addTag(tagKey, "false");
+                            console.log(`OneSignal Tag Updated to false: ${tagKey}`);
+                        } else if ((OneSignal as any).sendTag) {
+                            (OneSignal as any).sendTag(tagKey, "false");
                         } else {
-                            console.warn("OneSignal.User.removeTag not available");
+                            console.warn("OneSignal.User.addTag not available for unmute");
                         }
                     }
                 } catch (osError) {
@@ -980,7 +979,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
             </div>
 
             {/* Input Area */}
-            <div className="p-3 pb-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+            <div className="p-3 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] md:pb-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shrink-0">
 
                 {/* Replying Banner */}
                 {replyingTo && (

@@ -10,7 +10,7 @@ export async function toggleRitualAction(ritualId: string, isCompleted: boolean)
 
     if (!user) throw new Error("Unauthorized");
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
     if (isCompleted) {
         // Ritual log add ചെയ്യുന്നു
@@ -61,9 +61,10 @@ export async function toggleRitualAction(ritualId: string, isCompleted: boolean)
         newDailyPoints = 5;
     }
 
-    // ഇന്ന് ഈ reason-ൽ ഇതിന് മുൻപ് എത്ര പോയിന്റ് കൊടുത്തിരുന്നു?
-    const startOfDay = new Date();
-    startOfDay.setUTCHours(0, 0, 0, 0);
+    // ഇന്ന് ഈ reason-ൽ ഇതിന് മുൻപ് എത്ര പോയിന്റ് കൊടുത്തിരുന്നു? (ഇന്ത്യ സമയം പ്രകാരം ഇന്നത്തെ തുടക്കം)
+    const kolkataDateStr = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
+    const kolkataStart = new Date(kolkataDateStr);
+    const startOfDay = new Date(kolkataStart.getTime() - (5.5 * 60 * 60 * 1000));
 
     const { data: existingEntries } = await supabaseAdmin
         .from("gamification_ledger")

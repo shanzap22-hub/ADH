@@ -82,7 +82,7 @@ export const SplashScreenProvider = () => {
     return (
         <div className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center">
             {/* Logo Animation: Zoom In */}
-            <div className="relative w-32 h-32 mb-8 animate-in fade-in zoom-in duration-1000">
+            <div className="relative w-40 h-40 mb-8 animate-in fade-in zoom-in duration-1000">
                 <img
                     src="/logo.png"
                     alt="ADH Connect"

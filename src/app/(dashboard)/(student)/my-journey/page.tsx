@@ -91,7 +91,7 @@ export default async function MyJourneyPage() {
         .select("*")
         .eq("is_active", true);
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
     const { data: todayLogs } = await supabase
         .from("user_daily_ritual_logs")
         .select("ritual_id")

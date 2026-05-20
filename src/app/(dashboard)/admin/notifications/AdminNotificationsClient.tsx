@@ -12,12 +12,18 @@ import { Send, Bell } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 export default function AdminNotificationsPage() {
     // Manual Push State
     const [title, setTitle] = useState("");
     const [message, setMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+
+    // Stats State
+    const [stats, setStats] = useState<any[]>([]);
+    const [statsLoading, setStatsLoading] = useState(true);
 
     // Settings State
     const [settings, setSettings] = useState({
@@ -30,20 +36,29 @@ export default function AdminNotificationsPage() {
 
     // Fetch config on load
     useEffect(() => {
-        const fetchConfig = async () => {
+        const fetchConfigAndStats = async () => {
             try {
+                // Fetch Settings
                 const res = await fetch("/api/admin/notifications/config");
                 if (res.ok) {
                     const data = await res.json();
                     setSettings(data);
                 }
+                
+                // Fetch Stats
+                const statsRes = await fetch("/api/admin/notifications/stats");
+                if (statsRes.ok) {
+                    const statsData = await statsRes.json();
+                    setStats(statsData.stats || []);
+                }
             } catch (e) {
-                console.error("Failed to load settings");
+                console.error("Failed to load settings or stats");
             } finally {
                 setConfigLoading(false);
+                setStatsLoading(false);
             }
         };
-        fetchConfig();
+        fetchConfigAndStats();
     }, []);
 
     const toggleSetting = async (key: string, value: boolean) => {
@@ -90,6 +105,15 @@ export default function AdminNotificationsPage() {
             toast.success("Notification sent successfully to all users!");
             setTitle("");
             setMessage("");
+
+            // Refresh stats after sending
+            setStatsLoading(true);
+            const statsRes = await fetch("/api/admin/notifications/stats");
+            if (statsRes.ok) {
+                const statsData = await statsRes.json();
+                setStats(statsData.stats || []);
+            }
+            setStatsLoading(false);
 
         } catch (error: any) {
             console.error(error);
@@ -206,6 +230,63 @@ export default function AdminNotificationsPage() {
                         <p className="text-xs text-muted-foreground text-center mt-2">
                             Note: Delivery depends on user device settings and internet connection.
                         </p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Analytics Card */}
+            <div className="mt-6 max-w-4xl">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg">Recent Broadcast Analytics</CardTitle>
+                        <CardDescription>View delivery statistics for your recently sent notifications.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {statsLoading ? (
+                            <div className="text-sm text-muted-foreground animate-pulse">Loading analytics...</div>
+                        ) : stats.length === 0 ? (
+                            <div className="text-sm text-muted-foreground text-center py-4">No recent notifications found.</div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Message</TableHead>
+                                            <TableHead>Date</TableHead>
+                                            <TableHead className="text-right">Delivered</TableHead>
+                                            <TableHead className="text-right">Failed</TableHead>
+                                            <TableHead className="text-right">Opened</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {stats.map((s, idx) => (
+                                            <TableRow key={s.id || idx}>
+                                                <TableCell className="font-medium max-w-[200px] truncate">
+                                                    <div>{s.title}</div>
+                                                    <div className="text-xs text-muted-foreground truncate">{s.message}</div>
+                                                </TableCell>
+                                                <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                                                    {new Date(s.created_at).toLocaleString()}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                                                        {s.successful}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Badge variant="outline" className={s.failed > 0 ? "text-red-500 border-red-200" : "text-slate-400"}>
+                                                        {s.failed}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="text-right text-muted-foreground font-mono text-xs">
+                                                    {s.converted}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

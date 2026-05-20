@@ -179,11 +179,14 @@ export async function sendChatMessage(
                 const senderName = senderProfile?.full_name || 'Someone';
                 const notificationBody = type === 'image' ? 'Sent an image' : type === 'audio' ? 'Sent a voice note' : content;
 
-                // Mute Filter: Exclude users who have tag "muted_chat_CONVID" = "true"
-                // AND Exclude Sender: Exclude user who has tag "user_id" = user.id
+                // Mute Filter: Exclude users who have explicitly muted the chat.
+                // We use an OR condition: (tag doesn't exist) OR (tag is 'false').
+                // AND we exclude the sender.
                 const filters = [
-                    { field: "tag", key: `muted_chat_${conversationId}`, relation: "!=", value: "true" },
-                    { operator: "AND" },
+                    { field: "tag", key: `muted_chat_${conversationId}`, relation: "not_exists" },
+                    { field: "tag", key: "user_id", relation: "!=", value: user.id },
+                    { operator: "OR" },
+                    { field: "tag", key: `muted_chat_${conversationId}`, relation: "=", value: "false" },
                     { field: "tag", key: "user_id", relation: "!=", value: user.id }
                 ];
 

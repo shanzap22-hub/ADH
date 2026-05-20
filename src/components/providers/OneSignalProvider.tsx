@@ -60,20 +60,40 @@ export const OneSignalProvider = () => {
                 const { createClient } = await import("@/lib/supabase/client");
                 const supabase = createClient();
 
+                const syncMutedChats = async (userId: string) => {
+                    try {
+                        const { data: mutedChats } = await supabase
+                            .from('chat_notification_settings')
+                            .select('conversation_id')
+                            .eq('user_id', userId)
+                            .eq('is_muted', true);
+                            
+                        if (mutedChats && mutedChats.length > 0) {
+                            mutedChats.forEach(chat => {
+                                OneSignal.User.addTag(`muted_chat_${chat.conversation_id}`, "true");
+                            });
+                        }
+                    } catch (e) {
+                        console.error("Failed to sync muted chats", e);
+                    }
+                };
+
                 // Check current session
                 const { data: { session } } = await supabase.auth.getSession();
                 if (session?.user?.id) {
                     console.log("OneSignal: Logging in user", session.user.id);
                     OneSignal.login(session.user.id);
                     OneSignal.User.addTag("user_id", session.user.id);
+                    await syncMutedChats(session.user.id);
                 }
 
                 // Listen for auth changes
-                supabase.auth.onAuthStateChange((event, session) => {
+                supabase.auth.onAuthStateChange(async (event, session) => {
                     if (session?.user?.id) {
                         console.log("OneSignal: Auth Change - Logging in", session.user.id);
                         OneSignal.login(session.user.id);
                         OneSignal.User.addTag("user_id", session.user.id);
+                        await syncMutedChats(session.user.id);
                     } else {
                         console.log("OneSignal: Auth Change - Logging out");
                         OneSignal.User.removeTag("user_id");

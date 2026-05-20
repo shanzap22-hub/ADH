@@ -78,6 +78,22 @@ export default function ChatPageClient({
         autoOpenChat();
     }, [searchParams, hasCommunityAccess, hasAiAccess, termsAiAccepted, termsCommunityAccepted]);
 
+    // Capacitor App: Handle physical back button when a chat is active
+    useEffect(() => {
+        if (selectedChatId) {
+            (window as any).__onCapacitorBackButton = () => {
+                setSelectedChatId(null);
+                return true; // handled locally
+            };
+        } else {
+            (window as any).__onCapacitorBackButton = null;
+        }
+
+        return () => {
+            (window as any).__onCapacitorBackButton = null;
+        };
+    }, [selectedChatId]);
+
     // Limited Offer Banner Logic
     const showUpgradeBanner = ["bronze", "silver"].includes(currentUserTier);
 
@@ -223,15 +239,13 @@ export default function ChatPageClient({
                                 </>
                             ) : (
                                 <>
-                                    <p><strong>Welcome to the ADH Community! Please agree to our Code of Conduct:</strong></p>
-                                    <ul className="list-disc pl-5 space-y-2">
-                                        <li><strong>Respect:</strong> Treat all members with respect. Harassment, hate speech, and bullying are strictly prohibited.</li>
-                                        <li><strong>No Spam:</strong> Do not post unauthorized solicitations, spam, or irrelevant content.</li>
-                                        <li><strong>Privacy:</strong> Respect the privacy of others. Do not share members' personal information without consent.</li>
-                                        <li><strong>Content:</strong> You are responsible for the content you post. Ensure it complies with all applicable laws.</li>
-                                        <li><strong>Safety:</strong> Report any suspicious or harmful behavior to the administrators immediately.</li>
-                                    </ul>
-                                    <p className="text-xs text-slate-500 mt-4">Violation of these terms may result in account suspension or termination.</p>
+                                    <p className="text-base font-semibold text-slate-800 dark:text-slate-200">
+                                        Welcome to the ADH Community! Please agree to our community rule:
+                                    </p>
+                                    <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-xl p-5 text-amber-800 dark:text-amber-300 font-bold text-base leading-relaxed text-center my-4 shadow-sm">
+                                        നിങ്ങളുടെ ഫോൺ നമ്പറോ വ്യക്തിഗത വിവരങ്ങളോ ഈ ചാറ്റിൽ പങ്കുവെക്കരുത്.
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-4">By clicking "I Agree", you acknowledge that you have read and understood this rule.</p>
                                 </>
                             )}
                         </div>

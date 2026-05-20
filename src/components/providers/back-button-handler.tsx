@@ -64,6 +64,12 @@ export const BackButtonHandler = () => {
                         return; // ഡയലോഗ് അടച്ചതിനാൽ ബാക്ക് പോകാതെ ഇവിടെ വച്ച് നിർത്തുന്നു
                     }
 
+                    // Local handler check: if a page has registered a custom back button handler, run it first.
+                    if (typeof window !== 'undefined' && (window as any).__onCapacitorBackButton) {
+                        const handled = (window as any).__onCapacitorBackButton();
+                        if (handled) return; // handled locally
+                    }
+
                     const currentPath = window.location.pathname;
                     const exitPaths = ['/dashboard', '/', '/login', '/home'];
                     const isRoot = exitPaths.some(path => currentPath === path || currentPath === `${path}/`);
