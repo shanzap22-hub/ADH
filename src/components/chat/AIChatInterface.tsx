@@ -577,6 +577,7 @@ export function AIChatInterface({ onBack, onClose }: AIChatInterfaceProps) {
                                     </Button>
                                 </div>
                             )}
+                        </div>
                     </form>
                     {/* AI generated disclaimer - ഗൂഗിൾ പ്ലേ സ്റ്റോർ പോളിസി അനുസരിച്ച് AI നിർദ്ദേശങ്ങൾക്കുള്ള ഡിസ്ക്ലൈമർ */}
                     <p className="text-[10px] text-center text-slate-400 dark:text-slate-500 mt-2">
