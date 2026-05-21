@@ -29,13 +29,16 @@ export const StudentDashboardLayoutContent = ({
 
     return (
         <div className="h-full">
-            {/* Top Navigation Header - Hidden on MOBILE Chat Page, Visible on Desktop */}
-            <div className={isChat ? "hidden md:block" : ""}>
+            {/* Top Navigation Header - Hidden on mobile/tablet Chat, Visible on lg+ desktop */}
+            <div className={isChat ? "hidden lg:block" : ""}>
                 <TopHeader />
             </div>
 
-            {/* Desktop Sidebar */}
-            <div className="hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-40 mt-[calc(4rem_+_env(safe-area-inset-top))]">
+            {/* Desktop Sidebar - ടാബ്‌ലെറ്റ് Chat page-ൽ hide ചെയ്യുക (lg: breakpoint) */}
+            <div className={cn(
+                "hidden md:flex h-full w-56 flex-col fixed inset-y-0 z-40 mt-[calc(4rem_+_env(safe-area-inset-top))]",
+                isChat && "md:hidden lg:flex"
+            )}>
                 <StudentSidebar
                     is_instructor={is_instructor}
                     is_super_admin={is_super_admin}
@@ -44,13 +47,12 @@ export const StudentDashboardLayoutContent = ({
             </div>
 
             {/* Main Content Area */}
-            {/* Remove padding on Chat page (Mobile) to allow fixed chat container to fill top 
-                But add padding back on Desktop (md:pt-16) because Header is visible there */}
+            {/* Chat page: ടാബ്‌ലെറ്റിൽ sidebar ഇല്ലാതെ full width, lg+-ൽ sidebar padding */}
             <main className={cn(
-                "md:pl-56 h-full",
+                "h-full",
                 isChat
-                    ? "pb-16 md:pb-0 md:pt-[calc(4rem_+_env(safe-area-inset-top))]"
-                    : "pt-[calc(4rem_+_env(safe-area-inset-top))] pb-16 md:pb-0"
+                    ? "pb-16 lg:pb-0 lg:pl-56 lg:pt-[calc(4rem_+_env(safe-area-inset-top))]"
+                    : "md:pl-56 pt-[calc(4rem_+_env(safe-area-inset-top))] pb-16 md:pb-0"
             )}>
                 {children}
             </main>

@@ -71,7 +71,7 @@ export default function LearnPageClient({
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden pt-[env(safe-area-inset-top)]">
                 {/* Back Button Header */}
-                <div className="flex-none p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center md:hidden">
+                <div className="flex-none p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center lg:hidden">
                     <CourseContentBackButton href={`/courses/${courseId}`} label="Back to Course" />
                 </div>
 

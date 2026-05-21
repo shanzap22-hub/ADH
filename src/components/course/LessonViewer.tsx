@@ -132,8 +132,7 @@ export const LessonViewer = ({
 
             {/* Video Player */}
             <div 
-                className="relative aspect-video bg-slate-900 w-full mx-auto overflow-hidden flex-none"
-                style={{ maxHeight: 'calc(100vh - 200px)', maxWidth: 'calc((100vh - 200px) * 16 / 9)' }}
+                className="relative aspect-video bg-slate-900 w-full overflow-hidden flex-none"
             >
                 {cleanUrl ? (
                     <>
