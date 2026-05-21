@@ -15,6 +15,11 @@ public class MainActivity extends BridgeActivity {
             WebView webView = this.bridge.getWebView();
             WebSettings settings = webView.getSettings();
 
+            // ===== AUDIO PLAYBACK =====
+            // Allow audio playback without requiring user gesture
+            // (Required for TTS affirmations and other audio features)
+            settings.setMediaPlaybackRequiresUserGesture(false);
+
             // ===== CACHING CONFIGURATION =====
             // Enable caching for better offline experience
             settings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);

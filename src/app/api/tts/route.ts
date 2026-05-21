@@ -45,8 +45,9 @@ export async function POST(req: NextRequest) {
         for (const chunk of chunks) {
             if (!chunk.trim()) continue;
 
-            const urlGtx = `https://translate.googleapis.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunk.trim())}&tl=ml&client=gtx`;
-            const urlTwob = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunk.trim())}&tl=ml&client=tw-ob`;
+            const langCode = lang.split('-')[0] || 'ml';
+            const urlGtx = `https://translate.googleapis.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunk.trim())}&tl=${langCode}&client=gtx`;
+            const urlTwob = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunk.trim())}&tl=${langCode}&client=tw-ob`;
 
             let response = await fetch(urlGtx, {
                 headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }

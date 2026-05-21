@@ -179,99 +179,104 @@ export const DailyRituals = ({ initialRituals }: DailyRitualsProps) => {
         if (!affirmations) return toast.error("Please write some affirmations first");
 
         const isMalayalam = /[\u0D00-\u0D7F]/.test(affirmations);
+        const targetLang = isMalayalam ? "ml-IN" : "en-US";
 
-        if (isMalayalam) {
-            // Pause if already playing
-            if (isAffirmationsPlaying && affirmationsAudioRef.current) {
-                affirmationsAudioRef.current.pause();
-                setIsAffirmationsPlaying(false);
-                return;
-            }
-
-            // Resume if paused and loaded
-            if (!isAffirmationsPlaying && affirmationsAudioRef.current && affirmationsAudioRef.current.src && affirmationsAudioRef.current.currentTime > 0 && !affirmationsAudioRef.current.ended) {
-                await affirmationsAudioRef.current.play();
-                setIsAffirmationsPlaying(true);
-                return;
-            }
-
-            // Play from cache if already fetched
-            if (fetchedAudioUrl && affirmationsAudioRef.current) {
-                affirmationsAudioRef.current.currentTime = 0;
-                await affirmationsAudioRef.current.play();
-                setIsAffirmationsPlaying(true);
-                return;
-            }
-
-            setIsGeneratingTTS(true);
-            const toastId = toast.loading("ഓഡിയോ തയ്യാറാക്കുന്നു...");
-
-            try {
-                const response = await fetch("/api/tts", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ text: affirmations, lang: "ml-IN" })
-                });
-
-                if (!response.ok) throw new Error("TTS generation failed");
-
-                const data = await response.json();
-                const audioUrl = data.audioUrl || (data.audioBase64 ? `data:audio/mpeg;base64,${data.audioBase64}` : null);
-
-                if (!audioUrl) throw new Error("No audio received");
-
-                setFetchedAudioUrl(audioUrl);
-
-                if (affirmationsAudioRef.current) {
-                    affirmationsAudioRef.current.src = audioUrl;
-                    affirmationsAudioRef.current.onended = () => setIsAffirmationsPlaying(false);
-                    await affirmationsAudioRef.current.play();
-                    setIsAffirmationsPlaying(true);
-                    toast.success("മലയാളം അഫിർമേഷൻസ് പ്ലേ ചെയ്യുന്നു...", { id: toastId });
-                }
-            } catch (error) {
-                console.error("TTS Error:", error);
-                
-                try {
-                    const synth = window.speechSynthesis;
-                    if (synth) {
-                        const utterance = new SpeechSynthesisUtterance(affirmations);
-                        utterance.lang = 'ml-IN';
-                        utterance.rate = 0.85;
-                        utterance.onend = () => setIsAffirmationsPlaying(false);
-                        synth.speak(utterance);
-                        setIsAffirmationsPlaying(true);
-                        toast.success("മലയാളം അഫിർമേഷൻസ് പ്ലേ ചെയ്യുന്നു...", { id: toastId });
-                    } else {
-                        toast.error("ഓഡിയോ പ്ലേ ചെയ്യാൻ കഴിഞ്ഞില്ല.", { id: toastId });
-                    }
-                } catch {
-                    toast.error("ഓഡിയോ പ്ലേ ചെയ്യാൻ കഴിഞ്ഞില്ല.", { id: toastId });
-                }
-            } finally {
-                setIsGeneratingTTS(false);
-            }
+        // Pause if already playing
+        if (isAffirmationsPlaying && affirmationsAudioRef.current) {
+            affirmationsAudioRef.current.pause();
+            setIsAffirmationsPlaying(false);
             return;
         }
 
-        // ഇംഗ്ലീഷ് TTS: Browser speechSynthesis ഉപയോഗിക്കുന്നു
-        const synth = window.speechSynthesis;
-        if (synth.speaking) { 
-            synth.cancel(); 
-            setIsAffirmationsPlaying(false);
-            return; 
+        // Resume if paused and loaded
+        if (!isAffirmationsPlaying && affirmationsAudioRef.current && affirmationsAudioRef.current.src && affirmationsAudioRef.current.currentTime > 0 && !affirmationsAudioRef.current.ended) {
+            try {
+                await affirmationsAudioRef.current.play();
+                setIsAffirmationsPlaying(true);
+            } catch { /* ignore */ }
+            return;
         }
 
-        const voices = synth.getVoices();
-        const utterance = new SpeechSynthesisUtterance(affirmations);
-        const enVoice = voices.find(v => v.lang.startsWith("en") && (v.name.includes("Google") || v.name.includes("Premium")));
-        if (enVoice) { utterance.voice = enVoice; }
-        utterance.lang = "en-US";
-        utterance.rate = 0.9;
-        utterance.onstart = () => setIsAffirmationsPlaying(true);
-        utterance.onend = () => setIsAffirmationsPlaying(false);
-        toast.info("Playing affirmations...");
-        synth.speak(utterance);
+        // Play from cache if already fetched
+        if (fetchedAudioUrl && affirmationsAudioRef.current) {
+            try {
+                affirmationsAudioRef.current.currentTime = 0;
+                await affirmationsAudioRef.current.play();
+                setIsAffirmationsPlaying(true);
+            } catch { /* ignore */ }
+            return;
+        }
+
+        // ===== CRITICAL: Unlock audio on user gesture =====
+        // Android WebView blocks audio.play() unless it happens during a user gesture.
+        // We play a tiny silent sound IMMEDIATELY (within the click handler)
+        // to "unlock" the audio context, then swap src to real TTS audio.
+        const audio = affirmationsAudioRef.current;
+        if (audio) {
+            // Create a minimal silent MP3 (tiny base64 encoded silent audio)
+            const silentMp3 = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRwMHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+            try {
+                audio.src = silentMp3;
+                audio.volume = 0.01;
+                await audio.play();
+                audio.pause();
+                audio.volume = 1.0;
+            } catch (e) {
+                console.warn("[TTS] Silent audio unlock failed:", e);
+            }
+        }
+
+        setIsGeneratingTTS(true);
+        const toastId = toast.loading("ഓഡിയോ തയ്യാറാക്കുന്നു...");
+
+        try {
+            const response = await fetch("/api/tts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: affirmations, lang: targetLang })
+            });
+
+            if (!response.ok) throw new Error("TTS generation failed");
+
+            const data = await response.json();
+            const audioUrl = data.audioUrl || (data.audioBase64 ? `data:audio/mpeg;base64,${data.audioBase64}` : null);
+
+            if (!audioUrl) throw new Error("No audio received");
+
+            setFetchedAudioUrl(audioUrl);
+
+            if (audio) {
+                audio.onended = () => setIsAffirmationsPlaying(false);
+                audio.onerror = (e) => {
+                    console.error("[TTS] Audio element error:", e);
+                    setIsAffirmationsPlaying(false);
+                    toast.error("ഓഡിയോ പ്ലേ ചെയ്യാൻ കഴിഞ്ഞില്ല.", { id: toastId });
+                };
+                
+                // Set source and wait for it to be ready
+                audio.src = audioUrl;
+                audio.load();
+                
+                await new Promise<void>((resolve, reject) => {
+                    const onReady = () => {
+                        audio.removeEventListener('canplaythrough', onReady);
+                        resolve();
+                    };
+                    audio.addEventListener('canplaythrough', onReady);
+                    audio.addEventListener('error', () => reject(new Error("Audio load failed")), { once: true });
+                    setTimeout(() => reject(new Error("Audio load timeout")), 15000);
+                });
+                
+                await audio.play();
+                setIsAffirmationsPlaying(true);
+                toast.success("അഫിർമേഷൻസ് പ്ലേ ചെയ്യുന്നു...", { id: toastId });
+            }
+        } catch (error) {
+            console.error("[TTS] Error:", error);
+            toast.error("ഓഡിയോ പ്ലേ ചെയ്യാൻ കഴിഞ്ഞില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക.", { id: toastId });
+        } finally {
+            setIsGeneratingTTS(false);
+        }
     };
 
     const toggleAudio = () => {
