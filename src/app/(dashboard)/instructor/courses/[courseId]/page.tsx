@@ -21,11 +21,11 @@ export default async function CourseIdPage({
         return redirect("/");
     }
 
-    const { data: Program } = await supabase
+    const { data: course } = await supabase
         .from("courses")
         .select("*, chapters(*)")
         .eq("id", courseId)
-        .order("position", { foreignTable: "Modules", ascending: true })
+        .order("position", { foreignTable: "chapters", ascending: true })
         .single();
 
     if (!course) {
