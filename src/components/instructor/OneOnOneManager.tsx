@@ -116,7 +116,7 @@ export const OneOnOneManager = () => {
                                     <FileUpload
                                         endpoint="course-thumbnails"
                                         onChange={(url) => {
-                                            if (url) field.onChange(url);
+                                            if (url !== undefined) field.onChange(url);
                                         }}
                                         value={field.value}
                                     />
