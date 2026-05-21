@@ -91,6 +91,10 @@ export async function sendOneSignalNotification(
             data: data || {},
         };
 
+        if (data && data.url) {
+            payload.url = data.url;
+        }
+
         if (targetUserIds && targetUserIds.length > 0) {
             payload.include_external_user_ids = targetUserIds;
         } else if (filters && filters.length > 0) {
@@ -108,7 +112,9 @@ export async function sendOneSignalNotification(
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Basic ${ONESIGNAL_REST_API_KEY}`
+                'Authorization': ONESIGNAL_REST_API_KEY.startsWith("os_v2_")
+                    ? `Key ${ONESIGNAL_REST_API_KEY}`
+                    : `Basic ${ONESIGNAL_REST_API_KEY}`
             },
             body: JSON.stringify(payload)
         });

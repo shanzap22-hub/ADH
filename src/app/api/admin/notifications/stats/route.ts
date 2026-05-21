@@ -21,11 +21,36 @@ export async function GET() {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
+        let totalSubscribers = 0;
+
+        // Fetch App Details for Subscriber Count
+        try {
+            const appResponse = await fetch(`https://onesignal.com/api/v1/apps/${ONESIGNAL_APP_ID}`, {
+                method: 'GET',
+                headers: {
+                    Authorization: ONESIGNAL_REST_API_KEY.startsWith("os_v2_")
+                        ? `Key ${ONESIGNAL_REST_API_KEY}`
+                        : `Basic ${ONESIGNAL_REST_API_KEY}`,
+                    "Content-Type": "application/json",
+                },
+                cache: 'no-store'
+            });
+
+            if (appResponse.ok) {
+                const appData = await appResponse.json();
+                totalSubscribers = appData.messageable_players || 0;
+            }
+        } catch (e) {
+            console.error("Failed to fetch app details", e);
+        }
+
         // Fetch Notifications from OneSignal API
         const response = await fetch(`https://onesignal.com/api/v1/notifications?app_id=${ONESIGNAL_APP_ID}&limit=10`, {
             method: 'GET',
             headers: {
-                Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
+                Authorization: ONESIGNAL_REST_API_KEY.startsWith("os_v2_")
+                    ? `Key ${ONESIGNAL_REST_API_KEY}`
+                    : `Basic ${ONESIGNAL_REST_API_KEY}`,
                 "Content-Type": "application/json",
             },
             cache: 'no-store'
@@ -49,7 +74,10 @@ export async function GET() {
             remaining: n.remaining || 0
         }));
 
-        return NextResponse.json({ stats: notificationStats });
+        return NextResponse.json({ 
+            stats: notificationStats,
+            totalSubscribers 
+        });
 
     } catch (error: any) {
         console.error("Fetch Notification Stats Error:", error);

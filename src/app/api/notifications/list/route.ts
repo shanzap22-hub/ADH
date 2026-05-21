@@ -29,7 +29,9 @@ export async function GET(req: Request) {
         const response = await fetch(`https://onesignal.com/api/v1/notifications?app_id=${ONESIGNAL_APP_ID}&limit=20`, {
             method: 'GET',
             headers: {
-                Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
+                Authorization: ONESIGNAL_REST_API_KEY.startsWith("os_v2_")
+                    ? `Key ${ONESIGNAL_REST_API_KEY}`
+                    : `Basic ${ONESIGNAL_REST_API_KEY}`,
                 "Content-Type": "application/json",
             },
             cache: 'no-store'

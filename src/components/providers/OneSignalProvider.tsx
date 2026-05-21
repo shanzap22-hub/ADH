@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { usePlatform } from "@/hooks/use-platform";
+import { useRouter } from "next/navigation";
 
 export const OneSignalProvider = () => {
     const { isNative } = usePlatform();
     const [mounted, setMounted] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         setMounted(true);
@@ -42,6 +44,34 @@ export const OneSignalProvider = () => {
                 // Request Notification Permissions
                 OneSignal.Notifications.requestPermission(true).then((granted: boolean) => {
                     console.log("OneSignal: Permission Granted:", granted);
+                });
+
+                // Listen for notification click/tap events
+                OneSignal.Notifications.addEventListener("click", (event: any) => {
+                    console.log("OneSignal: Notification Clicked:", event);
+                    const notification = event?.notification;
+                    const additionalData = notification?.additionalData;
+                    const launchURL = notification?.launchURL;
+                    
+                    const urlToOpen = launchURL || additionalData?.url;
+                    if (urlToOpen) {
+                        try {
+                            if (urlToOpen.startsWith("https://adh.today") || urlToOpen.startsWith("/")) {
+                                // Route inside the app
+                                const path = urlToOpen.replace("https://adh.today", "");
+                                router.push(path);
+                            } else {
+                                // Open external link in Capacitor Browser
+                                import('@capacitor/browser').then(({ Browser }) => {
+                                    Browser.open({ url: urlToOpen });
+                                }).catch(() => {
+                                    window.open(urlToOpen, '_blank');
+                                });
+                            }
+                        } catch (e) {
+                            console.error("OneSignal: Redirect failed", e);
+                        }
+                    }
                 });
 
                 // Feature: Mic Perms are now requested lazily in ChatWindow.tsx

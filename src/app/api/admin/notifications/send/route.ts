@@ -21,10 +21,37 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { title, message } = body;
+        const { title, message, url, targetWeb = true, targetApp = true } = body;
 
         if (!title || !message) {
             return NextResponse.json({ error: "Title and message are required" }, { status: 400 });
+        }
+
+        if (!targetWeb && !targetApp) {
+            return NextResponse.json({ error: "At least one target platform is required" }, { status: 400 });
+        }
+
+        // Configure OneSignal Body
+        const oneSignalBody: any = {
+            app_id: ONESIGNAL_APP_ID,
+            included_segments: ['All'],
+            headings: { en: title },
+            contents: { en: message },
+        };
+
+        if (url && url.trim()) {
+            oneSignalBody.url = url.trim();
+            oneSignalBody.data = { url: url.trim() };
+        }
+
+        // If both are true, it sends to everyone in the segment (Web + Android + iOS)
+        // If not both, we can specify explicitly using isAndroid, isAnyWeb
+        if (!targetWeb) {
+            oneSignalBody.isAnyWeb = false;
+        }
+        if (!targetApp) {
+            oneSignalBody.isAndroid = false;
+            oneSignalBody.isIos = false;
         }
 
         const options = {
@@ -32,16 +59,11 @@ export async function POST(req: Request) {
             headers: {
                 accept: 'application/json',
                 'content-type': 'application/json',
-                Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`
+                Authorization: ONESIGNAL_REST_API_KEY.startsWith("os_v2_")
+                    ? `Key ${ONESIGNAL_REST_API_KEY}`
+                    : `Basic ${ONESIGNAL_REST_API_KEY}`
             },
-            body: JSON.stringify({
-                app_id: ONESIGNAL_APP_ID,
-                included_segments: ['All'], // Sends to everyone
-                headings: { en: title },
-                contents: { en: message },
-                // Optional: Add data for deeplinking
-                // data: { url: '/dashboard' } 
-            })
+            body: JSON.stringify(oneSignalBody)
         };
 
         const response = await fetch('https://onesignal.com/api/v1/notifications', options);

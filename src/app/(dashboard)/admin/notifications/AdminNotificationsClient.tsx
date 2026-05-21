@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Send, Bell } from "lucide-react";
+import { Send, Bell, Users } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -19,11 +19,17 @@ export default function AdminNotificationsPage() {
     // Manual Push State
     const [title, setTitle] = useState("");
     const [message, setMessage] = useState("");
+    const [url, setUrl] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
     // Stats State
     const [stats, setStats] = useState<any[]>([]);
+    const [totalSubscribers, setTotalSubscribers] = useState<number>(0);
     const [statsLoading, setStatsLoading] = useState(true);
+
+    // Target Selection State
+    const [targetWeb, setTargetWeb] = useState(true);
+    const [targetApp, setTargetApp] = useState(true);
 
     // Settings State
     const [settings, setSettings] = useState({
@@ -50,6 +56,7 @@ export default function AdminNotificationsPage() {
                 if (statsRes.ok) {
                     const statsData = await statsRes.json();
                     setStats(statsData.stats || []);
+                    setTotalSubscribers(statsData.totalSubscribers || 0);
                 }
             } catch (e) {
                 console.error("Failed to load settings or stats");
@@ -86,6 +93,11 @@ export default function AdminNotificationsPage() {
             return;
         }
 
+        if (!targetWeb && !targetApp) {
+            toast.error("Please select at least one target platform (Web or App)");
+            return;
+        }
+
         try {
             setIsLoading(true);
             const response = await fetch("/api/admin/notifications/send", {
@@ -93,7 +105,13 @@ export default function AdminNotificationsPage() {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ title, message }),
+                body: JSON.stringify({ 
+                    title, 
+                    message,
+                    url,
+                    targetWeb,
+                    targetApp
+                }),
             });
 
             const data = await response.json();
@@ -102,9 +120,10 @@ export default function AdminNotificationsPage() {
                 throw new Error(data.error || "Failed to send notification");
             }
 
-            toast.success("Notification sent successfully to all users!");
+            toast.success("Notification sent successfully!");
             setTitle("");
             setMessage("");
+            setUrl("");
 
             // Refresh stats after sending
             setStatsLoading(true);
@@ -112,6 +131,7 @@ export default function AdminNotificationsPage() {
             if (statsRes.ok) {
                 const statsData = await statsRes.json();
                 setStats(statsData.stats || []);
+                setTotalSubscribers(statsData.totalSubscribers || 0);
             }
             setStatsLoading(false);
 
@@ -127,7 +147,109 @@ export default function AdminNotificationsPage() {
         <div className="p-6">
             <h1 className="text-2xl font-bold mb-6">Push Notifications</h1>
 
-            <div className="grid gap-6 max-w-2xl">
+            <div className="grid gap-6 max-w-4xl grid-cols-1 md:grid-cols-2">
+                <div className="space-y-6">
+                    {/* Stats Summary Card */}
+                    <Card className="bg-indigo-50 dark:bg-indigo-950 border-indigo-100 dark:border-indigo-900">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-lg text-indigo-900 dark:text-indigo-100 flex items-center gap-2">
+                                <Users className="h-5 w-5" />
+                                Total Subscribers
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {statsLoading ? (
+                                <div className="animate-pulse h-10 w-24 bg-indigo-200 dark:bg-indigo-800 rounded"></div>
+                            ) : (
+                                <div className="text-4xl font-bold text-indigo-700 dark:text-indigo-300">
+                                    {totalSubscribers.toLocaleString()}
+                                </div>
+                            )}
+                            <p className="text-sm text-indigo-600/80 dark:text-indigo-400 mt-2">
+                                Users opted-in across web and mobile app
+                            </p>
+                        </CardContent>
+                    </Card>
+
+                    {/* Manual Push Card */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Bell className="h-5 w-5 text-indigo-600" />
+                                Send Manual Broadcast
+                            </CardTitle>
+                            <CardDescription>
+                                Send a custom push notification to your users.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Notification Title</label>
+                                <Input
+                                    placeholder="e.g., Live Class Starting Soon!"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Message Details</label>
+                                <Textarea
+                                    placeholder="e.g., Join us now for the weekly catchup..."
+                                    value={message}
+                                    onChange={(e) => setMessage(e.target.value)}
+                                    rows={4}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Redirect Link / URL (Optional)</label>
+                                <Input
+                                    placeholder="e.g., /chat or https://adh.today/courses"
+                                    value={url}
+                                    onChange={(e) => setUrl(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="space-y-3 pt-2">
+                                <label className="text-sm font-medium">Target Audience</label>
+                                <div className="flex gap-6">
+                                    <div className="flex items-center space-x-2">
+                                        <Switch 
+                                            id="target-app" 
+                                            checked={targetApp} 
+                                            onCheckedChange={setTargetApp} 
+                                        />
+                                        <Label htmlFor="target-app" className="cursor-pointer">Mobile App</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Switch 
+                                            id="target-web" 
+                                            checked={targetWeb} 
+                                            onCheckedChange={setTargetWeb} 
+                                        />
+                                        <Label htmlFor="target-web" className="cursor-pointer">Website</Label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Button
+                                onClick={handleSend}
+                                disabled={isLoading}
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 mt-4"
+                            >
+                                {isLoading ? "Sending..." : (
+                                    <>
+                                        <Send className="w-4 h-4 mr-2" />
+                                        Send Notification
+                                    </>
+                                )}
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <div className="space-y-6">
                 {/* Configuration Card */}
                 <Card>
                     <CardHeader>
@@ -183,55 +305,7 @@ export default function AdminNotificationsPage() {
                         </div>
                     </CardContent>
                 </Card>
-
-                {/* Manual Push Card */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Bell className="h-5 w-5 text-indigo-600" />
-                            Send Manual Broadcast
-                        </CardTitle>
-                        <CardDescription>
-                            Send a custom push notification to all users who have the app installed.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Notification Title</label>
-                            <Input
-                                placeholder="e.g., Live Class Starting Soon!"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Message Details</label>
-                            <Textarea
-                                placeholder="e.g., Join us now for the weekly catchup..."
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                                rows={4}
-                            />
-                        </div>
-
-                        <Button
-                            onClick={handleSend}
-                            disabled={isLoading}
-                            className="w-full bg-indigo-600 hover:bg-indigo-700"
-                        >
-                            {isLoading ? "Sending..." : (
-                                <>
-                                    <Send className="w-4 h-4 mr-2" />
-                                    Send Notification
-                                </>
-                            )}
-                        </Button>
-                        <p className="text-xs text-muted-foreground text-center mt-2">
-                            Note: Delivery depends on user device settings and internet connection.
-                        </p>
-                    </CardContent>
-                </Card>
+                </div>
             </div>
 
             {/* Analytics Card */}
