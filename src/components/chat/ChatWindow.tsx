@@ -772,7 +772,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
         <div className="flex flex-col h-full bg-slate-50 dark:bg-black/20">
             {/* Header */}
             <div className="sticky top-0 flex items-center gap-3 p-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm z-20">
-                <Button variant="ghost" size="icon" className="md:hidden" onClick={onBack}>
+                <Button variant="ghost" size="icon" className="mr-1" onClick={onBack}>
                     <ArrowLeft className="w-5 h-5" />
                 </Button>
                 <Avatar className={cn(

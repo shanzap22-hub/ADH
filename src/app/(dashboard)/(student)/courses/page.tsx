@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { CoursesList } from "@/components/courses-list";
 import { BookOpen, AlertCircle } from "lucide-react";
+import { GoBackButton } from "@/components/ui/go-back-button";
 
 // 2026 Performance: ISR with shorter revalidation for course listings
 // Balances freshness with performance (revalidate every 10 minutes)
@@ -51,7 +52,8 @@ export default async function CoursesPage() {
         <div className="min-h-screen bg-[#f7f6ff] dark:bg-slate-950 pb-28 md:pb-8">
             {/* Page Header */}
             <div className="px-4 md:px-8 pt-5 md:pt-8 pb-4">
-                <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                <GoBackButton />
+                <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2 mt-2">
                     My Programs
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mt-0.5">

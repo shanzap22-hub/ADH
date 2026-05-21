@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/client";
 import { LiveCountDown } from "@/components/live/LiveCountDown";
 import { ReschedulePicker } from "@/components/booking/ReschedulePicker";
 import { LiveSessionCardSkeleton } from "@/components/skeletons/live-page-skeleton";
+import { GoBackButton } from "@/components/ui/go-back-button";
 
 interface LiveSession {
     id: string;
@@ -169,6 +170,7 @@ export default function LivePage() {
             )}
 
             <div className="flex flex-col gap-2">
+                <GoBackButton />
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 bg-clip-text text-transparent tracking-tight">Live Sessions</h1>
                 <p className="text-slate-500 text-base max-w-2xl">
                     Join expert-led sessions and manage your 1-on-1 mentorship bookings.

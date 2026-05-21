@@ -299,7 +299,7 @@ export function AIChatInterface({ onBack, onClose }: AIChatInterfaceProps) {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="md:hidden -ml-2 text-slate-500"
+                            className="-ml-2 text-slate-500"
                             onClick={onBack}
                         >
                             <ArrowLeft className="w-5 h-5" />

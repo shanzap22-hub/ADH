@@ -5,6 +5,7 @@ import { RevenueLadder } from "@/components/journey/RevenueLadder";
 import { DailyRituals } from "@/components/journey/DailyRituals";
 import { MembershipBadge } from "@/components/membership/MembershipBadge";
 import { GraduationCap, TrendingUp, Sparkles } from "lucide-react";
+import { GoBackButton } from "@/components/ui/go-back-button";
 
 export const dynamic = 'force-dynamic';
 
@@ -131,6 +132,7 @@ export default async function MyJourneyPage() {
 
     return (
         <div className="p-6 space-y-8 max-w-7xl mx-auto pb-24">
+            <GoBackButton />
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
