@@ -149,7 +149,7 @@ export default function LivePage() {
     }
 
     return (
-        <div className="p-6 md:p-8 space-y-8 bg-slate-50 min-h-screen">
+        <div className="px-6 py-4 md:px-8 md:py-6 space-y-8 bg-slate-50 min-h-screen">
 
             {/* Reschedule Modal Overlay */}
             {rescheduleBooking && (

@@ -51,7 +51,7 @@ export default async function CoursesPage() {
     return (
         <div className="min-h-screen bg-[#f7f6ff] dark:bg-slate-950 pb-28 md:pb-8">
             {/* Page Header */}
-            <div className="px-4 md:px-8 pt-5 md:pt-8 pb-4">
+            <div className="px-4 md:px-8 pt-3 md:pt-4 pb-4">
                 <GoBackButton />
                 <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2 mt-2">
                     My Programs

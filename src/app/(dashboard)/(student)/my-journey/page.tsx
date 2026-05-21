@@ -131,7 +131,7 @@ export default async function MyJourneyPage() {
     const overallProgress = ritualProgress * 100;
 
     return (
-        <div className="p-6 space-y-8 max-w-7xl mx-auto pb-24">
+        <div className="px-6 pt-4 pb-6 space-y-8 max-w-7xl mx-auto md:pb-24">
             <GoBackButton />
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
