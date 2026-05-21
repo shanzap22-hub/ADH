@@ -101,6 +101,17 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  // Automatically redirect /privacy-policy to /privacy for ease of use
+  async redirects() {
+    return [
+      {
+        source: '/privacy-policy',
+        destination: '/privacy',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default withBundleAnalyzer(withSerwist(nextConfig));
