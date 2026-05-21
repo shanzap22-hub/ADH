@@ -239,13 +239,22 @@ export default function ChatPageClient({
                                 </>
                             ) : (
                                 <>
-                                    <p className="text-base font-semibold text-slate-800 dark:text-slate-200">
-                                        Welcome to the ADH Community! Please agree to our community rule:
+                                    <p className="text-base font-semibold text-slate-800 dark:text-slate-200 mb-2">
+                                        Welcome to the ADH Community! Please review our community guidelines:
                                     </p>
-                                    <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-xl p-5 text-amber-800 dark:text-amber-300 font-bold text-base leading-relaxed text-center my-4 shadow-sm">
-                                        നിങ്ങളുടെ ഫോൺ നമ്പറോ വ്യക്തിഗത വിവരങ്ങളോ ഈ ചാറ്റിൽ പങ്കുവെക്കരുത്.
-                                    </div>
-                                    <p className="text-xs text-slate-500 mt-4">By clicking "I Agree", you acknowledge that you have read and understood this rule.</p>
+                                    <ul className="list-disc pl-5 space-y-3 mb-4">
+                                        <li><strong>Respect & Kindness:</strong> Treat all members with respect. Harassment, hate speech, bullying, and abusive language are strictly prohibited.</li>
+                                        <li><strong>No Spam:</strong> Do not post unauthorized advertisements, promotional links, or spam.</li>
+                                        <li><strong>Appropriate Content:</strong> Keep discussions relevant. Do not share inappropriate, explicit, or illegal content.</li>
+                                        <li>
+                                            <strong className="text-amber-600 dark:text-amber-400">Privacy (പ്രധാനം):</strong> Do not share personal information. 
+                                            <div className="mt-1 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded p-2 text-amber-800 dark:text-amber-300 font-bold text-sm">
+                                                നിങ്ങളുടെ ഫോൺ നമ്പറോ വ്യക്തിഗത വിവരങ്ങളോ ഈ ചാറ്റിൽ പങ്കുവെക്കരുത്.
+                                            </div>
+                                        </li>
+                                        <li><strong>Reporting:</strong> Violators of these guidelines may be temporarily or permanently removed from the community.</li>
+                                    </ul>
+                                    <p className="text-xs text-slate-500 mt-4">By clicking "I Agree", you acknowledge that you have read and agree to follow these guidelines.</p>
                                 </>
                             )}
                         </div>
