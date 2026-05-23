@@ -60,44 +60,59 @@ export async function GET(req: Request) {
 
             console.log(`Found ${bookings.length} bookings for ${label} reminder.`);
 
-            for (const booking of bookings) {
-                const startDt = new Date(booking.start_time);
-                const dateStr = startDt.toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
-                const timeStr = startDt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' });
-                const link = booking.meet_link || "https://meet.google.com";
+            // ഇമെയിൽ ഡിസ്പാച്ചുകൾ പാരലൽ ആയി അയക്കുന്നു (നെറ്റ്‌വർക്ക് വൈകൽ ഇല്ലാതാക്കാൻ)
+            await Promise.all(bookings.map(async (booking) => {
+                try {
+                    const startDt = new Date(booking.start_time);
+                    const dateStr = startDt.toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
+                    const timeStr = startDt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' });
+                    const link = booking.meet_link || "https://meet.google.com";
 
-                // Resolve Student Details
-                const s: any = booking.student;
-                const i: any = booking.instructor;
-                
-                const sPhone = s ? (s.phone || s.mobile || s.contact_number || s.whatsapp_number || "N/A") : "N/A";
-                const studentDetails = s ? { name: s.full_name, email: s.email, phone: sPhone } : undefined;
+                    // Resolve Student Details
+                    const s: any = booking.student;
+                    const i: any = booking.instructor;
+                    
+                    const sPhone = s ? (s.phone || s.mobile || s.contact_number || s.whatsapp_number || "N/A") : "N/A";
+                    const studentDetails = s ? { name: s.full_name, email: s.email, phone: sPhone } : undefined;
 
-                // Send to Student
-                if (s) {
-                    await sendBookingReminder(
-                        s.email,
-                        s.full_name,
-                        dateStr, timeStr, link, timeLeftText,
-                        studentDetails
-                    );
+                    const emailPromises: Promise<any>[] = [];
+
+                    // Send to Student
+                    if (s) {
+                        emailPromises.push(sendBookingReminder(
+                            s.email,
+                            s.full_name,
+                            dateStr, timeStr, link, timeLeftText,
+                            studentDetails
+                        ));
+                    }
+                    // Send to Instructor
+                    if (i) {
+                        emailPromises.push(sendBookingReminder(
+                            i.email,
+                            i.full_name,
+                            dateStr, timeStr, link, timeLeftText,
+                            studentDetails
+                        ));
+                    }
+
+                    await Promise.all(emailPromises);
+                } catch (err) {
+                    console.error(`Error sending reminder for booking ${booking.id}:`, err);
                 }
-                // Send to Instructor
-                if (i) {
-                    await sendBookingReminder(
-                        i.email,
-                        i.full_name,
-                        dateStr, timeStr, link, timeLeftText,
-                        studentDetails
-                    );
-                }
+            }));
 
-                // Update Flag
-                await supabaseAdmin
-                    .from('bookings')
-                    .update({ [flagColumn]: true })
-                    .eq('id', booking.id);
+            // ഒരൊറ്റ സുപബേസ് അപ്‌ഡേറ്റ് ക്വറിയിലൂടെ എല്ലാ ഫ്ലാഗുകളും ഒരുമിച്ച് മാറ്റുന്നു (ഡാറ്റാബേസ് ലോഡ് കുറയ്ക്കാൻ)
+            const bookingIds = bookings.map(b => b.id);
+            const { error: updateError } = await supabaseAdmin
+                .from('bookings')
+                .update({ [flagColumn]: true })
+                .in('id', bookingIds);
+
+            if (updateError) {
+                console.error(`Error batch updating booking flags:`, updateError);
             }
+
             return bookings.length;
         };
 

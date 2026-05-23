@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
+import { after } from "next/server";
 
 import { sendOneSignalNotification } from "@/lib/notifications";
 import { uploadToR2 } from "./r2";
@@ -158,8 +159,8 @@ export async function sendChatMessage(
         return { success: false, error: error.message };
     }
 
-    // 2. Trigger Notification (Background)
-    (async () => {
+    // 2. Trigger Notification (Background via Next.js after)
+    after(async () => {
         try {
             // Check if Group
             const { data: conversation } = await supabase
@@ -202,7 +203,7 @@ export async function sendChatMessage(
         } catch (e) {
             console.error("Notification Trigger Error:", e);
         }
-    })();
+    });
 
     return { success: true, data };
 }

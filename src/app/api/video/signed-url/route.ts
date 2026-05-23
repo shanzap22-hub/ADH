@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import crypto from "crypto";
 
 /**
@@ -52,34 +53,35 @@ export async function GET(req: Request) {
                              userRole === "instructor";
 
         if (!isPrivileged && courseId) {
-            const { createClient: createSupabaseClient } = await import("@supabase/supabase-js");
             const supabaseAdmin = createSupabaseClient(
                 process.env.NEXT_PUBLIC_SUPABASE_URL!,
                 process.env.SUPABASE_SERVICE_ROLE_KEY!
             );
 
-            // Tier-based access check
-            const { data: tierAccess } = await supabaseAdmin
-                .from("course_tier_access")
-                .select("tier")
-                .eq("course_id", courseId)
-                .eq("tier", userTier);
+            // മൂന്ന് ഡാറ്റാബേസ് ക്വറികളും ഒരേ സമയം (Parallel) റൺ ചെയ്യപ്പെടുന്നു (സ്പീഡ് കൂട്ടാൻ)
+            const [tierAccessResult, purchaseResult, freeChapterResult] = await Promise.all([
+                supabaseAdmin
+                    .from("course_tier_access")
+                    .select("tier")
+                    .eq("course_id", courseId)
+                    .eq("tier", userTier),
+                supabaseAdmin
+                    .from("purchases")
+                    .select("id")
+                    .eq("user_id", user.id)
+                    .eq("course_id", courseId)
+                    .maybeSingle(),
+                supabaseAdmin
+                    .from("chapters")
+                    .select("id")
+                    .eq("course_id", courseId)
+                    .eq("is_free", true)
+                    .limit(1)
+            ]);
 
-            // Direct purchase check
-            const { data: purchase } = await supabaseAdmin
-                .from("purchases")
-                .select("id")
-                .eq("user_id", user.id)
-                .eq("course_id", courseId)
-                .maybeSingle();
-
-            // Chapter free check
-            const { data: freeChapter } = await supabaseAdmin
-                .from("chapters")
-                .select("id")
-                .eq("course_id", courseId)
-                .eq("is_free", true)
-                .limit(1);
+            const tierAccess = tierAccessResult.data;
+            const purchase = purchaseResult.data;
+            const freeChapter = freeChapterResult.data;
 
             const hasTierAccess = tierAccess && tierAccess.length > 0;
             const hasPurchase = !!purchase;

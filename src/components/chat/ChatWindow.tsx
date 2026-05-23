@@ -498,7 +498,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                 setMediaFile(file);
                 setImagePreview(image.webPath);
                 console.log('[IMAGE_PICK] ✅ Image attached successfully!');
-                toast.success("Image attached!");
+                toast.success("Image attached!", { duration: 600 });
             } else {
                 console.log('[IMAGE_PICK] 🌐 Using web file input...');
                 // Use file input for web
@@ -583,23 +583,18 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                 const formData = new FormData();
                 formData.append("file", mediaFile);
 
-                // Use API route instead of server action (same as AI Chat)
-                const res = await fetch('/api/upload/bunny?folder=chat-media', {
-                    method: 'POST',
-                    body: formData
-                });
+                // Use R2 Server Action (same as voice note) to bypass Bunny.net upload entirely
+                const uploadRes = await uploadChatMedia(formData);
 
-                if (!res.ok) {
-                    const errorData = await res.json();
-                    console.error('[UPLOAD] ❌ Upload failed:', errorData);
-                    toast.error("Upload failed", { id: 'upload' });
+                if (uploadRes.error) {
+                    console.error('[UPLOAD] ❌ Upload failed:', uploadRes.error);
+                    toast.error("Upload failed: " + uploadRes.error, { id: 'upload' });
                     // Remove optimistic message on failure
                     setMessages(prev => prev.filter(m => m.id !== tempId));
-                    throw new Error(errorData.error || 'Upload failed');
+                    throw new Error(uploadRes.error);
                 }
 
-                const data = await res.json();
-                finalMediaUrl = data.url;
+                finalMediaUrl = uploadRes.url;
 
                 // Update optimistic message with real URL if needed
                 if (finalMediaUrl) {
@@ -607,7 +602,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
                 }
 
                 console.log('[UPLOAD] ✅ Upload complete:', finalMediaUrl);
-                toast.success("Image uploaded!", { id: 'upload' });
+                toast.success("Image uploaded!", { id: 'upload', duration: 600 });
             }
 
             const result = await sendChatMessage(
@@ -772,7 +767,7 @@ export function ChatWindow({ conversationId, chatInfo, currentUserId, currentUse
         <div className="flex flex-col h-full bg-slate-50 dark:bg-black/20">
             {/* Header */}
             <div className="sticky top-0 flex items-center gap-3 p-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm z-20">
-                <Button variant="ghost" size="icon" className="mr-1" onClick={onBack}>
+                <Button variant="ghost" size="icon" className="mr-1 md:hidden" onClick={onBack}>
                     <ArrowLeft className="w-5 h-5" />
                 </Button>
                 <Avatar className={cn(

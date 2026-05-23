@@ -122,7 +122,7 @@ export function AIChatInterface({ onBack, onClose }: AIChatInterfaceProps) {
 
             if (result.url) {
                 setImageUrl(result.url);
-                toast.success("Image attached!");
+                toast.success("Image attached!", { duration: 600 });
                 setTimeout(() => {
                     if (textareaRef.current) {
                         textareaRef.current.focus();

@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 // Streaming response - allow up to 60 seconds
 export const maxDuration = 60;
@@ -11,15 +12,25 @@ const DAILY_MESSAGE_LIMIT = 50; // ഓരോ user-നും ദിവസം 50 m
 const MAX_HISTORY_MESSAGES = 8; // Context-ന് അവസാന 8 messages മാത്രം (token save)
 const MAX_OUTPUT_TOKENS = 2048; // ഡീറ്റെയിൽഡ് answers-ന് enough, free tier-ന് safe
 
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+    let binary = "";
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+}
+
 async function fetchImageAsBase64(url: string) {
     try {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
         const arrayBuffer = await response.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
+        const base64 = arrayBufferToBase64(arrayBuffer);
         return {
             inlineData: {
-                data: buffer.toString('base64'),
+                data: base64,
                 mimeType: response.headers.get('content-type') || 'image/jpeg'
             }
         };
@@ -192,11 +203,18 @@ ${retrievedContext ? `\n[Context from Knowledge Base]:\n${retrievedContext}` : '
         // History: Newest → Oldest. Skip current message (index 0), then reverse.
         const rawHistory = history && history.length > 0 ? history.slice(1).reverse() : [];
 
-        for (const msg of rawHistory) {
+        // സിസ്റ്റം എറർ മെസ്സേജുകൾ ഫിൽറ്റർ ചെയ്ത് ഒഴിവാക്കുന്നു (AI കൺഫ്യൂഷൻ ഒഴിവാക്കാൻ)
+        const cleanHistory = rawHistory.filter(msg => 
+            msg.content && 
+            !msg.content.includes("Sorry, I encountered an error") && 
+            !msg.content.includes("Something went wrong")
+        );
+
+        for (const msg of cleanHistory) {
             const role = msg.role === 'user' ? 'user' : 'model';
             const text = msg.content || '[Image Attachment]';
 
-            // Merge consecutive same-role messages
+            // ഒരേ റോൾ തുടർച്ചയായി വന്നാൽ മെസ്സേജുകൾ ഒരുമിപ്പിക്കുന്നു (Merge)
             if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === role) {
                 chatHistory[chatHistory.length - 1].parts[0].text += "\n\n" + text;
             } else {
@@ -205,6 +223,11 @@ ${retrievedContext ? `\n[Context from Knowledge Base]:\n${retrievedContext}` : '
                     parts: [{ text: text }]
                 });
             }
+        }
+
+        // Gemini API നിയമപ്രകാരം ചരിത്രം എപ്പോഴും 'user' മെസ്സേജിൽ മാത്രമേ തുടങ്ങാവൂ
+        while (chatHistory.length > 0 && chatHistory[0].role !== 'user') {
+            chatHistory.shift();
         }
 
         // --- PREPARE PROMPT ---

@@ -65,15 +65,16 @@ export async function POST(req: Request) {
         const hostname = REGION === 'de' ? 'storage.bunnycdn.com' : `${REGION}.storage.bunnycdn.com`;
         const uploadUrl = `https://${hostname}/${STORAGE_ZONE}/${filename}`;
 
-        const arrayBuffer = await file.arrayBuffer();
-
+        // മെമ്മറിയിൽ മുഴുവനായി ലോഡ് ചെയ്യാതെ സ്ട്രീം ആയി ഫയൽ Bunny-ലേക്ക് പൈപ്പ് ചെയ്യുന്നു (മെമ്മറി സേവ് ചെയ്യാൻ)
         const response = await fetch(uploadUrl, {
             method: "PUT",
             headers: {
                 "AccessKey": ACCESS_KEY,
                 "Content-Type": contentType,
             },
-            body: Buffer.from(arrayBuffer),
+            body: file.stream() as any,
+            // @ts-ignore - Node.js fetch-ൽ സ്ട്രീം അയക്കാൻ duplex സെറ്റ് ചെയ്യേണ്ടതുണ്ട്
+            duplex: "half",
         });
 
         if (!response.ok) {

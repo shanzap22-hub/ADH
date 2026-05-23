@@ -86,9 +86,7 @@ export default async function ChapterDetailPage({
                 <div className="flex-1 w-full overflow-y-auto">
                     <div className="max-w-6xl mx-auto w-full p-4 md:p-6 space-y-4">
 
-                        <div className="flex items-start justify-between">
-                            <CourseContentBackButton href={`/courses/${courseId}`} label="Back to Course" />
-                        </div>
+
 
                         {/* 2. Title & Status */}
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">

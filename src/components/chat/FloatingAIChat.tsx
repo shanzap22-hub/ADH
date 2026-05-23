@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bot, Sparkles } from "lucide-react";
 import { AIChatInterface } from "./AIChatInterface";
 import { cn } from "@/lib/utils";
@@ -11,12 +11,22 @@ interface FloatingAIChatProps {
 
 export const FloatingAIChat = ({ isAllowed }: FloatingAIChatProps) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsDesktop(window.innerWidth >= 1024);
+        };
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     if (!isAllowed) return null;
 
     return (
         <>
-            {/* Floating Toggle Button */}
+            {/* Floating Toggle Button - 100% Reliable Inline Styles to Bypass Cache/Compile Issues */}
             {!isOpen && (
                 <button
                     onClick={() => setIsOpen(true)}
@@ -27,10 +37,9 @@ export const FloatingAIChat = ({ isAllowed }: FloatingAIChatProps) => {
                         "group hover:shadow-pink-500/25 border border-white/20"
                     )}
                     style={{
-                        // LessonNavigation ബാറിന് മുകളിൽ (~80px) ബട്ടൺ വരുന്ന രീതിയിൽ
-                        bottom: "90px",
-                        right: "20px",
-                        zIndex: 60,
+                        bottom: isDesktop ? "80px" : "96px", // കമ്പ്യൂട്ടറിൽ ഫുൾസ്ക്രീൻ ബട്ടണുമായി മുട്ടാതിരിക്കാൻ അല്പം മുകളിലേക്ക് (80px) ഉയർത്തി വെക്കുന്നു
+                        right: isDesktop ? "24px" : "20px",
+                        zIndex: 100, // ഇതര എലമെന്റുകൾക്ക് മുകളിൽ വരാൻ zIndex കൂട്ടിയിട്ടുണ്ട്
                     }}
                     aria-label="Ask AI Coach"
                 >
@@ -40,7 +49,7 @@ export const FloatingAIChat = ({ isAllowed }: FloatingAIChatProps) => {
                 </button>
             )}
 
-            {/* Chat Panel Window */}
+            {/* Chat Panel Window - 100% Reliable Inline Styles for Desktop Sizing (max 420px) and Mobile stretch */}
             {isOpen && (
                 <div
                     className={cn(
@@ -49,13 +58,13 @@ export const FloatingAIChat = ({ isAllowed }: FloatingAIChatProps) => {
                         "animate-in fade-in slide-in-from-bottom-5 duration-300"
                     )}
                     style={{
-                        // മൊബൈൽ + ഡെസ്ക്ടോപ്പ് — LessonNavigation-ന് മുകളിൽ
-                        bottom: "90px",
-                        right: "16px",
-                        left: "16px",
-                        height: "48dvh",
-                        maxHeight: "420px",
-                        zIndex: 60,
+                        bottom: isDesktop ? "24px" : "96px",
+                        right: isDesktop ? "24px" : "16px",
+                        left: isDesktop ? "auto" : "16px",
+                        width: isDesktop ? "420px" : "auto",
+                        height: isDesktop ? "550px" : "48dvh",
+                        maxHeight: isDesktop ? "600px" : "420px",
+                        zIndex: 100,
                     }}
                 >
                     <AIChatInterface onClose={() => setIsOpen(false)} />

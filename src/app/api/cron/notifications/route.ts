@@ -38,22 +38,27 @@ export async function GET(req: Request) {
                 .eq("reminder_sent", false);
 
             if (upcomingLives && upcomingLives.length > 0) {
-                for (const session of upcomingLives) {
-                    await sendOneSignalNotification(
-                        "⏰ Mastermind Reminder",
-                        `"${session.title}" starts in less than an hour! Get ready to join.`,
-                        ['All'],
-                        { url: session.join_url }
-                    );
+                // പാരലൽ ആയി നോട്ടിഫിക്കേഷനുകൾ അയക്കുന്നു (കൂടുതൽ സ്പീഡ് ലഭിക്കാൻ)
+                await Promise.all(upcomingLives.map(async (session) => {
+                    try {
+                        await sendOneSignalNotification(
+                            "⏰ Mastermind Reminder",
+                            `"${session.title}" starts in less than an hour! Get ready to join.`,
+                            ['All'],
+                            { url: session.join_url }
+                        );
+                        results.live_reminders++;
+                    } catch (e) {
+                        console.error("Failed to send live reminder notification:", e);
+                    }
+                }));
 
-                    // Mark as sent
-                    await supabaseAdmin
-                        .from("weekly_live_sessions")
-                        .update({ reminder_sent: true })
-                        .eq("id", session.id);
-
-                    results.live_reminders++;
-                }
+                // ഒരൊറ്റ ക്വറിയിലൂടെ എല്ലാ ഫ്ലാഗുകളും ഒരുമിച്ച് മാറ്റുന്നു
+                const sessionIds = upcomingLives.map(s => s.id);
+                await supabaseAdmin
+                    .from("weekly_live_sessions")
+                    .update({ reminder_sent: true })
+                    .in("id", sessionIds);
             }
         }
 
@@ -72,21 +77,27 @@ export async function GET(req: Request) {
                 .eq("start_notification_sent", false);
 
             if (startedLives && startedLives.length > 0) {
-                for (const session of startedLives) {
-                    await sendOneSignalNotification(
-                        "🔴 Live Now!",
-                        `"${session.title}" has started. Join the session now!`,
-                        ['All'],
-                        { url: session.join_url }
-                    );
+                // പാരലൽ ആയി നോട്ടിഫിക്കേഷനുകൾ അയക്കുന്നു
+                await Promise.all(startedLives.map(async (session) => {
+                    try {
+                        await sendOneSignalNotification(
+                            "🔴 Live Now!",
+                            `"${session.title}" has started. Join the session now!`,
+                            ['All'],
+                            { url: session.join_url }
+                        );
+                        results.live_start++;
+                    } catch (e) {
+                        console.error("Failed to send live start notification:", e);
+                    }
+                }));
 
-                    await supabaseAdmin
-                        .from("weekly_live_sessions")
-                        .update({ start_notification_sent: true })
-                        .eq("id", session.id);
-
-                    results.live_start++;
-                }
+                // ഒരൊറ്റ ക്വറിയിലൂടെ ഫ്ലാഗുകൾ ഒരുമിച്ച് അപ്‌ഡേറ്റ് ചെയ്യുന്നു
+                const sessionIds = startedLives.map(s => s.id);
+                await supabaseAdmin
+                    .from("weekly_live_sessions")
+                    .update({ start_notification_sent: true })
+                    .in("id", sessionIds);
             }
         }
 
@@ -105,32 +116,38 @@ export async function GET(req: Request) {
                 .eq("reminder_sent", false);
 
             if (upcomingBookings && upcomingBookings.length > 0) {
-                for (const booking of upcomingBookings) {
-                    // Notify User
-                    await sendOneSignalNotification(
-                        "Starting Soon ⏳",
-                        `Your 1-on-1 with ${booking.instructor?.full_name || 'Instructor'} starts in 15 minutes.`,
-                        undefined,
-                        { url: booking.meet_link || '/dashboard' },
-                        [booking.user_id]
-                    );
+                // പാരലൽ ആയി മെസ്സേജുകൾ അയക്കുന്നു
+                await Promise.all(upcomingBookings.map(async (booking) => {
+                    try {
+                        const userPromise = sendOneSignalNotification(
+                            "Starting Soon ⏳",
+                            `Your 1-on-1 with ${booking.instructor?.full_name || 'Instructor'} starts in 15 minutes.`,
+                            undefined,
+                            { url: booking.meet_link || '/dashboard' },
+                            [booking.user_id]
+                        );
 
-                    // Notify Instructor
-                    await sendOneSignalNotification(
-                        "Session Reminder ⏳",
-                        `Your session starts in 15 minutes.`,
-                        undefined,
-                        { url: booking.meet_link || '/dashboard' },
-                        [booking.instructor_id]
-                    );
+                        const instructorPromise = sendOneSignalNotification(
+                            "Session Reminder ⏳",
+                            `Your session starts in 15 minutes.`,
+                            undefined,
+                            { url: booking.meet_link || '/dashboard' },
+                            [booking.instructor_id]
+                        );
 
-                    await supabaseAdmin
-                        .from("bookings")
-                        .update({ reminder_sent: true })
-                        .eq("id", booking.id);
+                        await Promise.all([userPromise, instructorPromise]);
+                        results.one_on_one_reminders++;
+                    } catch (e) {
+                        console.error("Failed to send 1-on-1 notifications:", e);
+                    }
+                }));
 
-                    results.one_on_one_reminders++;
-                }
+                // ഒരുമിച്ച് അപ്‌ഡേറ്റ് ചെയ്യുന്നു
+                const bookingIds = upcomingBookings.map(b => b.id);
+                await supabaseAdmin
+                    .from("bookings")
+                    .update({ reminder_sent: true })
+                    .in("id", bookingIds);
             }
         }
 

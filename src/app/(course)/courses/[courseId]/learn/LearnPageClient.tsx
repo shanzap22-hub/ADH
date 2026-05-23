@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LessonViewer } from "@/components/course/LessonViewer";
 import { LessonNavigation } from "@/components/course/LessonNavigation";
@@ -30,6 +31,16 @@ export default function LearnPageClient({
     chapters
 }: LearnPageClientProps) {
     const router = useRouter();
+    const [isDesktop, setIsDesktop] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsDesktop(window.innerWidth >= 1024);
+        };
+        handleResize();
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
     const searchParams = useSearchParams();
     const currentLessonId = searchParams.get("lesson");
 
@@ -70,10 +81,7 @@ export default function LearnPageClient({
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col overflow-hidden pt-[env(safe-area-inset-top)]">
-                {/* Back Button Header */}
-                <div className="flex-none p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center">
-                    <CourseContentBackButton href={`/courses/${courseId}`} label="Back to Course" />
-                </div>
+
 
                 <div className="flex-1 overflow-y-auto">
                     <LessonViewer
@@ -89,16 +97,22 @@ export default function LearnPageClient({
                         onComplete={() => {
                             router.refresh();
                         }}
+                        onPrevious={handlePrevious}
+                        onNext={handleNext}
+                        hasPrevious={hasPrevious}
+                        hasNext={hasNext}
                     />
                 </div>
 
-                {/* Navigation */}
-                <LessonNavigation
-                    onPrevious={handlePrevious}
-                    onNext={handleNext}
-                    hasPrevious={hasPrevious}
-                    hasNext={hasNext}
-                />
+                {/* Navigation - കമ്പ്യൂട്ടറിൽ ഈ നാവിഗേഷൻ ബാറും അതിന്റെ പാഡിങ്ങും പൂർണ്ണമായി ഒഴിവാക്കുന്നു */}
+                {!isDesktop && (
+                    <LessonNavigation
+                        onPrevious={handlePrevious}
+                        onNext={handleNext}
+                        hasPrevious={hasPrevious}
+                        hasNext={hasNext}
+                    />
+                )}
             </div>
         </div>
     );

@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 export async function awardPointsAction(
     points: number,
@@ -95,8 +96,11 @@ export async function awardPointsAction(
 
         if (updateError) throw updateError;
 
-        revalidatePath("/dashboard");
-        revalidatePath("/profile");
+        // പേജുകൾ റീബിൽഡ് ചെയ്യുന്നത് പശ്ചാത്തലത്തിലേക്ക് മാറ്റുന്നു (യൂസർ റെസ്പോൺസ് ലാഗ് ഒഴിവാക്കാൻ)
+        after(() => {
+            revalidatePath("/dashboard");
+            revalidatePath("/profile");
+        });
         return { success: true, newScore };
     } catch (error) {
         console.error("Error awarding points:", error);
@@ -153,8 +157,11 @@ export async function deductPointsAction(
 
         if (updateError) throw updateError;
 
-        revalidatePath("/dashboard");
-        revalidatePath("/profile");
+        // പേജുകൾ റീബിൽഡ് ചെയ്യുന്നത് പശ്ചാത്തലത്തിലേക്ക് മാറ്റുന്നു (യൂസർ റെസ്പോൺസ് ലാഗ് ഒഴിവാക്കാൻ)
+        after(() => {
+            revalidatePath("/dashboard");
+            revalidatePath("/profile");
+        });
         return { success: true, newScore };
     } catch (error) {
         console.error("Error deducting points:", error);

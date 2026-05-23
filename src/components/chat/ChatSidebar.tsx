@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Users, Bot, Lock } from "lucide-react";
+import { Users, Bot, Lock, ArrowLeft } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { getGlobalGroupChat } from "@/actions/chat-actions";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface ChatSidebarProps {
     currentUserId: string;
@@ -27,6 +28,7 @@ export function ChatSidebar({
 }: ChatSidebarProps) {
     const [groupChat, setGroupChat] = useState<any>(initialGroupChat || null);
     const [supabase] = useState(() => createClient());
+    const router = useRouter();
 
     // Fetch Global Chat only if user has community access AND no initial data
     useEffect(() => {
@@ -61,11 +63,20 @@ export function ChatSidebar({
     return (
         <div className="flex flex-col h-full bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-sm border-r border-white/20 dark:border-slate-800">
             {/* Header */}
-            <div className="p-6 border-b border-white/10 dark:border-slate-800">
-                <h2 className="text-xl font-bold bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 bg-clip-text text-transparent">
-                    Chats
-                </h2>
-                <p className="text-xs text-slate-500 font-medium mt-1">Connect instantly</p>
+            <div className="p-6 border-b border-white/10 dark:border-slate-800 flex items-center gap-3">
+                <button
+                    onClick={() => router.back()}
+                    className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-600 dark:text-slate-400 focus:outline-none cursor-pointer flex items-center justify-center shrink-0"
+                    title="Back"
+                >
+                    <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div>
+                    <h2 className="text-xl font-bold bg-gradient-to-r from-indigo-900 via-pink-600 to-orange-500 bg-clip-text text-transparent">
+                        Chats
+                    </h2>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">Connect instantly</p>
+                </div>
             </div>
 
             {/* Chat List */}

@@ -135,7 +135,8 @@ export function AdminSidebar() {
 
     return (
         <div className="space-y-4 py-4 flex flex-col h-full">
-            <div className="px-3 py-2 flex-1">
+            {/* Navigation Routes - Scrollable */}
+            <div className="px-3 py-2 flex-1 overflow-y-auto min-h-0">
                 <div className="space-y-1">
                     {routes.map((route) => (
                         <Link
@@ -160,8 +161,8 @@ export function AdminSidebar() {
                 </div>
             </div>
 
-            {/* Role Switcher */}
-            <div className="px-3 py-2 border-t">
+            {/* Role Switcher - Sticky at Bottom */}
+            <div className="px-3 py-2 border-t shrink-0">
                 <div className="text-xs font-semibold text-gray-500 mb-2 px-3">
                     SWITCH ROLE
                 </div>
