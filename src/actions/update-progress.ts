@@ -2,6 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { awardPointsAction } from "@/app/actions/gamification";
 
 export async function updateChapterProgress(
     courseId: string,
@@ -80,8 +82,17 @@ export async function updateChapterProgress(
             }
         }
 
-        revalidatePath(`/courses/${courseId}`, "layout");
+        if (isCompleted) {
+            try {
+                await awardPointsAction(5, "Completed Course Chapter", { chapter_id: chapterId }, false);
+            } catch (pError) {
+                console.error("Failed to award points:", pError);
+            }
+        }
 
+        after(() => {
+            revalidatePath(`/courses/${courseId}`, "layout");
+        });
         return { success: true };
     } catch (error) {
         return { success: false, error: "Something went wrong" };

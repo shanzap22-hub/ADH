@@ -34,7 +34,7 @@ export async function PUT(
         }
 
         if (isCompleted) {
-            await awardPointsAction(10, "Completed Course Chapter", { chapter_id: chapterId }, false);
+            await awardPointsAction(5, "Completed Course Chapter", { chapter_id: chapterId }, false);
         }
 
         return NextResponse.json({ success: true });

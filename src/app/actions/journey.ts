@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 export async function toggleRitualAction(ritualId: string, isCompleted: boolean) {
     const supabase = await createClient();
@@ -59,13 +60,8 @@ export async function toggleRitualAction(ritualId: string, isCompleted: boolean)
 
     const completedCount = todayLogs?.length || 0;
 
-    // Points threshold: 2 completed = 5, 4 completed = 10
-    let newDailyPoints = 0;
-    if (completedCount >= 4) {
-        newDailyPoints = 10;
-    } else if (completedCount >= 2) {
-        newDailyPoints = 5;
-    }
+    // ഓരോ ടാസ്കിനും 5 പോയിന്റ് വീതം നൽകുന്നു (5 points per completed task)
+    const newDailyPoints = completedCount * 5;
 
     // ഇന്ന് ഈ reason-ൽ ഇതിന് മുൻപ് എത്ര പോയിന്റ് കൊടുത്തിരുന്നു? (ഇന്ത്യ സമയം പ്രകാരം ഇന്നത്തെ തുടക്കം)
     const kolkataDateStr = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' });
@@ -118,9 +114,11 @@ export async function toggleRitualAction(ritualId: string, isCompleted: boolean)
             .eq("id", user.id);
     }
 
-    revalidatePath("/profile");
-    revalidatePath("/dashboard");
-    revalidatePath("/my-journey");
+    after(() => {
+        revalidatePath("/profile");
+        revalidatePath("/dashboard");
+        revalidatePath("/my-journey");
+    });
     return { success: true };
 }
 
@@ -140,7 +138,9 @@ export async function updateIncomeTargetAction(currentAmount: number) {
         return { success: false, error: error.message };
     }
 
-    revalidatePath("/profile");
+    after(() => {
+        revalidatePath("/profile");
+    });
     return { success: true };
 }
 
@@ -198,8 +198,10 @@ export async function adminUpdateUserJourneyAction(
             });
     }
 
-    revalidatePath("/profile");
-    revalidatePath("/admin/journey");
+    after(() => {
+        revalidatePath("/profile");
+        revalidatePath("/admin/journey");
+    });
     return { success: true };
 }
 
@@ -222,7 +224,9 @@ export async function saveAffirmationsAction(affirmations: string) {
         return { success: false, error: error.message };
     }
 
-    revalidatePath("/profile");
+    after(() => {
+        revalidatePath("/profile");
+    });
     return { success: true };
 }
 
@@ -259,8 +263,10 @@ export async function updateRitualAction(
         return { success: false, error: error.message };
     }
 
-    revalidatePath("/admin/journey");
-    revalidatePath("/profile");
+    after(() => {
+        revalidatePath("/admin/journey");
+        revalidatePath("/profile");
+    });
     return { success: true };
 }
 
@@ -294,7 +300,9 @@ export async function updateJourneyConfigAction(key: string, value: any) {
         return { success: false, error: error.message };
     }
 
-    revalidatePath("/admin/journey");
-    revalidatePath("/profile");
+    after(() => {
+        revalidatePath("/admin/journey");
+        revalidatePath("/profile");
+    });
     return { success: true };
 }
