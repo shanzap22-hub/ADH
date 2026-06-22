@@ -33,6 +33,12 @@ const config: CapacitorConfig = {
       splashFullScreen: true,
       splashImmersive: true,
     },
+    // Fullscreen video-ൽ status bar hide/show control ചെയ്യുക
+    StatusBar: {
+      style: "dark",           // Status bar text colour (dark = black icons)
+      backgroundColor: "#000000",
+      overlaysWebView: false,  // Status bar content-നെ push ചെയ്യും, overlay ചെയ്യില്ല
+    },
   },
   // 2026 Performance: Android WebView optimization
   android: {

@@ -15,8 +15,10 @@ dependencies {
     implementation project(':capacitor-camera')
     implementation project(':capacitor-haptics')
     implementation project(':capacitor-network')
+    implementation project(':capacitor-screen-orientation')
     implementation project(':capacitor-share')
     implementation project(':capacitor-splash-screen')
+    implementation project(':capacitor-status-bar')
     implementation project(':capacitor-secure-storage-plugin')
     implementation "com.onesignal:OneSignal:5.4.2"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.10"

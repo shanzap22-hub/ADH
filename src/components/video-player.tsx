@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { BunnyVideoPlayer } from "@/components/bunny/BunnyVideoPlayer";
+import { useFullscreenOrientation } from "@/hooks/useFullscreenOrientation";
 
 interface VideoPlayerProps {
     chapterId: string;
@@ -29,6 +30,9 @@ export const VideoPlayer = ({
 }: VideoPlayerProps) => {
     const router = useRouter();
     const [isReady, setIsReady] = useState(false);
+    // Fullscreen orientation hook — landscape lock + status bar hide
+    const containerRef = useRef<HTMLDivElement>(null);
+    useFullscreenOrientation(containerRef);
 
     const onEnd = async () => {
         try {
@@ -119,7 +123,7 @@ export const VideoPlayer = ({
     };
 
     return (
-        <div className="relative aspect-video bg-slate-900">
+        <div ref={containerRef} className="relative aspect-video bg-slate-900">
             {!isReady && (
                 <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
                     <Loader2 className="h-8 w-8 animate-spin text-secondary" />

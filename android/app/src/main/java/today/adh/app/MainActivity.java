@@ -1,6 +1,8 @@
 package today.adh.app;
 
 import android.os.Bundle;
+import android.view.View;
+import android.view.WindowManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
@@ -9,6 +11,10 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // ===== IMMERSIVE MODE (Fullscreen video-ന് status bar hide ചെയ്യുക) =====
+        // Window-ൽ FLAG_KEEP_SCREEN_ON set ചെയ്‌ത് video playing-ൽ screen ഓഫ് ആകാതിരിക്കുക
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // Configure WebView for optimal performance and security
         this.bridge.getWebView().post(() -> {
@@ -50,6 +56,37 @@ public class MainActivity extends BridgeActivity {
             // Mixed content mode - block all mixed content (HTTP in HTTPS)
             settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         });
+    }
+
+    /**
+     * Immersive Sticky Mode — fullscreen video-ൽ status bar + nav bar hide ചെയ്യുക
+     * @capacitor/status-bar plugin ഈ method internally call ചെയ്യും
+     */
+    private void enterImmersiveMode() {
+        View decorView = getWindow().getDecorView();
+        decorView.setSystemUiVisibility(
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY        // Swipe ചെയ്‌താൽ auto-hide ആകും
+            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION       // Navigation bar hide
+            | View.SYSTEM_UI_FLAG_FULLSCREEN             // Status bar hide
+        );
+    }
+
+    /**
+     * Normal Mode — status bar + nav bar restore ചെയ്യുക
+     */
+    private void exitImmersiveMode() {
+        View decorView = getWindow().getDecorView();
+        decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        // App focus തിരിച്ചു കിട്ടുമ്പോൾ immersive mode restore ചെയ്യണോ check ചെയ്യുക
+        // (notification bar swipe ചെയ്‌ത ശേഷം video-ലേക്ക് തിരിച്ചു വരുമ്പോൾ)
     }
 
     @Override

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { MetaballLoader } from "@/components/ui/metaball-loader";
+import { useFullscreenOrientation } from "@/hooks/useFullscreenOrientation";
 
 // Add global declaration for playerjs
 declare global {
@@ -39,6 +40,12 @@ export const BunnyVideoPlayer = ({
     const [isReady, setIsReady] = useState(false);
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const playerRef = useRef<any>(null);
+    // Container ref — fullscreen orientation hook-ന് വേണ്ടി
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Fullscreen enter → landscape lock + status bar hide
+    // Fullscreen exit  → unlock + status bar show
+    useFullscreenOrientation(containerRef);
 
     const onEndRef = useRef(onEnd);
     const onProgressRef = useRef(onProgress);
@@ -223,7 +230,7 @@ export const BunnyVideoPlayer = ({
     }
 
     return (
-        <div className={cn("relative aspect-video bg-slate-900 rounded-lg overflow-hidden group", className)}>
+        <div ref={containerRef} className={cn("relative aspect-video bg-slate-900 rounded-lg overflow-hidden group", className)}>
             {/* Cinematic skeleton instead of MetaballLoader */}
             {!isReady && !urlError && (
                 <div className="absolute inset-0 z-10 bg-slate-900 animate-pulse flex items-center justify-center">
