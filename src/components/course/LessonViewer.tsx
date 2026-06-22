@@ -8,6 +8,8 @@ import { updateChapterProgress } from "@/actions/update-progress";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { getVideoEmbedUrl, getVideoType } from "@/lib/video-utils";
+import { useFullscreenOrientation } from "@/hooks/useFullscreenOrientation";
+
 
 interface LessonViewerProps {
     courseId?: string;
@@ -50,6 +52,10 @@ export const LessonViewer = ({
     const router = useRouter();
     const lastSaveTimeRef = useRef<number>(0);
     const [isDesktop, setIsDesktop] = useState(false);
+
+    // Video wrapper container ref for handling fullscreen screen orientation changes
+    const videoContainerRef = useRef<HTMLDivElement>(null);
+    useFullscreenOrientation(videoContainerRef, cleanUrl);
 
     useEffect(() => {
         const handleResize = () => {
@@ -94,7 +100,7 @@ export const LessonViewer = ({
     // video-utils ഉപയ്യോഗിച്ച് video type detect ചെയ്യുക — YouTube short links, shorts, embed ഒക്കെ handle ചെയ്യും
     const videoType = getVideoType(cleanUrl);
     const isBunnyVideo = videoType === "bunny";
-    const bunnyVideoId = isBunnyVideo ? cleanUrl?.replace("bunny://", "") : null;
+    const bunnyVideoId = isBunnyVideo ? cleanUrl?.replace("bunny://", "").split(/[?#]/)[0] : null;
     const isExternalEmbed = videoType === "youtube" || videoType === "vimeo";
 
     return (
@@ -162,6 +168,7 @@ export const LessonViewer = ({
             {/* Video Player - 14 ഇഞ്ച് ലാപ്ടോപ്പ് മുതൽ വലിയ മോണിറ്ററുകളിൽ വരെ സ്ക്രീൻ ഉയരത്തിന് അനുസരിച്ച് (calc(100vh - 110px)) പരമാവധി വലിപ്പത്തിൽ കാണിക്കുന്നു */}
             <div className="w-full bg-slate-50 dark:bg-slate-950/40 flex-none py-0 lg:py-2 border-b border-slate-200 dark:border-slate-800/60">
                 <div 
+                    ref={videoContainerRef}
                     className="relative aspect-video bg-slate-950 w-full mx-auto overflow-hidden lg:rounded-2xl lg:shadow-2xl border border-transparent lg:border-slate-200/80 dark:lg:border-slate-800/80"
                     style={{
                         maxHeight: isDesktop ? "calc(100vh - 110px)" : undefined,
@@ -180,6 +187,7 @@ export const LessonViewer = ({
                                         title={title}
                                         initialTime={lastPlayedSecond}
                                         onProgress={handleProgress}
+                                        disableFullscreenHook={true}
                                         onEnd={async () => {
                                             if (courseId && chapterId && !isCompleted) {
                                                 try {

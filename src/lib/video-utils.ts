@@ -82,3 +82,33 @@ export function getVideoType(url: string | null): "bunny" | "youtube" | "vimeo" 
     if (u.includes("vimeo.com")) return "vimeo";
     return "mp4";
 }
+
+/**
+ * isVerticalVideo
+ * URL നോക്കി അത് ഒരു vertical video ആണോ എന്ന് check ചെയ്യുന്നു.
+ * YouTube Shorts ആണെങ്കിലോ, അല്ലെങ്കിൽ URL-ൽ explicit ആയി vertical orientation parameters
+ * (ഉദാഹരണത്തിന്: ?vertical=true, #vertical, ?orientation=portrait) ഉണ്ടെങ്കിലോ true return ചെയ്യും.
+ */
+export function isVerticalVideo(url: string | null): boolean {
+    if (!url) return false;
+    const u = url.toLowerCase().trim();
+    
+    // YouTube Shorts എപ്പോഴും vertical ആണ്
+    if (u.includes("youtube.com/shorts/") || u.includes("youtu.be/shorts/")) {
+        return true;
+    }
+    
+    // Explicit parameters check ചെയ്യുക (Admin-ന് ഏത് video-യും vertical ആക്കാൻ ഇത് ഉപയോഗിക്കാം)
+    if (
+        u.includes("vertical=true") ||
+        u.includes("portrait=true") ||
+        u.includes("orientation=portrait") ||
+        u.includes("#vertical") ||
+        u.includes("/shorts/") ||
+        u.includes("/reels/")
+    ) {
+        return true;
+    }
+    
+    return false;
+}

@@ -20,6 +20,7 @@ interface BunnyVideoPlayerProps {
     onProgress?: (seconds: number) => void;
     className?: string;
     initialTime?: number;
+    disableFullscreenHook?: boolean;
 }
 
 export const BunnyVideoPlayer = ({
@@ -30,8 +31,12 @@ export const BunnyVideoPlayer = ({
     onProgress,
     className,
     initialTime = 0,
+    disableFullscreenHook = false,
 }: BunnyVideoPlayerProps) => {
     const libraryId = process.env.NEXT_PUBLIC_BUNNY_LIBRARY_ID;
+
+    // query params (ഉദാ: ?vertical=true) ഉണ്ടെങ്കിൽ strip ചെയ്‌ത് clean ID എടുക്കുക
+    const cleanVideoId = videoId.split(/[?#]/)[0];
 
     // Signed URL server-ൽ നിന്ന് fetch ചെയ്യുന്നു (piracy protection)
     const [embedUrl, setEmbedUrl] = useState<string | null>(null);
@@ -43,9 +48,9 @@ export const BunnyVideoPlayer = ({
     // Container ref — fullscreen orientation hook-ന് വേണ്ടി
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Fullscreen enter → landscape lock + status bar hide
+    // Fullscreen enter → orientation lock + status bar hide
     // Fullscreen exit  → unlock + status bar show
-    useFullscreenOrientation(containerRef);
+    useFullscreenOrientation(containerRef, videoId, disableFullscreenHook);
 
     const onEndRef = useRef(onEnd);
     const onProgressRef = useRef(onProgress);
@@ -97,22 +102,23 @@ export const BunnyVideoPlayer = ({
     }, [courseId, libraryId]);
 
     // Video ID change ആകുമ്പോൾ new signed URL fetch ചെയ്യുക
-    const [prevVideoId, setPrevVideoId] = useState(videoId);
-    if (videoId !== prevVideoId) {
-        setPrevVideoId(videoId);
-        fetchSignedUrl(videoId);
+    const [prevVideoId, setPrevVideoId] = useState(cleanVideoId);
+    if (cleanVideoId !== prevVideoId) {
+        setPrevVideoId(cleanVideoId);
+        fetchSignedUrl(cleanVideoId);
     }
 
     // Initial load-ൽ signed URL fetch ചെയ്യുക
     useEffect(() => {
-        fetchSignedUrl(videoId);
+        fetchSignedUrl(cleanVideoId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
         hasEndedRef.current = false;
         isInitialTimeSetRef.current = false;
-    }, [videoId]);
+    }, [cleanVideoId]);
+
 
     const handleCompletion = useCallback(() => {
         if (!hasEndedRef.current) {

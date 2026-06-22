@@ -33,7 +33,7 @@ export const VideoPlayer = ({
     const [isReady, setIsReady] = useState(false);
     // Fullscreen orientation hook — landscape lock + status bar hide
     const containerRef = useRef<HTMLDivElement>(null);
-    useFullscreenOrientation(containerRef);
+    useFullscreenOrientation(containerRef, videoUrl);
 
     const onEnd = async () => {
         try {
@@ -83,7 +83,7 @@ export const VideoPlayer = ({
 
     // Detect video type
     const isBunnyVideo = videoUrl.startsWith('bunny://');
-    const bunnyVideoId = isBunnyVideo ? videoUrl.replace('bunny://', '') : null;
+    const bunnyVideoId = isBunnyVideo ? videoUrl.replace('bunny://', '').split(/[?#]/)[0] : null;
     const isYouTube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
     const isVimeo = videoUrl.includes('vimeo.com');
     const isExternalEmbed = isYouTube || isVimeo;
@@ -96,6 +96,7 @@ export const VideoPlayer = ({
                     videoId={bunnyVideoId}
                     courseId={courseId}
                     title={title}
+                    disableFullscreenHook={true}
                 />
                 {completeOnEnd && (
                     <div className="absolute bottom-4 right-4 z-10">
