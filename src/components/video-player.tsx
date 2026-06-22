@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { BunnyVideoPlayer } from "@/components/bunny/BunnyVideoPlayer";
 import { useFullscreenOrientation } from "@/hooks/useFullscreenOrientation";
+import { getVideoEmbedUrl } from "@/lib/video-utils";
 
 interface VideoPlayerProps {
     chapterId: string;
@@ -110,17 +111,8 @@ export const VideoPlayer = ({
         );
     }
 
-    // Convert YouTube watch URL to embed URL
-    const getEmbedUrl = (url: string) => {
-        if (isYouTube) {
-            return url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/');
-        }
-        if (isVimeo) {
-            const vimeoId = url.split('/').pop();
-            return `https://player.vimeo.com/video/${vimeoId}`;
-        }
-        return url;
-    };
+    // ── YouTube / Vimeo embed URL → shared utility ഉപയോഗിക്കുന്നു
+    // (youtu.be short links, playlist params, shorts ഒക്കെ correctly handle ചെയ്യും)
 
     return (
         <div ref={containerRef} className="relative aspect-video bg-slate-900">
@@ -133,14 +125,16 @@ export const VideoPlayer = ({
             {isExternalEmbed ? (
                 // YouTube/Vimeo iframe embed
                 <iframe
-                    src={getEmbedUrl(videoUrl)}
+                    src={getVideoEmbedUrl(videoUrl)}
                     className={cn(
                         "absolute top-0 left-0 w-full h-full",
                         !isReady && "hidden"
                     )}
+                    title={title}
                     onLoad={() => setIsReady(true)}
                     allowFullScreen
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 />
             ) : (
                 // HTML5 video for Supabase-hosted MP4

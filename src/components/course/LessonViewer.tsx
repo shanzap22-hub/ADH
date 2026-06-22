@@ -7,6 +7,7 @@ import { useState, useTransition, useRef, useCallback, useEffect } from "react";
 import { updateChapterProgress } from "@/actions/update-progress";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { getVideoEmbedUrl, getVideoType } from "@/lib/video-utils";
 
 interface LessonViewerProps {
     courseId?: string;
@@ -90,30 +91,11 @@ export const LessonViewer = ({
         });
     };
 
-    // Detect video type using clean URL
-    const isBunnyVideo = cleanUrl?.startsWith('bunny://');
-    const bunnyVideoId = isBunnyVideo ? cleanUrl?.replace('bunny://', '') : null;
-    const isYouTube = cleanUrl?.includes('youtube.com') || cleanUrl?.includes('youtu.be');
-    const isVimeo = cleanUrl?.includes('vimeo.com');
-    const isExternalEmbed = isYouTube || isVimeo;
-
-    // Convert YouTube/Vimeo URLs to embed format
-    const getEmbedUrl = (url: string) => {
-        if (!url) return '';
-        if (url.includes('youtube.com/watch')) {
-            const videoId = url.split('v=')[1]?.split('&')[0];
-            return `https://www.youtube.com/embed/${videoId}`;
-        }
-        if (url.includes('youtu.be/')) {
-            const videoId = url.split('youtu.be/')[1];
-            return `https://www.youtube.com/embed/${videoId}`;
-        }
-        if (url.includes('vimeo.com')) {
-            const vimeoId = url.split('/').pop();
-            return `https://player.vimeo.com/video/${vimeoId}`;
-        }
-        return url;
-    };
+    // video-utils ഉപയ്യോഗിച്ച് video type detect ചെയ്യുക — YouTube short links, shorts, embed ഒക്കെ handle ചെയ്യും
+    const videoType = getVideoType(cleanUrl);
+    const isBunnyVideo = videoType === "bunny";
+    const bunnyVideoId = isBunnyVideo ? cleanUrl?.replace("bunny://", "") : null;
+    const isExternalEmbed = videoType === "youtube" || videoType === "vimeo";
 
     return (
         <div className="flex-1 bg-white dark:bg-slate-900">
@@ -214,11 +196,13 @@ export const LessonViewer = ({
                                     />
                                 </div>
                             ) : isExternalEmbed ? (
-                                // YouTube/Vimeo
+                                // YouTube/Vimeo — shared utility ഉപയോഗിച്ച് proper embed URL
                                 <iframe
-                                    src={getEmbedUrl(cleanUrl)}
+                                    src={getVideoEmbedUrl(cleanUrl!)}
                                     className="w-full h-full"
-                                    allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                                    title={title}
+                                    referrerPolicy="strict-origin-when-cross-origin"
+                                    allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; web-share"
                                     allowFullScreen
                                 />
                             ) : (
