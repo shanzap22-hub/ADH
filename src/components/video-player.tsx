@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { toast } from "sonner";
 
-import { cn } from "@/lib/utils";
 import { BunnyVideoPlayer } from "@/components/bunny/BunnyVideoPlayer";
 import { useFullscreenOrientation } from "@/hooks/useFullscreenOrientation";
-import { getVideoEmbedUrl } from "@/lib/video-utils";
+import { getVideoType, extractYouTubeId } from "@/lib/video-utils";
+import { YoutubeVideoPlayer } from "@/components/course/YoutubeVideoPlayer";
+import { VimeoVideoPlayer } from "@/components/course/VimeoVideoPlayer";
+import { NativeVideoPlayer } from "@/components/course/NativeVideoPlayer";
 
 interface VideoPlayerProps {
     chapterId: string;
@@ -30,8 +32,6 @@ export const VideoPlayer = ({
     videoUrl,
 }: VideoPlayerProps) => {
     const router = useRouter();
-    const [isReady, setIsReady] = useState(false);
-    // Fullscreen orientation hook — landscape lock + status bar hide
     const containerRef = useRef<HTMLDivElement>(null);
     useFullscreenOrientation(containerRef, videoUrl);
 
@@ -49,7 +49,6 @@ export const VideoPlayer = ({
                 if (nextChapterId) {
                     router.push(`/courses/${courseId}/chapters/${nextChapterId}`);
                 } else {
-                    // Last chapter - refresh to show completion
                     router.refresh();
                 }
             }
@@ -62,8 +61,8 @@ export const VideoPlayer = ({
     if (isLocked) {
         return (
             <div className="relative aspect-video flex items-center justify-center bg-slate-800 flex-col gap-y-2 text-secondary">
-                <Lock className="h-8 w-8" />
-                <p className="text-sm">
+                <Lock className="h-8 w-8 text-slate-400" />
+                <p className="text-sm text-slate-300">
                     This Module is locked
                 </p>
             </div>
@@ -82,77 +81,42 @@ export const VideoPlayer = ({
     }
 
     // Detect video type
-    const isBunnyVideo = videoUrl.startsWith('bunny://');
+    const videoType = getVideoType(videoUrl);
+    const isBunnyVideo = videoType === "bunny";
     const bunnyVideoId = isBunnyVideo ? videoUrl.replace('bunny://', '').split(/[?#]/)[0] : null;
-    const isYouTube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
-    const isVimeo = videoUrl.includes('vimeo.com');
-    const isExternalEmbed = isYouTube || isVimeo;
+    const youtubeId = videoType === "youtube" ? extractYouTubeId(videoUrl) : null;
+    const vimeoId = videoType === "vimeo" ? videoUrl.match(/vimeo\.com\/(?:.*\/)?(\d+)/)?.[1] : null;
 
-    // Bunny.net video
-    if (isBunnyVideo && bunnyVideoId) {
-        return (
-            <div className="relative">
+    return (
+        <div ref={containerRef} className="relative aspect-video bg-slate-900">
+            {isBunnyVideo && bunnyVideoId ? (
                 <BunnyVideoPlayer
                     videoId={bunnyVideoId}
                     courseId={courseId}
                     title={title}
                     disableFullscreenHook={true}
+                    onEnd={onEnd}
                 />
-                {completeOnEnd && (
-                    <div className="absolute bottom-4 right-4 z-10">
-                        <button
-                            onClick={onEnd}
-                            className="bg-emerald-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-emerald-700 transition shadow-lg"
-                        >
-                            Mark as Completed
-                        </button>
-                    </div>
-                )}
-            </div>
-        );
-    }
-
-    // ── YouTube / Vimeo embed URL → shared utility ഉപയോഗിക്കുന്നു
-    // (youtu.be short links, playlist params, shorts ഒക്കെ correctly handle ചെയ്യും)
-
-    return (
-        <div ref={containerRef} className="relative aspect-video bg-slate-900">
-            {!isReady && (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
-                    <Loader2 className="h-8 w-8 animate-spin text-secondary" />
-                </div>
-            )}
-
-            {isExternalEmbed ? (
-                // YouTube/Vimeo iframe embed
-                <iframe
-                    src={getVideoEmbedUrl(videoUrl)}
-                    className={cn(
-                        "absolute top-0 left-0 w-full h-full",
-                        !isReady && "hidden"
-                    )}
+            ) : videoType === "youtube" && youtubeId ? (
+                <YoutubeVideoPlayer
+                    videoId={youtubeId}
+                    onEnd={onEnd}
                     title={title}
-                    onLoad={() => setIsReady(true)}
-                    allowFullScreen
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                />
+            ) : videoType === "vimeo" && vimeoId ? (
+                <VimeoVideoPlayer
+                    videoId={vimeoId}
+                    onEnd={onEnd}
+                    title={title}
                 />
             ) : (
-                // HTML5 video for Supabase-hosted MP4
-                <video
-                    className="absolute top-0 left-0 w-full h-full"
-                    controls
-                    controlsList="nodownload"
-                    onLoadedData={() => setIsReady(true)}
-                    onEnded={onEnd}
-                >
-                    <source src={videoUrl} type="video/mp4" />
-                    Your browser does not support the video tag.
-                </video>
+                <NativeVideoPlayer
+                    src={videoUrl}
+                    onEnd={onEnd}
+                />
             )}
 
-            {/* Manual completion button for iframe videos (since we can't detect onEnded) */}
-            {completeOnEnd && isExternalEmbed && (
+            {completeOnEnd && (videoType === "youtube" || videoType === "vimeo") && (
                 <div className="absolute bottom-4 right-4 z-10">
                     <button
                         onClick={onEnd}

@@ -20,9 +20,9 @@ export const CourseHero = ({
 }: CourseHeroProps) => {
     return (
         <div className="relative overflow-hidden bg-slate-900 rounded-xl border border-slate-700/50">
-            <div className="relative flex flex-col md:flex-row gap-6 p-6">
+            <div className="relative flex flex-col md:flex-row gap-4 p-4 md:gap-6 md:p-6">
                 {/* Image Section - Compact & Left aligned on desktop */}
-                <div className="w-full md:w-1/3 flex-shrink-0">
+                <div className="w-full md:w-1/3 flex-shrink-0 hidden sm:block">
                     <div className="relative aspect-video rounded-lg overflow-hidden bg-slate-800 border border-slate-700">
                         {imageUrl ? (
                             <Image
@@ -41,31 +41,31 @@ export const CourseHero = ({
                 </div>
 
                 {/* Content Section */}
-                <div className="flex flex-col justify-center space-y-3 flex-1">
+                <div className="flex flex-col justify-center space-y-2 md:space-y-3 flex-1">
                     <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/20 w-fit">
                         <Award className="h-3 w-3 text-orange-400" />
-                        <span className="text-xs font-medium text-orange-400">Course</span>
+                        <span className="text-[10px] md:text-xs font-medium text-orange-400">Course</span>
                     </div>
 
-                    <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight">
+                    <h1 className="text-xl md:text-3xl font-bold text-white leading-tight">
                         {title}
                     </h1>
 
                     {description && (
-                        <p className="text-sm md:text-base text-slate-300 line-clamp-2">
+                        <p className="text-xs md:text-base text-slate-300 line-clamp-1 md:line-clamp-2">
                             {description}
                         </p>
                     )}
 
                     {/* Stats */}
-                    <div className="flex items-center gap-4 pt-2">
+                    <div className="flex items-center gap-4 pt-1 md:pt-2">
                         <div className="flex items-center gap-1.5 text-slate-400">
-                            <BookOpen className="h-4 w-4 text-blue-400" />
-                            <span className="text-sm">{chaptersCount} Modules</span>
+                            <BookOpen className="h-3.5 w-3.5 text-blue-400" />
+                            <span className="text-xs md:text-sm">{chaptersCount} Modules</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-slate-400">
-                            <Clock className="h-4 w-4 text-purple-400" />
-                            <span className="text-sm">{lessonsCount} Lessons</span>
+                            <Clock className="h-3.5 w-3.5 text-purple-400" />
+                            <span className="text-xs md:text-sm">{lessonsCount} Lessons</span>
                         </div>
                     </div>
                 </div>

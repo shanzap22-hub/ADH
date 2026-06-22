@@ -2,12 +2,15 @@
 
 import { BookOpen, File, CheckCircle, Loader2, Link2, ChevronLeft, ChevronRight } from "lucide-react";
 import { BunnyVideoPlayer } from "@/components/bunny/BunnyVideoPlayer";
+import { YoutubeVideoPlayer } from "@/components/course/YoutubeVideoPlayer";
+import { VimeoVideoPlayer } from "@/components/course/VimeoVideoPlayer";
+import { NativeVideoPlayer } from "@/components/course/NativeVideoPlayer";
 import { Button } from "@/components/ui/button";
 import { useState, useTransition, useRef, useCallback, useEffect } from "react";
 import { updateChapterProgress } from "@/actions/update-progress";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { getVideoEmbedUrl, getVideoType } from "@/lib/video-utils";
+import { getVideoEmbedUrl, getVideoType, extractYouTubeId } from "@/lib/video-utils";
 import { useFullscreenOrientation } from "@/hooks/useFullscreenOrientation";
 
 
@@ -50,12 +53,120 @@ export const LessonViewer = ({
     const cleanUrl = videoUrl ? videoUrl.trim() : null;
     const [isLoading, startTransition] = useTransition();
     const router = useRouter();
-    const lastSaveTimeRef = useRef<number>(0);
     const [isDesktop, setIsDesktop] = useState(false);
 
     // Video wrapper container ref for handling fullscreen screen orientation changes
     const videoContainerRef = useRef<HTMLDivElement>(null);
     useFullscreenOrientation(videoContainerRef, cleanUrl);
+
+    const currentProgressSecondsRef = useRef<number>(0);
+    const lastDbSaveTimeRef = useRef<number>(0);
+    const lastSavedValueRef = useRef<number>(0);
+
+    const [initialTime, setInitialTime] = useState<number>(0);
+    const [isTimeLoaded, setIsTimeLoaded] = useState(false);
+
+    // Local storage key helper
+    const getStorageKey = useCallback(() => {
+        return `progress-${courseId}-${chapterId}-${unitId || "default"}`;
+    }, [courseId, chapterId, unitId]);
+
+    // Page load-ൽ local storage-ൽ നിന്ന് saved progress വായിക്കുക (അല്ലെങ്കിൽ database value)
+    useEffect(() => {
+        const storageKey = getStorageKey();
+        const localTime = localStorage.getItem(storageKey);
+        if (localTime) {
+            const parsedTime = parseInt(localTime, 10);
+            setInitialTime(parsedTime);
+            currentProgressSecondsRef.current = parsedTime;
+            lastSavedValueRef.current = parsedTime;
+        } else {
+            setInitialTime(lastPlayedSecond || 0);
+            currentProgressSecondsRef.current = lastPlayedSecond || 0;
+            lastSavedValueRef.current = lastPlayedSecond || 0;
+        }
+        setIsTimeLoaded(true);
+    }, [courseId, chapterId, unitId, lastPlayedSecond, getStorageKey]);
+
+    // Supabase ഡാറ്റാബേസിലേക്ക് progress sync ചെയ്യുക
+    const syncProgressToDb = useCallback(async (seconds: number) => {
+        if (!courseId || !chapterId) return;
+        const sec = Math.floor(seconds);
+        
+        // ഒരേ സെക്കൻഡ് വീണ്ടും വീണ്ടും ഡാറ്റാബേസിലേക്ക് അയക്കുന്നത് തടയുക
+        if (sec === lastSavedValueRef.current) return;
+        
+        lastSavedValueRef.current = sec;
+        lastDbSaveTimeRef.current = Date.now();
+        
+        try {
+            await updateChapterProgress(courseId, chapterId, { lastPlayedSecond: sec, unitId });
+        } catch (error) {
+            console.warn("[LessonViewer] Supabase sync failed:", error);
+        }
+    }, [courseId, chapterId, unitId]);
+
+    // വീഡിയോ കണ്ടുകൊണ്ടിരിക്കുമ്പോൾ വിളിക്കുന്ന ഫംഗ്ഷൻ (Option A: 15-second background sync)
+    const handleProgress = useCallback((seconds: number) => {
+        currentProgressSecondsRef.current = seconds;
+        
+        // 1. ലോക്കൽ മെമ്മറിയിൽ ഉടനടി സേവ് ചെയ്യുന്നു (lag-free)
+        if (typeof window !== "undefined") {
+            localStorage.setItem(getStorageKey(), Math.floor(seconds).toString());
+        }
+        
+        // 2. ഓരോ 15 സെക്കൻഡിലും ബാക്ക്ഗ്രൗണ്ടിൽ ഡാറ്റാബേസിലേക്ക് സിങ്ക് ചെയ്യുന്നു
+        const now = Date.now();
+        if (now - lastDbSaveTimeRef.current >= 15000) {
+            syncProgressToDb(seconds);
+        }
+    }, [getStorageKey, syncProgressToDb]);
+
+    // വീഡിയോ pause ചെയ്യുമ്പോൾ ഉടൻ തന്നെ ഡാറ്റാബേസിലേക്ക് സിങ്ക് ചെയ്യുന്നു
+    const handlePause = useCallback(() => {
+        syncProgressToDb(currentProgressSecondsRef.current);
+    }, [syncProgressToDb]);
+
+    // വീഡിയോ തീരുമ്പോൾ ചെയ്യുന്ന കാര്യങ്ങൾ
+    const handleEnd = useCallback(async () => {
+        // local storage ഡാറ്റ ഡിലീറ്റ് ചെയ്യുക
+        if (typeof window !== "undefined") {
+            localStorage.removeItem(getStorageKey());
+        }
+        
+        // അവസാന പ്രോഗ്രസ്സ് ഡാറ്റാബേസിലേക്ക് സിങ്ക് ചെയ്യുക
+        await syncProgressToDb(currentProgressSecondsRef.current);
+
+        // Lesson completed എന്ന് ഡാറ്റാബേസിൽ രേഖപ്പെടുത്തുക
+        if (courseId && chapterId && !isCompleted) {
+            try {
+                await updateChapterProgress(courseId, chapterId, { isCompleted: true, unitId });
+                toast.success("Lesson completed!");
+                if (onComplete) onComplete();
+                router.refresh();
+            } catch (error) {
+                toast.error("Could not mark as complete");
+            }
+        }
+    }, [courseId, chapterId, unitId, isCompleted, onComplete, router, getStorageKey, syncProgressToDb]);
+
+    // ആപ്പ് ബാക്ക്ഗ്രൗണ്ടിലേക്ക് മാറുമ്പോൾ (tab switch/home screen) ഉടൻ തന്നെ സിങ്ക് ചെയ്യുക
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "hidden") {
+                syncProgressToDb(currentProgressSecondsRef.current);
+            }
+        };
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    }, [syncProgressToDb]);
+
+    // കോഴ്സ് പേജിൽ നിന്നും മറ്റൊരു പേജിലേക്ക് നാവിഗേറ്റ് ചെയ്യുമ്പോൾ അവസാന പ്രോഗ്രസ്സ് സേവ് ചെയ്യും
+    useEffect(() => {
+        return () => {
+            syncProgressToDb(currentProgressSecondsRef.current);
+        };
+    }, [syncProgressToDb]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -66,24 +177,15 @@ export const LessonViewer = ({
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    const handleProgress = useCallback((seconds: number) => {
-        const now = Date.now();
-        if (now - lastSaveTimeRef.current > 5000) {
-            lastSaveTimeRef.current = now;
-            if (courseId && chapterId) {
-                const sec = Math.floor(seconds);
-                // unitId ഉണ്ടെങ്കിൽ unit-level upsert, ഇല്ലെങ്കിൽ chapter-level
-                updateChapterProgress(courseId, chapterId, { lastPlayedSecond: sec, unitId })
-                    .catch(() => {});
-            }
-        }
-    }, [courseId, chapterId, unitId]);
-
     const handleMarkAsComplete = () => {
         if (!courseId || !chapterId) return;
 
         startTransition(async () => {
             try {
+                // local storage ക്ലിയർ ചെയ്യുക
+                if (typeof window !== "undefined") {
+                    localStorage.removeItem(getStorageKey());
+                }
                 // unitId ഉള്ളപ്പോൾ unit-level progress update ചെയ്യുക
                 await updateChapterProgress(courseId, chapterId, { isCompleted: !isCompleted, unitId });
                 if (!isCompleted) {
@@ -101,6 +203,8 @@ export const LessonViewer = ({
     const videoType = getVideoType(cleanUrl);
     const isBunnyVideo = videoType === "bunny";
     const bunnyVideoId = isBunnyVideo ? cleanUrl?.replace("bunny://", "").split(/[?#]/)[0] : null;
+    const youtubeId = videoType === "youtube" && cleanUrl ? extractYouTubeId(cleanUrl) : null;
+    const vimeoId = videoType === "vimeo" && cleanUrl ? cleanUrl.match(/vimeo\.com\/(?:.*\/)?(\d+)/)?.[1] : null;
     const isExternalEmbed = videoType === "youtube" || videoType === "vimeo";
 
     return (
@@ -175,7 +279,7 @@ export const LessonViewer = ({
                         maxWidth: isDesktop ? "calc((100vh - 110px) * 1.77)" : undefined,
                     }}
                 >
-                    {cleanUrl ? (
+                    {cleanUrl && isTimeLoaded ? (
                         <>
                             {isBunnyVideo && bunnyVideoId ? (
                                 // Bunny.net Video
@@ -185,44 +289,56 @@ export const LessonViewer = ({
                                         className="w-full h-full border-none rounded-none"
                                         courseId={courseId}
                                         title={title}
-                                        initialTime={lastPlayedSecond}
+                                        initialTime={initialTime}
                                         onProgress={handleProgress}
                                         disableFullscreenHook={true}
-                                        onEnd={async () => {
-                                            if (courseId && chapterId && !isCompleted) {
-                                                try {
-                                                    // unitId ഉണ്ടെങ്കിൽ unit-level completion save ചെയ്യുക
-                                                    await updateChapterProgress(courseId, chapterId, { isCompleted: true, unitId });
-                                                    toast.success("Lesson completed!");
-                                                    if (onComplete) onComplete();
-                                                    router.refresh();
-                                                } catch (error) {
-                                                    toast.error("Could not mark as complete");
-                                                }
-                                            }
-                                        }}
+                                        onEnd={handleEnd}
                                     />
                                 </div>
-                            ) : isExternalEmbed ? (
-                                // YouTube/Vimeo — shared utility ഉപയോഗിച്ച് proper embed URL
-                                <iframe
-                                    src={getVideoEmbedUrl(cleanUrl!)}
-                                    className="w-full h-full"
-                                    title={title}
-                                    referrerPolicy="strict-origin-when-cross-origin"
-                                    allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; web-share"
-                                    allowFullScreen
-                                />
+                            ) : videoType === "youtube" && youtubeId ? (
+                                // YouTube Video
+                                <div className="w-full h-full">
+                                    <YoutubeVideoPlayer
+                                        videoId={youtubeId}
+                                        className="w-full h-full border-none rounded-none"
+                                        initialTime={initialTime}
+                                        onProgress={handleProgress}
+                                        onPause={handlePause}
+                                        onEnd={handleEnd}
+                                        title={title}
+                                    />
+                                </div>
+                            ) : videoType === "vimeo" && vimeoId ? (
+                                // Vimeo Video
+                                <div className="w-full h-full">
+                                    <VimeoVideoPlayer
+                                        videoId={vimeoId}
+                                        className="w-full h-full border-none rounded-none"
+                                        initialTime={initialTime}
+                                        onProgress={handleProgress}
+                                        onPause={handlePause}
+                                        onEnd={handleEnd}
+                                        title={title}
+                                    />
+                                </div>
                             ) : (
-                                // Direct URL (fallback)
-                                <iframe
-                                    src={cleanUrl}
-                                    className="w-full h-full"
-                                    allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
-                                    allowFullScreen
-                                />
+                                // Native MP4 Video or Direct URL Video
+                                <div className="w-full h-full">
+                                    <NativeVideoPlayer
+                                        src={cleanUrl}
+                                        className="w-full h-full border-none rounded-none"
+                                        initialTime={initialTime}
+                                        onProgress={handleProgress}
+                                        onPause={handlePause}
+                                        onEnd={handleEnd}
+                                    />
+                                </div>
                             )}
                         </>
+                    ) : cleanUrl ? (
+                        <div className="absolute inset-0 flex items-center justify-center bg-slate-900 z-10">
+                            <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+                        </div>
                     ) : (
                         <div className="w-full h-full flex items-center justify-center">
                             <div className="text-center">

@@ -42,13 +42,13 @@ export const CourseStartButton = ({
     }
 
     return (
-        <div className="bg-gradient-to-br from-orange-500 to-pink-600 rounded-xl p-6">
-            <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                    <h3 className="text-xl font-bold text-white">
+        <div className="bg-gradient-to-br from-orange-500 to-pink-600 rounded-xl p-4 md:p-6">
+            <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5 md:space-y-1">
+                    <h3 className="text-sm md:text-xl font-bold text-white leading-tight">
                         {hasProgress ? "Continue Learning" : "Start Your Journey"}
                     </h3>
-                    <p className="text-orange-100">
+                    <p className="text-[10px] md:text-sm text-orange-100 line-clamp-1">
                         {hasProgress
                             ? "Pick up where you left off"
                             : "Begin your first lesson now"}
@@ -57,18 +57,17 @@ export const CourseStartButton = ({
 
                 <Button
                     onClick={handleClick}
-                    size="lg"
-                    className="bg-white text-orange-600 hover:bg-orange-50 font-semibold shadow-lg"
+                    className="bg-white text-orange-600 hover:bg-orange-50 font-semibold shadow-lg h-9 px-3 text-xs sm:h-11 sm:px-6 sm:text-base flex-shrink-0"
                 >
                     {hasProgress ? (
                         <>
                             Continue
-                            <ArrowRight className="ml-2 h-5 w-5" />
+                            <ArrowRight className="ml-1.5 h-4 w-4 md:h-5 md:w-5" />
                         </>
                     ) : (
                         <>
                             Start Course
-                            <Play className="ml-2 h-5 w-5" />
+                            <Play className="ml-1.5 h-4 w-4 md:h-5 md:w-5" />
                         </>
                     )}
                 </Button>
