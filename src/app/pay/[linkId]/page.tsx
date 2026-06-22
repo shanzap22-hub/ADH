@@ -71,7 +71,8 @@ export default async function PayLinkIdPage({ params }: PayPageProps) {
                 description: link.description,
                 type: link.type,
                 target_id: link.target_id,
-                price: Number(link.price)
+                price: Number(link.price),
+                target_audience: link.target_audience
             }}
             details={details}
         />

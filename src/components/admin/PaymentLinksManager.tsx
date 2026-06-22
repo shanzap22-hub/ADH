@@ -36,6 +36,7 @@ interface PaymentLink {
     price: number;
     is_active: boolean;
     created_at: string;
+    target_audience?: string;
 }
 
 interface PaymentLinksManagerProps {
@@ -51,9 +52,10 @@ export function PaymentLinksManager({ courses, tierPricing, initialLinks }: Paym
     // Form states
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-    const [type, setType] = useState<"tier" | "course">("tier");
+    const [type, setType] = useState<"tier" | "course" | "custom">("tier");
     const [targetId, setTargetId] = useState("");
     const [price, setPrice] = useState("");
+    const [targetAudience, setTargetAudience] = useState<"new" | "existing">("new");
     const [isActive, setIsActive] = useState(true);
     const [creating, setCreating] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -63,16 +65,23 @@ export function PaymentLinksManager({ courses, tierPricing, initialLinks }: Paym
     const targetOptions = useMemo(() => {
         if (type === "tier") {
             return tierPricing.map(t => ({ id: t.tier, name: `${t.name} (₹${t.price})`, defaultPrice: t.price }));
-        } else {
+        } else if (type === "course") {
             return courses.map(c => ({ id: c.id, name: `${c.title} (₹${c.price || 0})`, defaultPrice: c.price || 0 }));
+        } else {
+            return [];
         }
     }, [type, courses, tierPricing]);
 
     // Handle Type Change
-    const handleTypeChange = (val: "tier" | "course") => {
+    const handleTypeChange = (val: "tier" | "course" | "custom") => {
         setType(val);
-        setTargetId("");
-        setPrice("");
+        if (val === "custom") {
+            setTargetId("custom");
+            setPrice("");
+        } else {
+            setTargetId("");
+            setPrice("");
+        }
     };
 
     // Handle Target Change (Auto-fill price and generate simple title if empty)
@@ -112,7 +121,8 @@ export function PaymentLinksManager({ courses, tierPricing, initialLinks }: Paym
                         type,
                         target_id: targetId,
                         price: numericPrice,
-                        is_active: isActive
+                        is_active: isActive,
+                        target_audience: targetAudience
                     }
                 ]);
 
@@ -124,6 +134,7 @@ export function PaymentLinksManager({ courses, tierPricing, initialLinks }: Paym
             setDescription("");
             setTargetId("");
             setPrice("");
+            setTargetAudience("new");
             setIsActive(true);
             router.refresh();
         } catch (err: any) {
@@ -188,8 +199,10 @@ export function PaymentLinksManager({ courses, tierPricing, initialLinks }: Paym
     const getTargetName = (linkType: string, id: string) => {
         if (linkType === "tier") {
             return tierPricing.find(t => t.tier === id)?.name || id;
-        } else {
+        } else if (linkType === "course") {
             return courses.find(c => c.id === id)?.title || "Unknown Program";
+        } else {
+            return "Custom Direct Payment";
         }
     };
 
@@ -213,33 +226,52 @@ export function PaymentLinksManager({ courses, tierPricing, initialLinks }: Paym
                             {/* Type Selector */}
                             <div className="space-y-2">
                                 <Label htmlFor="link-type" className="font-semibold">Type</Label>
-                                <Select value={type} onValueChange={(val: "tier" | "course") => handleTypeChange(val)}>
+                                <Select value={type} onValueChange={(val: "tier" | "course" | "custom") => handleTypeChange(val)}>
                                     <SelectTrigger id="link-type" className="rounded-xl border-slate-200 dark:border-slate-800">
                                         <SelectValue placeholder="Select type" />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl">
                                         <SelectItem value="tier">Membership Tier</SelectItem>
                                         <SelectItem value="course">Program (Course)</SelectItem>
+                                        <SelectItem value="custom">Custom Payment</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             {/* Target Selector */}
-                            <div className="space-y-2">
-                                <Label htmlFor="link-target" className="font-semibold">Target {type === "tier" ? "Tier" : "Program"}</Label>
-                                <Select value={targetId} onValueChange={handleTargetChange}>
-                                    <SelectTrigger id="link-target" className="rounded-xl border-slate-200 dark:border-slate-800">
-                                        <SelectValue placeholder={`Select a ${type === "tier" ? "Tier" : "Program"}`} />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl">
-                                        {targetOptions.map(opt => (
-                                            <SelectItem key={opt.id} value={opt.id}>
-                                                {opt.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                            {type !== "custom" && (
+                                <div className="space-y-2 animate-in fade-in duration-200">
+                                    <Label htmlFor="link-target" className="font-semibold">Target {type === "tier" ? "Tier" : "Program"}</Label>
+                                    <Select value={targetId} onValueChange={handleTargetChange}>
+                                        <SelectTrigger id="link-target" className="rounded-xl border-slate-200 dark:border-slate-800">
+                                            <SelectValue placeholder={`Select a ${type === "tier" ? "Tier" : "Program"}`} />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl">
+                                            {targetOptions.map(opt => (
+                                                <SelectItem key={opt.id} value={opt.id}>
+                                                    {opt.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+
+                            {/* Target Audience Selector */}
+                            {type !== "custom" && (
+                                <div className="space-y-2 animate-in fade-in duration-200">
+                                    <Label htmlFor="link-audience" className="font-semibold">Target Audience</Label>
+                                    <Select value={targetAudience} onValueChange={(val: "new" | "existing") => setTargetAudience(val)}>
+                                        <SelectTrigger id="link-audience" className="rounded-xl border-slate-200 dark:border-slate-800">
+                                            <SelectValue placeholder="Select audience" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl">
+                                            <SelectItem value="new">New Student (WhatsApp + Onboarding)</SelectItem>
+                                            <SelectItem value="existing">Existing Student (Email + OTP)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
 
                             {/* Price */}
                             <div className="space-y-2">
@@ -344,9 +376,19 @@ export function PaymentLinksManager({ courses, tierPricing, initialLinks }: Paym
                                                 ₹{link.price.toLocaleString("en-IN")}
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant={link.type === "tier" ? "default" : "secondary"} className="capitalize">
-                                                    {link.type === "tier" ? "Tier Plan" : "Program"}
-                                                </Badge>
+                                                <div className="flex flex-col gap-1">
+                                                    <Badge 
+                                                        variant={link.type === "tier" ? "default" : link.type === "course" ? "secondary" : "outline"} 
+                                                        className="capitalize w-fit"
+                                                    >
+                                                        {link.type === "tier" ? "Tier Plan" : link.type === "course" ? "Program" : "Custom Pay"}
+                                                    </Badge>
+                                                    {link.type !== "custom" && (
+                                                        <Badge variant="outline" className="capitalize w-fit text-[10px] py-0 px-1.5 font-medium">
+                                                            {link.target_audience === "existing" ? "Existing Student" : "New Student"}
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 <button

@@ -40,11 +40,13 @@ export async function middleware(request: NextRequest) {
         '/api/coupons/validate',  // അൺഓഥന്റിക്കേറ്റഡ് യൂസേഴ്സിന് കൂപ്പൺ വാലിഡേറ്റ് ചെയ്യാൻ അനുവദിക്കുക
         '/api/webhook',   // Razorpay/Stripe വെബ്ഹുക്കുകൾ
         '/api/cron',      // ഓട്ടോമേറ്റഡ് റിമൈൻഡർ ടാസ്കുകൾ (Cron Jobs)
+        '/api/payment-links/checkout', // public payment initiation
+        '/api/payment-links/verify',   // public payment verification & signup
     ];
 
     if (publicApiRoutes.some(route => pathname.startsWith(route))) {
         // കൂപ്പണുകൾ, പേയ്മെന്റ് എന്നിവ ദുരുപയോഗം ചെയ്യാതിരിക്കാൻ ഇതിൽ ചിലതിന് മാത്രം റേറ്റിലിമിറ്റ് നൽകാം.
-        const strictApiPaths = ['/api/coupons/validate', '/api/razorpay', '/api/enrollment'];
+        const strictApiPaths = ['/api/coupons/validate', '/api/razorpay', '/api/enrollment', '/api/payment-links'];
         if (strictApiPaths.some(p => pathname.startsWith(p))) {
             const rateLimitResponse = await rateLimit(request, RateLimitPresets.STRICT);
             if (rateLimitResponse) return rateLimitResponse;

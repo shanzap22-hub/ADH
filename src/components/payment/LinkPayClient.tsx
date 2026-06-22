@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CreditCard, CheckCircle2, ShieldCheck, Mail, User, Phone, ArrowRight, Copy, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +24,7 @@ interface LinkPayClientProps {
         type: string;
         target_id: string;
         price: number;
+        target_audience?: string;
     };
     details: {
         title: string;
@@ -33,10 +34,20 @@ interface LinkPayClientProps {
 }
 
 export function LinkPayClient({ link, details }: LinkPayClientProps) {
+    const isExistingFlow = link.target_audience === "existing";
+    const isCustomFlow = link.type === "custom";
+
     // Form Inputs
     const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
     const [whatsappNumber, setWhatsappNumber] = useState("");
+
+    // OTP states (for existing students)
+    const [isOtpSent, setIsOtpSent] = useState(false);
+    const [otpCode, setOtpCode] = useState("");
+    const [isSendingOtp, setIsSendingOtp] = useState(false);
+    const [isOtpVerifying, setIsOtpVerifying] = useState(false);
+    const [isEmailVerified, setIsEmailVerified] = useState(false);
 
     // Flow States
     const [isProcessing, setIsProcessing] = useState(false);
@@ -48,13 +59,117 @@ export function LinkPayClient({ link, details }: LinkPayClientProps) {
     } | null>(null);
     const [copiedPassword, setCopiedPassword] = useState(false);
 
+    // Check if user is already logged in (prefill profile)
+    useEffect(() => {
+        const checkUserSession = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && user.email) {
+                // Fetch profile details
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("full_name, whatsapp_number")
+                    .eq("id", user.id)
+                    .single();
+
+                setEmail(user.email);
+                setIsEmailVerified(true);
+                if (profile) {
+                    setFullName(profile.full_name || "Student");
+                    setWhatsappNumber(profile.whatsapp_number || "");
+                }
+            }
+        };
+        checkUserSession();
+    }, []);
+
+    // OTP Handlers
+    const handleSendOtp = async () => {
+        if (!email) {
+            toast.error("Please enter your email address first");
+            return;
+        }
+        setIsSendingOtp(true);
+        try {
+            const res = await fetch("/api/auth/send-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to send OTP");
+            setIsOtpSent(true);
+            toast.success("Verification code sent to your email!");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to send verification code");
+        } finally {
+            setIsSendingOtp(false);
+        }
+    };
+
+    const handleVerifyOtp = async () => {
+        if (!otpCode) {
+            toast.error("Please enter the 6-digit code");
+            return;
+        }
+        setIsOtpVerifying(true);
+        try {
+            const res = await fetch("/api/auth/verify-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, code: otpCode }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Invalid verification code");
+            
+            if (!data.profile) {
+                throw new Error("This email is not registered as an existing student. Please enter the correct email or register as a new student.");
+            }
+
+            setFullName(data.profile.fullName || "");
+            setWhatsappNumber(data.profile.whatsappNumber || "");
+            setIsEmailVerified(true);
+            toast.success("Email verified successfully!");
+        } catch (err: any) {
+            toast.error(err.message || "OTP verification failed");
+        } finally {
+            setIsOtpVerifying(false);
+        }
+    };
+
     // Load Razorpay Checkout Overlay
     const handlePayment = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!fullName || !email || !whatsappNumber) {
-            toast.error("Please fill in all details");
-            return;
+        let finalFullName = fullName;
+        let finalEmail = email;
+        let finalWhatsapp = whatsappNumber;
+
+        if (isCustomFlow) {
+            if (!fullName || !email || !whatsappNumber) {
+                toast.error("Please fill in all details");
+                return;
+            }
+            finalFullName = fullName;
+            finalEmail = email;
+            finalWhatsapp = whatsappNumber;
+        } else if (isExistingFlow) {
+            if (!isEmailVerified) {
+                toast.error("Please verify your email address first");
+                return;
+            }
+            finalFullName = fullName;
+            finalEmail = email;
+            finalWhatsapp = whatsappNumber;
+        } else {
+            // New Student Flow
+            if (!whatsappNumber) {
+                toast.error("Please enter your WhatsApp number");
+                return;
+            }
+            finalFullName = "Student";
+            finalEmail = `${whatsappNumber}@adh.pending`;
+            finalWhatsapp = whatsappNumber;
         }
 
         setIsProcessing(true);
@@ -67,9 +182,9 @@ export function LinkPayClient({ link, details }: LinkPayClientProps) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     linkId: link.id,
-                    fullName,
-                    email,
-                    whatsappNumber
+                    fullName: finalFullName,
+                    email: finalEmail,
+                    whatsappNumber: finalWhatsapp
                 })
             });
 
@@ -102,13 +217,13 @@ export function LinkPayClient({ link, details }: LinkPayClientProps) {
                 description: link.title,
                 order_id: orderId,
                 prefill: {
-                    name: fullName,
-                    email: email,
-                    contact: whatsappNumber
+                    name: finalFullName,
+                    email: finalEmail,
+                    contact: finalWhatsapp
                 },
                 notes: {
                     linkId: link.id,
-                    whatsappNumber: whatsappNumber
+                    whatsappNumber: finalWhatsapp
                 },
                 theme: {
                     color: "#9333ea" // purple-600
@@ -124,9 +239,9 @@ export function LinkPayClient({ link, details }: LinkPayClientProps) {
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                                 linkId: link.id,
-                                fullName,
-                                email,
-                                whatsappNumber,
+                                fullName: finalFullName,
+                                email: finalEmail,
+                                whatsappNumber: finalWhatsapp,
                                 razorpay_payment_id,
                                 razorpay_order_id,
                                 razorpay_signature
@@ -260,17 +375,20 @@ export function LinkPayClient({ link, details }: LinkPayClientProps) {
                             </div>
                         ) : (
                             <div className="text-center p-4 bg-purple-50 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/50 rounded-xl text-xs text-purple-700 dark:text-purple-300">
-                                You already have an active account in our LMS. Tap below to access your dashboard.
+                                {isCustomFlow 
+                                    ? "Your payment transaction has been successfully recorded. Thank you!" 
+                                    : "You already have an active account in our LMS. Tap below to access your dashboard."
+                                }
                             </div>
                         )}
                     </CardContent>
 
                     <CardFooter className="p-6 pt-0">
                         <Button
-                            onClick={handleGoToDashboard}
+                            onClick={isCustomFlow ? () => { window.location.href = "https://adh.today"; } : handleGoToDashboard}
                             className="w-full h-11 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold transition flex items-center justify-center gap-2"
                         >
-                            Go to Portal Dashboard
+                            {isCustomFlow ? "Go to Main Website" : "Go to Portal Dashboard"}
                             <ArrowRight className="h-4 w-4" />
                         </Button>
                     </CardFooter>
@@ -354,71 +472,176 @@ export function LinkPayClient({ link, details }: LinkPayClientProps) {
                     </CardHeader>
                     <form onSubmit={handlePayment}>
                         <CardContent className="space-y-4">
-                            {/* Full Name */}
-                            <div className="space-y-1.5">
-                                <Label htmlFor="user-name" className="font-semibold text-slate-700 dark:text-slate-300">Full Name</Label>
-                                <div className="relative">
-                                    <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                                    <Input
-                                        id="user-name"
-                                        type="text"
-                                        placeholder="Full Name"
-                                        required
-                                        value={fullName}
-                                        onChange={(e) => setFullName(e.target.value)}
-                                        className="pl-9 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-purple-500"
-                                    />
-                                </div>
-                            </div>
+                            {isCustomFlow ? (
+                                <>
+                                    {/* Custom Payment Flow: Direct Name, Email, and Phone collection */}
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="user-name" className="font-semibold text-slate-700 dark:text-slate-300">Full Name</Label>
+                                        <div className="relative">
+                                            <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                                            <Input
+                                                id="user-name"
+                                                type="text"
+                                                placeholder="Full Name"
+                                                required
+                                                value={fullName}
+                                                onChange={(e) => setFullName(e.target.value)}
+                                                className="pl-9 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-purple-500"
+                                            />
+                                        </div>
+                                    </div>
 
-                            {/* Email Address */}
-                            <div className="space-y-1.5">
-                                <Label htmlFor="user-email" className="font-semibold text-slate-700 dark:text-slate-300">Email Address</Label>
-                                <div className="relative">
-                                    <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                                    <Input
-                                        id="user-email"
-                                        type="email"
-                                        placeholder="yourname@gmail.com"
-                                        required
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="pl-9 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-purple-500"
-                                    />
-                                </div>
-                                <p className="text-[10px] text-muted-foreground leading-normal">
-                                    Important: Credentials and link alerts will be synced to this email.
-                                </p>
-                            </div>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="user-email" className="font-semibold text-slate-700 dark:text-slate-300">Email Address</Label>
+                                        <div className="relative">
+                                            <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                                            <Input
+                                                id="user-email"
+                                                type="email"
+                                                placeholder="yourname@gmail.com"
+                                                required
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                className="pl-9 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-purple-500"
+                                            />
+                                        </div>
+                                    </div>
 
-                            {/* WhatsApp number */}
-                            <div className="space-y-1.5">
-                                <Label htmlFor="user-whatsapp" className="font-semibold text-slate-700 dark:text-slate-300">WhatsApp Number</Label>
-                                <div className="relative">
-                                    <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                                    <Input
-                                        id="user-whatsapp"
-                                        type="tel"
-                                        placeholder="WhatsApp phone number"
-                                        required
-                                        value={whatsappNumber}
-                                        onChange={(e) => setWhatsappNumber(e.target.value)}
-                                        className="pl-9 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-purple-500"
-                                    />
-                                </div>
-                                <p className="text-[10px] text-muted-foreground leading-normal">
-                                    Used for dashboard access validation and WhatsApp support channels.
-                                </p>
-                            </div>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="user-whatsapp" className="font-semibold text-slate-700 dark:text-slate-300">WhatsApp Number</Label>
+                                        <div className="relative">
+                                            <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                                            <Input
+                                                id="user-whatsapp"
+                                                type="tel"
+                                                placeholder="WhatsApp phone number"
+                                                required
+                                                value={whatsappNumber}
+                                                onChange={(e) => setWhatsappNumber(e.target.value)}
+                                                className="pl-9 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-purple-500"
+                                            />
+                                        </div>
+                                    </div>
+                                </>
+                            ) : isExistingFlow ? (
+                                <>
+                                    {/* Existing Student Flow: Email + OTP */}
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="user-email" className="font-semibold text-slate-700 dark:text-slate-300">Email Address</Label>
+                                        <div className="flex gap-2">
+                                            <div className="relative flex-1">
+                                                <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                                                <Input
+                                                    id="user-email"
+                                                    type="email"
+                                                    placeholder="yourname@gmail.com"
+                                                    required
+                                                    disabled={isEmailVerified || isSendingOtp}
+                                                    value={email}
+                                                    onChange={(e) => setEmail(e.target.value)}
+                                                    className="pl-9 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-purple-500"
+                                                />
+                                            </div>
+                                            {!isEmailVerified && (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    disabled={isSendingOtp || !email}
+                                                    onClick={handleSendOtp}
+                                                    className="h-10 rounded-xl border-slate-200 dark:border-slate-800"
+                                                >
+                                                    {isSendingOtp ? "Sending..." : "Send OTP"}
+                                                </Button>
+                                            )}
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground leading-normal">
+                                            Enter the email address registered with your account.
+                                        </p>
+                                    </div>
+
+                                    {/* OTP Input Field */}
+                                    {isOtpSent && !isEmailVerified && (
+                                        <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                                            <Label htmlFor="otp-code" className="font-semibold text-slate-700 dark:text-slate-300">Verification Code</Label>
+                                            <div className="flex gap-2">
+                                                <Input
+                                                    id="otp-code"
+                                                    type="text"
+                                                    maxLength={6}
+                                                    placeholder="Enter 6-digit OTP"
+                                                    value={otpCode}
+                                                    onChange={(e) => setOtpCode(e.target.value)}
+                                                    className="h-10 rounded-xl border-slate-200 dark:border-slate-800 text-center tracking-widest font-mono text-base focus-visible:ring-purple-500"
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    disabled={isOtpVerifying || otpCode.length !== 6}
+                                                    onClick={handleVerifyOtp}
+                                                    className="h-10 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold"
+                                                >
+                                                    {isOtpVerifying ? "Verifying..." : "Verify"}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* If verified, show student details read-only */}
+                                    {isEmailVerified && (
+                                        <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800 animate-in fade-in duration-300">
+                                            <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/50 rounded-xl p-3 text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+                                                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                                                <span>Account verified successfully!</span>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <Label className="text-xs text-slate-400">Student Name</Label>
+                                                <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                                                    {fullName}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <Label className="text-xs text-slate-400">WhatsApp Number</Label>
+                                                <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                                                    {whatsappNumber || "Not configured"}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    {/* New Student Flow: WhatsApp number only */}
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="user-whatsapp" className="font-semibold text-slate-700 dark:text-slate-300">WhatsApp Number</Label>
+                                        <div className="relative">
+                                            <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                                            <Input
+                                                id="user-whatsapp"
+                                                type="tel"
+                                                placeholder="WhatsApp phone number"
+                                                required
+                                                value={whatsappNumber}
+                                                onChange={(e) => setWhatsappNumber(e.target.value)}
+                                                className="pl-9 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-purple-500"
+                                            />
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground leading-normal">
+                                            Enter your WhatsApp number to initiate your program registration.
+                                        </p>
+                                    </div>
+                                </>
+                            )}
                         </CardContent>
 
                         <CardFooter className="flex-col gap-3 pt-2">
                             <Button
                                 type="submit"
+                                disabled={isExistingFlow && !isEmailVerified}
                                 className="w-full h-11 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold transition shadow-sm flex items-center justify-center gap-2"
                             >
                                 <CreditCard className="h-4 w-4" />
-                                Pay & Register Now
+                                {isCustomFlow ? "Pay Now" : isExistingFlow ? "Pay & Upgrade Now" : "Pay & Register Now"}
                             </Button>
                         </CardFooter>
                     </form>

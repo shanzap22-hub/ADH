@@ -94,71 +94,97 @@ export async function POST(req: Request) {
             .eq("order_id", razorpay_order_id)
             .eq("status", "pending");
 
-        // 5. Check if user already exists
-        let userId = "";
+        // 5. User lookup or creation based on target audience
+        let userId: string | null = null;
         let isNewUser = false;
         const tempPassword = "ADH" + Math.random().toString(36).slice(-8) + "!";
 
-        // Search by WhatsApp number
-        const { data: profileByWhatsapp } = await supabaseAdmin
-            .from("profiles")
-            .select("id, email")
-            .eq("whatsapp_number", whatsappNumber)
-            .maybeSingle();
-
-        if (profileByWhatsapp) {
-            userId = profileByWhatsapp.id;
-        } else {
-            // Search by Email
+        if (link.type === 'custom') {
+            // Bypass user lookup/creation for custom payments
+            userId = null;
+        } else if (link.target_audience === 'existing') {
+            // Search strictly by Email for existing students
             const { data: profileByEmail } = await supabaseAdmin
                 .from("profiles")
                 .select("id, email")
                 .eq("email", email.toLowerCase().trim())
                 .maybeSingle();
 
-            if (profileByEmail) {
-                userId = profileByEmail.id;
-                // Update WhatsApp number
-                await supabaseAdmin
-                    .from("profiles")
-                    .update({ whatsapp_number: whatsappNumber })
-                    .eq("id", userId);
+            if (!profileByEmail) {
+                console.error("[LINK_VERIFY] Existing user profile not found for email:", email);
+                return NextResponse.json({ error: "Existing student account not found for this email" }, { status: 400 });
+            }
+
+            userId = profileByEmail.id;
+
+            // Update WhatsApp number if it is different
+            await supabaseAdmin
+                .from("profiles")
+                .update({ whatsapp_number: whatsappNumber })
+                .eq("id", userId);
+        } else {
+            // New Student Flow
+            // Search by WhatsApp number first (similar to homepage checkouts)
+            const { data: profileByWhatsapp } = await supabaseAdmin
+                .from("profiles")
+                .select("id, email")
+                .eq("whatsapp_number", whatsappNumber)
+                .maybeSingle();
+
+            if (profileByWhatsapp) {
+                userId = profileByWhatsapp.id;
             } else {
-                // User does not exist, create a new auth user and profile
-                isNewUser = true;
-                const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-                    email: email.toLowerCase().trim(),
-                    password: tempPassword,
-                    email_confirm: true,
-                    user_metadata: {
-                        full_name: fullName,
-                        whatsapp_number: whatsappNumber,
-                        setup_required: true
+                // Search by Email secondary
+                const { data: profileByEmail } = await supabaseAdmin
+                    .from("profiles")
+                    .select("id, email")
+                    .eq("email", email.toLowerCase().trim())
+                    .maybeSingle();
+
+                if (profileByEmail) {
+                    userId = profileByEmail.id;
+                    // Update WhatsApp number
+                    await supabaseAdmin
+                        .from("profiles")
+                        .update({ whatsapp_number: whatsappNumber })
+                        .eq("id", userId);
+                } else {
+                    // User does not exist, create a new auth user and profile
+                    isNewUser = true;
+                    const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
+                        email: email.toLowerCase().trim(),
+                        password: tempPassword,
+                        email_confirm: true,
+                        user_metadata: {
+                            full_name: fullName,
+                            whatsapp_number: whatsappNumber,
+                            setup_required: true // REDIRECT to onboarding completion
+                        }
+                    });
+
+                    if (createUserError || !newUser.user) {
+                        console.error("[LINK_VERIFY] Auth user creation failed:", createUserError);
+                        return NextResponse.json({ error: "Failed to create account credential" }, { status: 500 });
                     }
-                });
 
-                if (createUserError || !newUser.user) {
-                    console.error("[LINK_VERIFY] Auth user creation failed:", createUserError);
-                    return NextResponse.json({ error: "Failed to create account credential" }, { status: 500 });
-                }
+                    userId = newUser.user.id;
 
-                userId = newUser.user.id;
+                    // Create profile
+                    const { error: profileError } = await supabaseAdmin.from("profiles").insert({
+                        id: userId,
+                        email: email.toLowerCase().trim(),
+                        whatsapp_number: whatsappNumber,
+                        phone_number: paymentContact,
+                        role: 'student',
+                        membership_tier: link.type === 'tier' ? link.target_id : 'silver',
+                        setup_required: true, // REDIRECT to onboarding completion
+                        full_name: fullName
+                    });
 
-                // Create profile
-                const { error: profileError } = await supabaseAdmin.from("profiles").insert({
-                    id: userId,
-                    email: email.toLowerCase().trim(),
-                    whatsapp_number: whatsappNumber,
-                    phone_number: paymentContact,
-                    role: 'student',
-                    membership_tier: link.type === 'tier' ? link.target_id : 'silver',
-                    setup_required: true,
-                    full_name: fullName
-                });
-
-                if (profileError) {
-                    console.error("[LINK_VERIFY] Profile creation failed:", profileError);
-                    return NextResponse.json({ error: "Failed to create profile" }, { status: 500 });
+                    if (profileError) {
+                        console.error("[LINK_VERIFY] Profile creation failed:", profileError);
+                        return NextResponse.json({ error: "Failed to create profile" }, { status: 500 });
+                    }
                 }
             }
         }
@@ -198,7 +224,7 @@ export async function POST(req: Request) {
 
         // 7. Insert record in transactions table
         const { error: txnError } = await supabaseAdmin.from('transactions').insert({
-            user_id: userId,
+            user_id: userId || null,
             student_name: fullName,
             student_email: email.toLowerCase().trim(),
             whatsapp_number: whatsappNumber,
@@ -208,7 +234,7 @@ export async function POST(req: Request) {
             source: 'razorpay',
             razorpay_payment_id: razorpay_payment_id,
             razorpay_order_id: razorpay_order_id,
-            membership_plan: link.type === 'tier' ? link.target_id : 'silver',
+            membership_plan: link.type === 'tier' ? link.target_id : link.type === 'custom' ? 'custom' : 'silver',
             created_at: new Date().toISOString()
         });
 
@@ -228,7 +254,7 @@ export async function POST(req: Request) {
                     name: fullName,
                     phone: paymentContact,
                     whatsapp: whatsappNumber,
-                    plan: link.type === 'tier' ? link.target_id : 'silver',
+                    plan: link.type === 'tier' ? link.target_id : link.type === 'custom' ? 'custom' : 'silver',
                     amount: realAmount / 100,
                     status: 'verified',
                     created_at: new Date().toISOString()

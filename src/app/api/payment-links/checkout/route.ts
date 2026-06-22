@@ -4,10 +4,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(req: Request) {
     try {
-        const { linkId, whatsappNumber, fullName, email } = await req.json();
+        const { linkId, whatsappNumber, fullName: reqFullName, email: reqEmail } = await req.json();
 
-        if (!linkId || !whatsappNumber || !fullName || !email) {
-            return NextResponse.json({ error: "All fields are required" }, { status: 400 });
+        if (!linkId || !whatsappNumber) {
+            return NextResponse.json({ error: "Link ID and WhatsApp number are required" }, { status: 400 });
         }
 
         if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
@@ -26,6 +26,24 @@ export async function POST(req: Request) {
 
         if (linkError || !link) {
             return NextResponse.json({ error: "Payment link not found or inactive" }, { status: 404 });
+        }
+
+        let fullName = reqFullName;
+        let email = reqEmail;
+
+        // Conditional validation depending on link type and target audience
+        if (link.type === 'custom') {
+            if (!email || !fullName) {
+                return NextResponse.json({ error: "Name and Email are required for custom payments" }, { status: 400 });
+            }
+        } else if (link.target_audience === 'existing') {
+            if (!email || !fullName) {
+                return NextResponse.json({ error: "Name and Email are required for existing students" }, { status: 400 });
+            }
+        } else {
+            // New student: use defaults/placeholders if not provided
+            fullName = reqFullName || "Student";
+            email = reqEmail || `${whatsappNumber}@adh.pending`;
         }
 
         // Initialize Razorpay

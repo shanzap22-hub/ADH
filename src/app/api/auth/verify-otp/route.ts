@@ -34,7 +34,20 @@ export async function POST(req: Request) {
         // Cleanup: Valid code used, delete it.
         await supabaseAdmin.from("verification_codes").delete().eq("email", email);
 
-        return NextResponse.json({ success: true });
+        // Fetch profile details to return to the checkout page
+        const { data: profile } = await supabaseAdmin
+            .from("profiles")
+            .select("full_name, whatsapp_number")
+            .eq("email", email.toLowerCase().trim())
+            .maybeSingle();
+
+        return NextResponse.json({ 
+            success: true,
+            profile: profile ? {
+                fullName: profile.full_name,
+                whatsappNumber: profile.whatsapp_number
+            } : null
+        });
     } catch (e: any) {
         console.error("Verify OTP Error:", e);
         return NextResponse.json({ error: e.message }, { status: 500 });

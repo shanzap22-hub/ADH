@@ -173,7 +173,7 @@ export default function ChatPageClient({
     return (
         // Mobile: Fixed top-0 (no header), Bottom-16 to clear BottomNav
         // Added relative to container so modal positions correctly against viewport if needed, or fixed.
-        <div className="fixed left-0 right-0 top-0 bottom-16 pt-[env(safe-area-inset-top)] lg:pt-0 lg:static lg:h-[calc(100vh-4rem)] flex overflow-hidden bg-slate-50 dark:bg-black/20 z-0">
+        <div className="fixed left-0 right-0 top-0 bottom-16 pt-[calc(env(safe-area-inset-top)+20px)] lg:pt-0 lg:static lg:h-[calc(100vh-4rem)] flex overflow-hidden bg-slate-50 dark:bg-black/20 z-0">
             {/* Sidebar - Hidden on mobile if chat is selected */}
             <div className={cn(
                 "w-full md:w-[280px] lg:w-[320px] xl:w-[380px] border-r border-slate-200 dark:border-slate-800 flex flex-col h-full bg-white dark:bg-slate-900 transition-all duration-300",
@@ -227,7 +227,7 @@ export default function ChatPageClient({
 
             {/* TERMS MODAL OVERLAY - Moved OUTSIDE the inner divs */}
             {showTermsModal && (
-                <div className="absolute inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="absolute inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 pt-[calc(env(safe-area-inset-top)+20px)]">
                     <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-800">
                             <h3 className="text-xl font-bold flex items-center gap-2">
