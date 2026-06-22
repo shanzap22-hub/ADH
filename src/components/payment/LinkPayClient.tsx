@@ -254,9 +254,28 @@ export function LinkPayClient({ link, details }: LinkPayClientProps) {
                             throw new Error(data.error || "Payment verification failed");
                         }
 
-                        setSuccessData(data);
-                        setProcessingStep("done");
-                        toast.success("Payment successful!");
+                        if (data.isNewUser && data.tempPassword && data.email) {
+                            // Auto-login in background for new students
+                            const supabase = createClient();
+                            const { error: signInError } = await supabase.auth.signInWithPassword({
+                                email: data.email,
+                                password: data.tempPassword
+                            });
+
+                            if (signInError) {
+                                console.error("Auto-login failed:", signInError);
+                                toast.error("Account created but auto-login failed. Redirecting to login...");
+                                setTimeout(() => {
+                                    window.location.href = "/login";
+                                }, 2000);
+                            } else {
+                                window.location.href = "/dashboard";
+                            }
+                        } else {
+                            setSuccessData(data);
+                            setProcessingStep("done");
+                            toast.success("Payment successful!");
+                        }
                     } catch (verifyErr: any) {
                         console.error("Verification error:", verifyErr);
                         setIsProcessing(false);
