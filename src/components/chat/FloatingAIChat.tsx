@@ -97,7 +97,7 @@ export const FloatingAIChat = ({ isAllowed, initialTermsAccepted = false }: Floa
                 <div
                     className={cn(
                         "fixed flex flex-col bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 shadow-2xl overflow-hidden transition-all duration-300",
-                        isDesktop ? "rounded-3xl" : "rounded-none inset-0 pt-[env(safe-area-inset-top,20px)]",
+                        isDesktop ? "rounded-3xl" : "rounded-none inset-0 pt-[calc(env(safe-area-inset-top)+20px)]",
                         "animate-in fade-in duration-300",
                         isDesktop ? "slide-in-from-bottom-5" : "slide-in-from-bottom-full"
                     )}
