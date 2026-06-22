@@ -161,7 +161,7 @@ export default async function CourseIdPage({
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-[env(safe-area-inset-top)]">
-            <div className="max-w-6xl mx-auto p-4 space-y-8">
+            <div className="max-w-6xl mx-auto p-4 space-y-4 md:space-y-8">
                 <CourseContentBackButton className="lg:hidden" />
 
                 <CourseHero
@@ -173,7 +173,7 @@ export default async function CourseIdPage({
                 />
 
                 {isEnrolled && (
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="grid md:grid-cols-2 gap-4 md:gap-6">
                         <CourseProgress
                             completedLessons={completedLessons}
                             totalLessons={totalLessons}

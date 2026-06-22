@@ -22,18 +22,18 @@ import { PlayCircle } from "lucide-react";
 
 export const CourseTOCPreview = ({ chapters, courseId }: CourseTOCPreviewProps) => {
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 md:p-6">
+            <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white mb-4 md:mb-6">
                 Program Content
             </h3>
 
-            <div className="space-y-3">
+            <div className="space-y-2 md:space-y-3">
                 {chapters.map((chapter, index) => {
                     const isLocked = chapter.isLocked;
 
                     const ChapterInner = (
                         <div
-                            className={`flex items-start gap-4 p-4 rounded-lg border transition-colors ${isLocked
+                            className={`flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-lg border transition-colors ${isLocked
                                 ? "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/50 cursor-not-allowed text-slate-400"
                                 : "border-slate-200 dark:border-slate-800 hover:border-orange-500/50 dark:hover:border-orange-500/50 cursor-pointer bg-white dark:bg-slate-900"
                                 }`}
