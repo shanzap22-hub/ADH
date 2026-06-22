@@ -22,18 +22,18 @@ import { PlayCircle } from "lucide-react";
 
 export const CourseTOCPreview = ({ chapters, courseId }: CourseTOCPreviewProps) => {
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 md:p-6">
-            <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white mb-4 md:mb-6">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 md:p-5">
+            <h3 className="text-sm md:text-base font-bold text-slate-900 dark:text-white mb-3 md:mb-4">
                 Program Content
             </h3>
 
-            <div className="space-y-2 md:space-y-3">
+            <div className="space-y-1.5 md:space-y-2">
                 {chapters.map((chapter, index) => {
                     const isLocked = chapter.isLocked;
 
                     const ChapterInner = (
                         <div
-                            className={`flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-lg border transition-colors ${isLocked
+                            className={`flex items-start gap-2.5 md:gap-3 p-2 md:p-3 rounded-lg border transition-colors ${isLocked
                                 ? "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/50 cursor-not-allowed text-slate-400"
                                 : "border-slate-200 dark:border-slate-800 hover:border-orange-500/50 dark:hover:border-orange-500/50 cursor-pointer bg-white dark:bg-slate-900"
                                 }`}
@@ -41,25 +41,25 @@ export const CourseTOCPreview = ({ chapters, courseId }: CourseTOCPreviewProps) 
                             {/* Status Icon */}
                             <div className="flex-shrink-0 mt-0.5">
                                 {chapter.isCompleted ? (
-                                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                    <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-green-500" />
                                 ) : isLocked ? (
-                                    <Lock className="h-5 w-5 text-slate-400" />
+                                    <Lock className="h-4 w-4 md:h-5 md:w-5 text-slate-400" />
                                 ) : (
-                                    <PlayCircle className="h-5 w-5 text-slate-800 dark:text-slate-200" />
+                                    <PlayCircle className="h-4 w-4 md:h-5 md:w-5 text-slate-800 dark:text-slate-200" />
                                 )}
                             </div>
 
                             {/* Module Info */}
                             <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between mb-1">
-                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                                <div className="flex items-center justify-between mb-0.5">
+                                    <span className="text-[10px] md:text-xs font-medium text-slate-500 dark:text-slate-400">
                                         Module {index + 1}
                                     </span>
-                                    <span className="text-xs text-slate-400">
+                                    <span className="text-[10px] md:text-xs text-slate-400">
                                         {chapter.duration || "0:00"}
                                     </span>
                                 </div>
-                                <h4 className={`font-semibold mb-1 ${isLocked ? "text-slate-500" : "text-slate-900 dark:text-white"}`}>
+                                <h4 className={`text-xs md:text-sm font-semibold ${isLocked ? "text-slate-500" : "text-slate-900 dark:text-white"}`}>
                                     {chapter.title}
                                 </h4>
                             </div>

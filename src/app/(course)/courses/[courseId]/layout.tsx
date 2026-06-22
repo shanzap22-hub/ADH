@@ -52,13 +52,15 @@ export default async function CourseLayout({
         canViewCommunity: false,
         canViewLive: false,
         canViewChat: false,
+        canViewAIChat: false,
+        termsAiAccepted: false,
         hideOnPlayer: true // Enable auto-hide feature
     };
 
     if (user) {
         const { data: profile } = await supabase
             .from("profiles")
-            .select("role, membership_tier")
+            .select("role, membership_tier, terms_ai_accepted")
             .eq("id", user.id)
             .single();
 
@@ -75,13 +77,22 @@ export default async function CourseLayout({
                 .single();
 
             if (isAdmin) {
-                permissions = { ...permissions, canViewCommunity: true, canViewLive: true, canViewChat: true };
+                permissions = { 
+                    ...permissions, 
+                    canViewCommunity: true, 
+                    canViewLive: true, 
+                    canViewChat: true, 
+                    canViewAIChat: true,
+                    termsAiAccepted: !!profile.terms_ai_accepted
+                };
             } else if (tierData) {
                 permissions = {
                     ...permissions,
                     canViewCommunity: tierData.has_community_feed_access,
                     canViewLive: tierData.has_weekly_live_access || tierData.has_booking_access,
-                    canViewChat: tierData.has_ai_access || tierData.has_community_chat_access
+                    canViewChat: tierData.has_ai_access || tierData.has_community_chat_access,
+                    canViewAIChat: !!tierData.has_ai_access,
+                    termsAiAccepted: !!profile.terms_ai_accepted
                 };
             }
         }
@@ -109,7 +120,7 @@ export default async function CourseLayout({
             <BottomNav permissions={permissions} />
 
             {/* Floating AI Chat Widget */}
-            <FloatingAIChat isAllowed={permissions.canViewChat} />
+            <FloatingAIChat isAllowed={permissions.canViewAIChat} initialTermsAccepted={permissions.termsAiAccepted} />
         </div>
     )
 }

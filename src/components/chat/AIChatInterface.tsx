@@ -15,6 +15,7 @@ import remarkGfm from "remark-gfm";
 interface AIChatInterfaceProps {
     onBack?: () => void;
     onClose?: () => void;
+    isFloating?: boolean;
 }
 
 interface Message {
@@ -25,7 +26,7 @@ interface Message {
     created_at?: string;
 }
 
-export function AIChatInterface({ onBack, onClose }: AIChatInterfaceProps) {
+export function AIChatInterface({ onBack, onClose, isFloating = false }: AIChatInterfaceProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [input, setInput] = useState("");
@@ -470,7 +471,12 @@ export function AIChatInterface({ onBack, onClose }: AIChatInterfaceProps) {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] md:pb-6 border-t bg-white dark:bg-slate-900 shrink-0">
+            <div className={cn(
+                "p-4 border-t bg-white dark:bg-slate-900 shrink-0",
+                isFloating
+                    ? "pb-[calc(env(safe-area-inset-bottom)+1rem)] md:pb-6"
+                    : "pb-[calc(env(safe-area-inset-bottom)+5.5rem)] md:pb-6"
+            )}>
                 <div className="max-w-3xl mx-auto space-y-2">
 
                     {/* Image Preview Area */}
