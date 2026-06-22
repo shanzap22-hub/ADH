@@ -54,7 +54,14 @@ export async function POST(
             const hasAccess = allowedTiers.some(tier => tierHierarchy.includes(tier));
 
             if (!hasAccess) {
-                const requiredTier = getMinimumRequiredTier(allowedTiers);
+                // Get all active tiers ordered by price ascending to determine hierarchy order dynamically
+                const { data: allTiers } = await supabase
+                    .from("tier_pricing")
+                    .select("tier")
+                    .order("price", { ascending: true });
+                
+                const tierOrder = allTiers ? allTiers.map(t => t.tier) : ["free", "bronze", "silver", "gold", "diamond", "platinum"];
+                const requiredTier = getMinimumRequiredTier(allowedTiers, tierOrder);
                 return new NextResponse(
                     `This course requires ${requiredTier} membership or higher. Please upgrade your membership to enroll.`,
                     { status: 403 }
@@ -88,12 +95,11 @@ function getTierHierarchy(tier: string): string[] {
     return [tier];
 }
 
-function getMinimumRequiredTier(allowedTiers: string[]): string {
-    const tierOrder = ["bronze", "silver", "gold", "diamond"];
+function getMinimumRequiredTier(allowedTiers: string[], tierOrder: string[]): string {
     for (const tier of tierOrder) {
         if (allowedTiers.includes(tier)) {
             return tier;
         }
     }
-    return "bronze";
+    return allowedTiers[0] || "bronze";
 }

@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Settings } from "lucide-react";
-import { CourseTierManager } from "@/components/admin/CourseTierManager";
-import { TierFeatureManager } from "@/components/admin/TierFeatureManager";
+import { CourseTiersDashboard } from "@/components/admin/CourseTiersDashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -58,42 +57,16 @@ export default async function CourseTiersPage() {
                 <div>
                     <h1 className="text-2xl font-bold">Program Tier Management</h1>
                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                        Assign Programs to membership tiers
+                        Manage membership tiers, assign programs, and control feature gates
                     </p>
                 </div>
             </div>
 
-            {/* Tier Info Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {tierPricing?.map((tier) => (
-                    <div
-                        key={tier.tier}
-                        className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4"
-                    >
-                        <div className="text-lg font-bold capitalize">{tier.name}</div>
-                        <div className="text-2xl font-bold text-purple-600">
-                            {tier.price === 0 ? "Free" : `₹${tier.price.toLocaleString("en-IN")}`}
-                        </div>
-                        <div className="mt-2 text-xs font-medium text-emerald-600">
-                            {tier.has_booking_access && "✨ Includes 1-on-1 Sessions"}
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                    {/* Program Tier Manager */}
-                    <CourseTierManager
-                        courses={courses || []}
-                        tierAssignments={tierAssignments || []}
-                    />
-                </div>
-                <div>
-                    {/* Tier Feature Control - All 5 features in one place */}
-                    <TierFeatureManager initialFeatures={(tierPricing as any) || []} />
-                </div>
-            </div>
+            <CourseTiersDashboard
+                courses={courses || []}
+                tierAssignments={tierAssignments || []}
+                tierPricing={tierPricing || []}
+            />
         </div>
     );
 }

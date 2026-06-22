@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -12,13 +12,6 @@ import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/client";
 
-const TIERS = [
-    { value: "bronze", label: "Bronze" },
-    { value: "silver", label: "Silver" },
-    { value: "gold", label: "Gold" },
-    { value: "diamond", label: "Diamond" },
-];
-
 interface EditPostDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -29,6 +22,7 @@ export function EditPostDialog({ open, onOpenChange, post }: EditPostDialogProps
     const [content, setContent] = useState(post.content);
     const [link, setLink] = useState(post.link || "");
     const [isPinned, setIsPinned] = useState(post.is_pinned);
+    const [tiers, setTiers] = useState<{ value: string; label: string }[]>([]);
 
     // Initialize tiers set
     const initialTiers = new Set<string>(post.post_tier_access?.map((t: any) => t.tier) || []);
@@ -41,6 +35,28 @@ export function EditPostDialog({ open, onOpenChange, post }: EditPostDialogProps
 
     const router = useRouter();
     const supabase = createClient();
+
+    useEffect(() => {
+        async function loadTiers() {
+            try {
+                const { data } = await supabase
+                    .from("tier_pricing")
+                    .select("tier, name")
+                    .eq("is_active", true)
+                    .order("price", { ascending: true });
+                
+                if (data) {
+                    const active = data
+                        .filter(t => !["expired", "cancelled"].includes(t.tier))
+                        .map(t => ({ value: t.tier, label: t.name }));
+                    setTiers(active);
+                }
+            } catch (err) {
+                console.error("Failed to load tiers", err);
+            }
+        }
+        loadTiers();
+    }, [supabase]);
 
     const toggleTier = (tier: string) => {
         const next = new Set(selectedTiers);
@@ -199,7 +215,7 @@ export function EditPostDialog({ open, onOpenChange, post }: EditPostDialogProps
                         <div className="space-y-2">
                             <Label className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Visible To</Label>
                             <div className="flex flex-wrap gap-2">
-                                {TIERS.map(tier => (
+                                {tiers.map(tier => (
                                     <div
                                         key={tier.value}
                                         className={`

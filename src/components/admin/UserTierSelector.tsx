@@ -15,9 +15,10 @@ import { toast } from "sonner";
 interface UserTierSelectorProps {
     userId: string;
     currentTier: string;
+    tiers: { tier: string; name: string }[];
 }
 
-export function UserTierSelector({ userId, currentTier }: UserTierSelectorProps) {
+export function UserTierSelector({ userId, currentTier, tiers }: UserTierSelectorProps) {
     const [tier, setTier] = useState(currentTier || "bronze");
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -36,16 +37,8 @@ export function UserTierSelector({ userId, currentTier }: UserTierSelectorProps)
                 toast.error("Failed to update tier", { description: error.message });
             } else {
                 setTier(newTier);
-                const tierNames: Record<string, string> = {
-                    bronze: "Bronze",
-                    silver: "Silver",
-                    gold: "Gold",
-                    diamond: "Diamond",
-                    platinum: "Platinum",
-                    expired: "Expired",
-                    cancelled: "Cancelled"
-                };
-                toast.success(`Tier updated to ${tierNames[newTier]}!`);
+                const displayName = tiers.find(t => t.tier === newTier)?.name || newTier;
+                toast.success(`Tier updated to ${displayName}!`);
                 router.refresh();
             }
         } catch (error) {
@@ -61,14 +54,28 @@ export function UserTierSelector({ userId, currentTier }: UserTierSelectorProps)
                 <SelectValue />
             </SelectTrigger>
             <SelectContent>
-                <SelectItem value="bronze">🥉 Bronze (Free)</SelectItem>
-                <SelectItem value="silver">🥈 Silver (₹4,999)</SelectItem>
-                <SelectItem value="gold">🥇 Gold (₹9,999)</SelectItem>
-                <SelectItem value="diamond">💎 Diamond (₹14,999)</SelectItem>
-                <SelectItem value="platinum">💍 Platinum</SelectItem>
-                <SelectItem value="expired">⚠️ Expired</SelectItem>
-                <SelectItem value="cancelled">🚫 Cancelled</SelectItem>
+                {tiers.map((t) => {
+                    const info = getTierInfo(t.tier);
+                    return (
+                        <SelectItem key={t.tier} value={t.tier}>
+                            {info.icon} {t.name}
+                        </SelectItem>
+                    );
+                })}
             </SelectContent>
         </Select>
     );
+}
+
+// Helper to get local icon mapping
+function getTierInfo(tier: string) {
+    const t = tier.toLowerCase();
+    if (t === "bronze") return { icon: "🥉" };
+    if (t === "silver") return { icon: "🥈" };
+    if (t === "gold") return { icon: "🥇" };
+    if (t === "diamond") return { icon: "💎" };
+    if (t === "platinum") return { icon: "💍" };
+    if (t === "expired") return { icon: "⚠️" };
+    if (t === "cancelled") return { icon: "🚫" };
+    return { icon: "✨" };
 }

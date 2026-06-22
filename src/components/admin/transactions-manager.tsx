@@ -81,6 +81,22 @@ export default function TransactionsManager() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("verified"); 
+    const [tiers, setTiers] = useState<{ tier: string; name: string }[]>([]);
+
+    useEffect(() => {
+        const loadTiers = async () => {
+            try {
+                const res = await fetch("/api/admin/tier-pricing");
+                if (res.ok) {
+                    const data = await res.json();
+                    setTiers(data);
+                }
+            } catch (err) {
+                console.error("Failed to load tiers", err);
+            }
+        };
+        loadTiers();
+    }, []);
 
     // Filters
     const [startDate, setStartDate] = useState("");
@@ -412,13 +428,11 @@ export default function TransactionsManager() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Tiers</SelectItem>
-                                <SelectItem value="bronze">Bronze</SelectItem>
-                                <SelectItem value="silver">Silver</SelectItem>
-                                <SelectItem value="gold">Gold</SelectItem>
-                                <SelectItem value="diamond">Diamond</SelectItem>
-                                <SelectItem value="platinum">Platinum</SelectItem>
-                                <SelectItem value="expired">Expired</SelectItem>
-                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                                {tiers.map((t) => (
+                                    <SelectItem key={t.tier} value={t.tier}>
+                                        {t.name}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>
@@ -648,13 +662,11 @@ export default function TransactionsManager() {
                             <Select value={formData.membership_plan} onValueChange={e => setFormData({ ...formData, membership_plan: e })}>
                                 <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="bronze">Bronze</SelectItem>
-                                    <SelectItem value="silver">Silver</SelectItem>
-                                    <SelectItem value="gold">Gold</SelectItem>
-                                    <SelectItem value="diamond">Diamond</SelectItem>
-                                    <SelectItem value="platinum">Platinum</SelectItem>
-                                    <SelectItem value="expired">Expired</SelectItem>
-                                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                                    {tiers.map((t) => (
+                                        <SelectItem key={t.tier} value={t.tier}>
+                                            {t.name}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -693,13 +705,11 @@ export default function TransactionsManager() {
                             <Select value={formData.membership_plan} onValueChange={e => setFormData({ ...formData, membership_plan: e })}>
                                 <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="bronze">Bronze</SelectItem>
-                                    <SelectItem value="silver">Silver</SelectItem>
-                                    <SelectItem value="gold">Gold</SelectItem>
-                                    <SelectItem value="diamond">Diamond</SelectItem>
-                                    <SelectItem value="platinum">Platinum</SelectItem>
-                                    <SelectItem value="expired">Expired</SelectItem>
-                                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                                    {tiers.map((t) => (
+                                        <SelectItem key={t.tier} value={t.tier}>
+                                            {t.name}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>

@@ -22,19 +22,10 @@ interface TierAssignment {
 interface CourseTierManagerProps {
     courses: Course[];
     tierAssignments: TierAssignment[];
+    tiers: { value: string; label: string; color: string }[];
 }
 
-const TIERS = [
-    { value: "free", label: "Free 🆓", color: "text-gray-500" },
-    { value: "bronze", label: "Bronze 🥉", color: "text-orange-700" },
-    { value: "silver", label: "Silver 🥈", color: "text-gray-600" },
-    { value: "gold", label: "Gold 🥇", color: "text-yellow-600" },
-    { value: "diamond", label: "Diamond 💎", color: "text-blue-600" },
-    { value: "platinum", label: "Platinum 💍", color: "text-slate-900" },
-    { value: "expired", label: "Expired ⚠️", color: "text-red-500" },
-];
-
-export function CourseTierManager({ courses, tierAssignments }: CourseTierManagerProps) {
+export function CourseTierManager({ courses, tierAssignments, tiers }: CourseTierManagerProps) {
     const router = useRouter();
     const [saving, setSaving] = useState(false);
 
@@ -104,7 +95,7 @@ export function CourseTierManager({ courses, tierAssignments }: CourseTierManage
                                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                     Course
                                 </th>
-                                {TIERS.map((tier) => (
+                                {tiers.map((tier) => (
                                     <th
                                         key={tier.value}
                                         className="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -134,7 +125,7 @@ export function CourseTierManager({ courses, tierAssignments }: CourseTierManage
                                             )}
                                         </div>
                                     </td>
-                                    {TIERS.map((tier) => (
+                                    {tiers.map((tier) => (
                                         <td key={tier.value} className="px-6 py-4 text-center">
                                             <Checkbox
                                                 checked={assignments.get(course.id)?.has(tier.value) || false}

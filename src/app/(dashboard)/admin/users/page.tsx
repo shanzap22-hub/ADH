@@ -1,6 +1,7 @@
 import nextDynamic from "next/dynamic";
 import { getAllUsers } from "@/actions/admin/get-all-users";
 import { Skeleton } from "@/components/ui/skeleton";
+import { createClient } from "@/lib/supabase/server";
 
 // Performance Optimization: Dynamic import for heavy client component
 const UserManagementClient = nextDynamic(
@@ -25,6 +26,13 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdminUsersPage() {
     const users = await getAllUsers();
+    
+    // Fetch tiers dynamically
+    const supabase = await createClient();
+    const { data: tiers } = await supabase
+        .from("tier_pricing")
+        .select("tier, name")
+        .order("price", { ascending: true });
 
     return (
         <div className="p-6">
@@ -32,7 +40,7 @@ export default async function AdminUsersPage() {
                 <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
                 <p className="text-gray-600 mt-1">Manage all users, their roles, and membership tiers</p>
             </div>
-            <UserManagementClient initialUsers={users} />
+            <UserManagementClient initialUsers={users} tiers={tiers || []} />
         </div>
     );
 }

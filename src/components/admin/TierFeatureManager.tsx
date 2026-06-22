@@ -21,18 +21,10 @@ interface TierFeature {
 
 interface TierFeatureManagerProps {
     initialFeatures: TierFeature[];
+    tiers: { value: string; label: string; color: string }[];
 }
 
-const TIERS = [
-    { value: "bronze", label: "Bronze 🥉", color: "text-orange-700" },
-    { value: "silver", label: "Silver 🥈", color: "text-gray-600" },
-    { value: "gold", label: "Gold 🥇", color: "text-yellow-600" },
-    { value: "platinum", label: "Platinum 💠", color: "text-indigo-600" },
-    { value: "diamond", label: "Diamond 💎", color: "text-blue-600" },
-    { value: "expired", label: "Expired ⚠️", color: "text-red-600" },
-];
-
-export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps) {
+export function TierFeatureManager({ initialFeatures, tiers }: TierFeatureManagerProps) {
     const router = useRouter();
     const [saving, setSaving] = useState(false);
     // Initialize with default true if missing (for seamless UI before DB update propagates)
@@ -101,7 +93,7 @@ export function TierFeatureManager({ initialFeatures }: TierFeatureManagerProps)
             <CardContent>
                 <div className="space-y-6">
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        {TIERS.map((tier) => {
+                        {tiers.map((tier) => {
                             const feature = getFeature(tier.value);
                             return (
                                 <div key={tier.value} className="flex flex-col p-4 border rounded-lg bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">

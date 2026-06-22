@@ -26,16 +26,16 @@ export function getTierHierarchy(tier: string): string[] {
 /**
  * Get the minimum required tier from a list of allowed tiers
  */
-export function getMinimumRequiredTier(allowedTiers: string[]): string {
-    const tierOrder = ["bronze", "silver", "gold", "diamond", "platinum", "expired"];
+export function getMinimumRequiredTier(allowedTiers: string[], tierOrder?: string[]): string {
+    const order = tierOrder || ["free", "bronze", "silver", "gold", "diamond", "platinum", "expired"];
 
-    for (const tier of tierOrder) {
+    for (const tier of order) {
         if (allowedTiers.includes(tier)) {
             return tier;
         }
     }
 
-    return "bronze";
+    return allowedTiers[0] || "free";
 }
 
 /**
@@ -47,7 +47,8 @@ export function getTierInfo(tier: string): {
     icon: string;
     gradient: string;
 } {
-    switch (tier) {
+    const lowerTier = (tier || "").toLowerCase();
+    switch (lowerTier) {
         case "platinum":
             return {
                 name: "Platinum",
@@ -90,13 +91,28 @@ export function getTierInfo(tier: string): {
                 icon: "🚫",
                 gradient: "from-red-800 to-red-950",
             };
+        case "free":
+            return {
+                name: "Free",
+                color: "text-gray-500",
+                icon: "🆓",
+                gradient: "from-gray-400 to-gray-500",
+            };
         case "bronze":
-        default:
             return {
                 name: "Bronze",
                 color: "text-orange-700",
                 icon: "🥉",
                 gradient: "from-orange-600 to-amber-700",
+            };
+        default:
+            // Dynamic fallback: Capitalize tier and provide general styling
+            const displayName = tier ? (tier.charAt(0).toUpperCase() + tier.slice(1)) : "Member";
+            return {
+                name: displayName,
+                color: "text-purple-600",
+                icon: "✨",
+                gradient: "from-purple-500 to-indigo-600",
             };
     }
 }
@@ -104,13 +120,13 @@ export function getTierInfo(tier: string): {
 /**
  * Get tier comparison for upgrade prompts
  */
-export function compareTiers(currentTier: string, requiredTier: string): {
+export function compareTiers(currentTier: string, requiredTier: string, tierOrder?: string[]): {
     needsUpgrade: boolean;
     tierDifference: number;
 } {
-    const tierOrder = ["cancelled", "expired", "bronze", "silver", "gold", "diamond", "platinum"];
-    const currentIndex = tierOrder.indexOf(currentTier);
-    const requiredIndex = tierOrder.indexOf(requiredTier);
+    const order = tierOrder || ["cancelled", "expired", "free", "bronze", "silver", "gold", "diamond", "platinum"];
+    const currentIndex = order.indexOf(currentTier);
+    const requiredIndex = order.indexOf(requiredTier);
 
     return {
         needsUpgrade: requiredIndex > currentIndex,

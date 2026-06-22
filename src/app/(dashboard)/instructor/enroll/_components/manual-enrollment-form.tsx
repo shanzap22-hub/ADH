@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2, CheckCircle } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 const formSchema = z.object({
     name: z.string().optional(),
@@ -35,6 +36,24 @@ const formSchema = z.object({
 export function ManualEnrollmentForm() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [tiers, setTiers] = useState<{ tier: string; name: string }[]>([]);
+
+    useEffect(() => {
+        async function loadTiers() {
+            const supabase = createClient();
+            const { data } = await supabase
+                .from("tier_pricing")
+                .select("tier, name")
+                .eq("is_active", true)
+                .order("price", { ascending: true });
+            
+            if (data) {
+                // Filter out expired and cancelled for enrollment
+                setTiers(data.filter(t => !["expired", "cancelled"].includes(t.tier)));
+            }
+        }
+        loadTiers();
+    }, []);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -132,11 +151,11 @@ export function ManualEnrollmentForm() {
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    <SelectItem value="bronze">Bronze</SelectItem>
-                                    <SelectItem value="silver">Silver (Most Popular)</SelectItem>
-                                    <SelectItem value="gold">Gold (VIP)</SelectItem>
-                                    <SelectItem value="platinum">Platinum 💠</SelectItem>
-                                    <SelectItem value="diamond">Diamond</SelectItem>
+                                    {tiers.map((t) => (
+                                        <SelectItem key={t.tier} value={t.tier}>
+                                            {t.name}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                             <FormDescription className="text-slate-400">

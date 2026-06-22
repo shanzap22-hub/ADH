@@ -20,9 +20,10 @@ import { MembershipBadge } from "@/components/membership/MembershipBadge";
 
 interface UserManagementClientProps {
     initialUsers: any[];
+    tiers: { tier: string; name: string }[];
 }
 
-export default function UserManagementClient({ initialUsers }: UserManagementClientProps) {
+export default function UserManagementClient({ initialUsers, tiers }: UserManagementClientProps) {
     const [users, setUsers] = useState(initialUsers);
     const [searchQuery, setSearchQuery] = useState("");
     const [roleFilter, setRoleFilter] = useState("all");
@@ -99,13 +100,11 @@ export default function UserManagementClient({ initialUsers }: UserManagementCli
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Tiers</SelectItem>
-                        <SelectItem value="bronze">Bronze</SelectItem>
-                        <SelectItem value="silver">Silver</SelectItem>
-                        <SelectItem value="gold">Gold</SelectItem>
-                        <SelectItem value="diamond">Diamond</SelectItem>
-                        <SelectItem value="platinum">Platinum</SelectItem>
-                        <SelectItem value="expired">Expired</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                        {tiers.map((t) => (
+                            <SelectItem key={t.tier} value={t.tier}>
+                                {t.name}
+                            </SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
                 <Button variant="outline" onClick={() => { setSearchQuery(""); setRoleFilter("all"); setTierFilter("all"); }}>
@@ -175,7 +174,7 @@ export default function UserManagementClient({ initialUsers }: UserManagementCli
                                         </div>
                                         <div className="text-right">
                                             <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">Tier</div>
-                                            <UserTierSelector userId={user.id} currentTier={user.membership_tier || 'bronze'} />
+                                            <UserTierSelector userId={user.id} currentTier={user.membership_tier || 'bronze'} tiers={tiers} />
                                         </div>
                                         <div className="ml-2">
                                             <DeleteUserAction userId={user.id} userName={user.full_name || 'User'} />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -13,18 +13,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { uploadToR2 } from "@/actions/r2";
 
-const TIERS = [
-    { value: "bronze", label: "Bronze" },
-    { value: "silver", label: "Silver" },
-    { value: "gold", label: "Gold" },
-    { value: "diamond", label: "Diamond" },
-];
-
 export function CreatePost() {
     const [content, setContent] = useState("");
     const [link, setLink] = useState("");
     const [isPinned, setIsPinned] = useState(false);
-    const [selectedTiers, setSelectedTiers] = useState<Set<string>>(new Set(["bronze", "silver", "gold", "diamond"]));
+    const [tiers, setTiers] = useState<{ value: string; label: string }[]>([]);
+    const [selectedTiers, setSelectedTiers] = useState<Set<string>>(new Set());
     const [expanded, setExpanded] = useState(false);
     const [loading, setLoading] = useState(false);
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -33,6 +27,29 @@ export function CreatePost() {
 
     const router = useRouter();
     const supabase = createClient();
+
+    useEffect(() => {
+        async function loadTiers() {
+            try {
+                const { data } = await supabase
+                    .from("tier_pricing")
+                    .select("tier, name")
+                    .eq("is_active", true)
+                    .order("price", { ascending: true });
+                
+                if (data) {
+                    const active = data
+                        .filter(t => !["expired", "cancelled"].includes(t.tier))
+                        .map(t => ({ value: t.tier, label: t.name }));
+                    setTiers(active);
+                    setSelectedTiers(new Set(active.map(t => t.value)));
+                }
+            } catch (err) {
+                console.error("Failed to load tiers", err);
+            }
+        }
+        loadTiers();
+    }, [supabase]);
 
     const toggleTier = (tier: string) => {
         const next = new Set(selectedTiers);
@@ -210,7 +227,7 @@ export function CreatePost() {
                     <div className="space-y-2">
                         <Label className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Visible To</Label>
                         <div className="flex flex-wrap gap-2">
-                            {TIERS.map(tier => (
+                             {tiers.map(tier => (
                                 <div
                                     key={tier.value}
                                     className={`
@@ -221,7 +238,7 @@ export function CreatePost() {
                                         }
                                     `}
                                     onClick={() => toggleTier(tier.value)}
-                                >
+                                	>
                                     <div className={`w-2 h-2 rounded-full ${selectedTiers.has(tier.value) ? 'bg-purple-600' : 'bg-slate-300'}`} />
                                     <span className="text-xs font-medium">{tier.label}</span>
                                 </div>
