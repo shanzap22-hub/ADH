@@ -320,12 +320,12 @@ export function AIChatInterface({ onBack, onClose, isFloating = false }: AIChatI
                 {onClose && (
                     <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         size="icon"
-                        className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 rounded-full w-9 h-9 flex items-center justify-center"
+                        className="text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-full w-9 h-9 flex items-center justify-center transition-colors border border-slate-200 dark:border-slate-800 shadow-sm shrink-0"
                         onClick={onClose}
                     >
-                        <X className="w-5 h-5" />
+                        <X className="w-5 h-5 stroke-[2.5]" />
                     </Button>
                 )}
             </header>

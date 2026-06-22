@@ -30,6 +30,18 @@ export const FloatingAIChat = ({ isAllowed, initialTermsAccepted = false }: Floa
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
+    // Hides BottomNav on mobile when chat is active
+    useEffect(() => {
+        if (isOpen && !isDesktop) {
+            document.documentElement.classList.add("chat-active");
+        } else {
+            document.documentElement.classList.remove("chat-active");
+        }
+        return () => {
+            document.documentElement.classList.remove("chat-active");
+        };
+    }, [isOpen, isDesktop]);
+
     const handleAgreeTerms = async () => {
         setLoadingTerms(true);
         try {
@@ -85,7 +97,7 @@ export const FloatingAIChat = ({ isAllowed, initialTermsAccepted = false }: Floa
                 <div
                     className={cn(
                         "fixed flex flex-col bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 shadow-2xl overflow-hidden transition-all duration-300",
-                        isDesktop ? "rounded-3xl" : "rounded-none inset-0",
+                        isDesktop ? "rounded-3xl" : "rounded-none inset-0 pt-[env(safe-area-inset-top,20px)]",
                         "animate-in fade-in duration-300",
                         isDesktop ? "slide-in-from-bottom-5" : "slide-in-from-bottom-full"
                     )}
@@ -118,9 +130,9 @@ export const FloatingAIChat = ({ isAllowed, initialTermsAccepted = false }: Floa
                                 </div>
                                 <button
                                     onClick={() => setIsOpen(false)}
-                                    className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 rounded-full w-9 h-9 flex items-center justify-center animate-in fade-in duration-200"
+                                    className="text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-full w-9 h-9 flex items-center justify-center transition-colors border border-slate-200 dark:border-slate-800 shadow-sm shrink-0"
                                 >
-                                    <X className="w-5 h-5" />
+                                    <X className="w-5 h-5 stroke-[2.5]" />
                                 </button>
                             </header>
 

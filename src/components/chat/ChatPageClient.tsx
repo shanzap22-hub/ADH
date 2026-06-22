@@ -94,6 +94,18 @@ export default function ChatPageClient({
         };
     }, [selectedChatId]);
 
+    // Hides BottomNav on mobile when a chat is active
+    useEffect(() => {
+        if (selectedChatId) {
+            document.documentElement.classList.add("chat-active");
+        } else {
+            document.documentElement.classList.remove("chat-active");
+        }
+        return () => {
+            document.documentElement.classList.remove("chat-active");
+        };
+    }, [selectedChatId]);
+
     // Limited Offer Banner Logic
     const showUpgradeBanner = ["bronze", "silver"].includes(currentUserTier);
 

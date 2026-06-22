@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Home, BookOpen, Video, MessageCircle, GraduationCap } from "lucide-react";
@@ -27,6 +27,24 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
     const pathname = usePathname();
     const [prevPathname, setPrevPathname] = useState(pathname);
     const [optimisticPath, setOptimisticPath] = useState(pathname);
+    const [isChatActive, setIsChatActive] = useState(false);
+
+    useEffect(() => {
+        const checkChatActive = () => {
+            setIsChatActive(document.documentElement.classList.contains("chat-active"));
+        };
+        // Check initially
+        checkChatActive();
+
+        // Set up MutationObserver to watch class changes on html tag
+        const observer = new MutationObserver(checkChatActive);
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ["class"],
+        });
+
+        return () => observer.disconnect();
+    }, []);
 
     if (pathname !== prevPathname) {
         setPrevPathname(pathname);
@@ -39,6 +57,7 @@ export const BottomNav = ({ permissions }: BottomNavProps) => {
 
     const isPlayerPage = pathname.includes("/chapters/") || pathname.includes("/learn");
     if (permissions?.hideOnPlayer && isPlayerPage) return null;
+    if (isChatActive) return null;
 
     const visibleItems = ALL_NAV_ITEMS.filter(item => {
         if (item.perm === "canViewLive" && permissions && !permissions.canViewLive) return false;
