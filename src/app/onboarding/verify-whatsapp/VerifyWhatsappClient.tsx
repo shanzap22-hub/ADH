@@ -18,7 +18,8 @@ export default function VerifyWhatsappClient() {
     const [dbWhatsapp, setDbWhatsapp] = useState<string | null>(null)
     const router = useRouter()
     const searchParams = useSearchParams()
-    const urlToken = searchParams.get('token')
+    // token_hash param കയ്ക്കലാൻ — സേഫ് ആയിറ്റ് മൾപ്പ ലിങ്ക്കിൽ ബേക്കുന്ന format
+    const urlTokenHash = searchParams.get('token_hash')
     const urlEmail = searchParams.get('email')
     const supabase = createClient()
 
@@ -67,17 +68,17 @@ export default function VerifyWhatsappClient() {
 
         // Initial session check
         async function checkSession() {
-            if (urlToken && urlEmail) {
-                console.log("[VerifyWhatsapp] Token and Email found in URL. Verifying OTP...");
+            if (urlTokenHash && urlEmail) {
+                console.log("[VerifyWhatsapp] token_hash and Email found in URL. Verifying OTP...");
+                // token_hash + type 'email' — ഇതാണ് Supabase ആവശ്യപ്പെടുന്ന ശരിയായ format
                 const { error: otpError } = await supabase.auth.verifyOtp({
-                    email: urlEmail,
-                    token: urlToken,
-                    type: 'magiclink'
+                    token_hash: urlTokenHash,
+                    type: 'email'
                 });
                 
                 if (otpError) {
                     console.error("[VerifyWhatsapp] OTP verification failed:", otpError);
-                    setError('ലോഗിൻ ചെയ്യാൻ സാധിച്ചില്ല. ലിങ്ക് കാലാവധി കഴിഞ്ഞതോ ഉപയോഗിച്ചതോ ആകാം.');
+                    setError('ലോഗിൻ ചെയ്യാൻ സാധിച്ചില്ല. ലിങ്ക്ക് കാലാവധി കഴിഞ്ഞതോ ഉപയോഗിച്ചതോ ആകാം.');
                     setLoading(false);
                     return;
                 }
