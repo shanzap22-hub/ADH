@@ -126,84 +126,52 @@ export async function POST(req: Request) {
                 // Update WhatsApp number for existing user
                 await supabaseAdmin.from("profiles").update({ whatsapp_number: whatsappNumber }).eq("id", userId);
             } else {
-                // Profile does NOT exist. Check if Auth User exists in auth.users schema.
-                const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
-                const supabaseAdminAuth = createSupabaseClient(
-                    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-                    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-                    { db: { schema: 'auth' } }
-                );
+                // Create New User
+                console.log("[FINALIZE_ENROLLMENT] Creating New Auth User:", finalEmail);
+                isNewUser = true;
 
-                const { data: existingAuthUser } = await supabaseAdminAuth
-                    .from('users')
-                    .select('id')
-                    .eq('email', finalEmail.toLowerCase().trim())
-                    .maybeSingle();
-
-                if (existingAuthUser) {
-                    // Self-healing: Auth User exists but Profile is missing!
-                    userId = existingAuthUser.id;
-                    console.log("[FINALIZE_ENROLLMENT] Auth user exists but profile was missing. Self-healing by creating profile for ID:", userId);
-
-                    const { error: insertError } = await supabaseAdmin.from("profiles").insert({
-                        id: userId,
-                        email: finalEmail.toLowerCase().trim(),
+                // 1. Create Auth User first (Required for Foreign Key in Profiles)
+                const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
+                    email: finalEmail,
+                    password: tempPassword,
+                    email_confirm: true,
+                    user_metadata: {
+                        full_name: fullName || "Student",
                         whatsapp_number: whatsappNumber,
-                        phone_number: finalContact,
-                        role: 'student',
-                        membership_tier: 'silver',
-                        setup_required: true,
-                        full_name: fullName || "Student"
-                    });
-
-                    if (insertError) {
-                        console.error("[FINALIZE_ENROLLMENT] Self-healing profile creation failed:", insertError);
-                        return NextResponse.json({ error: "Failed to restore profile" }, { status: 500 });
+                        setup_required: true
                     }
-                } else {
-                    // Create New User
-                    console.log("[FINALIZE_ENROLLMENT] Creating New Auth User:", finalEmail);
-                    isNewUser = true;
+                });
 
-                    // 1. Create Auth User first (Required for Foreign Key in Profiles)
-                    const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-                        email: finalEmail,
-                        password: tempPassword,
-                        email_confirm: true,
-                        user_metadata: {
-                            full_name: fullName || "Student",
-                            whatsapp_number: whatsappNumber,
-                            setup_required: true
-                        }
-                    });
-
-                    if (createUserError || !newUser.user) {
-                        console.error("[FINALIZE_ENROLLMENT] Auth user creation failed:", createUserError);
-                        if (createUserError?.message?.includes("already registered")) {
-                            return NextResponse.json({ error: "User already registered. Please login." }, { status: 409 });
-                        }
-                        return NextResponse.json({ error: "Failed to create account credential" }, { status: 500 });
+                if (createUserError || !newUser.user) {
+                    console.error("[FINALIZE_ENROLLMENT] Auth user creation failed:", createUserError);
+                    // Check if user already exists but we missed it (race condition)
+                    if (createUserError?.message?.includes("already registered")) {
+                        // Try to get user again? Or fail gracefully
+                        return NextResponse.json({ error: "User already exists. Please login." }, { status: 409 });
                     }
+                    return NextResponse.json({ error: "Failed to create account credential" }, { status: 500 });
+                }
 
-                    userId = newUser.user.id;
-                    console.log("[FINALIZE_ENROLLMENT] Auth User Created. ID:", userId);
+                userId = newUser.user.id;
+                console.log("[FINALIZE_ENROLLMENT] Auth User Created. ID:", userId);
 
-                    // 2. Create Profile (Now linked to Auth ID)
-                    const { error: insertError } = await supabaseAdmin.from("profiles").insert({
-                        id: userId,
-                        email: finalEmail.toLowerCase().trim(),
-                        whatsapp_number: whatsappNumber,
-                        phone_number: finalContact,
-                        role: 'student',
-                        membership_tier: 'silver',
-                        setup_required: true,
-                        full_name: fullName || "Student"
-                    });
+                // 2. Create Profile (Now linked to Auth ID)
+                const { error: insertError } = await supabaseAdmin.from("profiles").insert({
+                    id: userId,
+                    email: finalEmail.toLowerCase().trim(),
+                    whatsapp_number: whatsappNumber,
+                    phone_number: finalContact,
+                    role: 'student',
+                    membership_tier: 'silver',
+                    setup_required: true,
+                    full_name: fullName || "Student"
+                });
 
-                    if (insertError) {
-                        console.error("[FINALIZE_ENROLLMENT] Profile creation failed:", insertError);
-                        return NextResponse.json({ error: "Failed to create profile" }, { status: 500 });
-                    }
+                if (insertError) {
+                    console.error("[FINALIZE_ENROLLMENT] Profile creation failed:", insertError);
+                    // Rollback auth user? (Optional but good practice)
+                    // await supabaseAdmin.auth.admin.deleteUser(userId);
+                    return NextResponse.json({ error: "Failed to create profile" }, { status: 500 });
                 }
             }
         }

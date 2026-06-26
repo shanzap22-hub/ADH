@@ -366,7 +366,8 @@ export async function GET(req: Request) {
             // Onboarded: Must have profile, setup_required = false, and email not pending
             transactions = transactions.filter((t: any) => {
                 const hasProfile = !!t.profiles;
-                const setupRequired = t.profiles?.setup_required === true;
+                const isLegacyOrStaff = t.source === 'legacy_import' || (t.profiles && t.profiles.role !== 'student');
+                const setupRequired = t.profiles?.setup_required === true && !isLegacyOrStaff;
                 const emailToCheck = t.profiles?.email || t.student_email || "";
                 const isPendingEmail = emailToCheck.toLowerCase().endsWith("@adh.pending");
                 return hasProfile && !setupRequired && !isPendingEmail;
@@ -375,7 +376,8 @@ export async function GET(req: Request) {
             // Pending Onboarding: No profile OR setup_required = true OR email is pending
             transactions = transactions.filter((t: any) => {
                 const hasProfile = !!t.profiles;
-                const setupRequired = t.profiles?.setup_required === true;
+                const isLegacyOrStaff = t.source === 'legacy_import' || (t.profiles && t.profiles.role !== 'student');
+                const setupRequired = t.profiles?.setup_required === true && !isLegacyOrStaff;
                 const emailToCheck = t.profiles?.email || t.student_email || "";
                 const isPendingEmail = emailToCheck.toLowerCase().endsWith("@adh.pending");
                 return !hasProfile || setupRequired || isPendingEmail;

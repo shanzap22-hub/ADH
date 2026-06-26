@@ -154,78 +154,41 @@ export async function POST(req: Request) {
                         .update({ whatsapp_number: whatsappNumber })
                         .eq("id", userId);
                 } else {
-                    // Profile does NOT exist in public.profiles.
-                    // Check if Auth User exists in auth.users schema.
-                    const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
-                    const supabaseAdminAuth = createSupabaseClient(
-                        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-                        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-                        { db: { schema: 'auth' } }
-                    );
-
-                    const { data: existingAuthUser } = await supabaseAdminAuth
-                        .from('users')
-                        .select('id')
-                        .eq('email', email.toLowerCase().trim())
-                        .maybeSingle();
-
-                    if (existingAuthUser) {
-                        // Self-healing: Auth User exists but Profile is missing!
-                        userId = existingAuthUser.id;
-                        console.log("[LINK_VERIFY] Auth user exists but profile was missing. Self-healing by creating profile for ID:", userId);
-                        
-                        const { error: profileError } = await supabaseAdmin.from("profiles").insert({
-                            id: userId,
-                            email: email.toLowerCase().trim(),
+                    // User does not exist, create a new auth user and profile
+                    isNewUser = true;
+                    const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
+                        email: email.toLowerCase().trim(),
+                        password: tempPassword,
+                        email_confirm: true,
+                        user_metadata: {
+                            full_name: fullName,
                             whatsapp_number: whatsappNumber,
-                            phone_number: paymentContact,
-                            role: 'student',
-                            membership_tier: link.type === 'tier' ? link.target_id : 'silver',
-                            setup_required: true, // REDIRECT to onboarding completion
-                            full_name: fullName
-                        });
-
-                        if (profileError) {
-                            console.error("[LINK_VERIFY] Self-healing profile creation failed:", profileError);
-                            return NextResponse.json({ error: "Failed to restore profile" }, { status: 500 });
+                            setup_required: true // REDIRECT to onboarding completion
                         }
-                    } else {
-                        // User does not exist in Auth or Profiles, create a new auth user and profile
-                        isNewUser = true;
-                        const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-                            email: email.toLowerCase().trim(),
-                            password: tempPassword,
-                            email_confirm: true,
-                            user_metadata: {
-                                full_name: fullName,
-                                whatsapp_number: whatsappNumber,
-                                setup_required: true // REDIRECT to onboarding completion
-                            }
-                        });
+                    });
 
-                        if (createUserError || !newUser.user) {
-                            console.error("[LINK_VERIFY] Auth user creation failed:", createUserError);
-                            return NextResponse.json({ error: "Failed to create account credential" }, { status: 500 });
-                        }
+                    if (createUserError || !newUser.user) {
+                        console.error("[LINK_VERIFY] Auth user creation failed:", createUserError);
+                        return NextResponse.json({ error: "Failed to create account credential" }, { status: 500 });
+                    }
 
-                        userId = newUser.user.id;
+                    userId = newUser.user.id;
 
-                        // Create profile
-                        const { error: profileError } = await supabaseAdmin.from("profiles").insert({
-                            id: userId,
-                            email: email.toLowerCase().trim(),
-                            whatsapp_number: whatsappNumber,
-                            phone_number: paymentContact,
-                            role: 'student',
-                            membership_tier: link.type === 'tier' ? link.target_id : 'silver',
-                            setup_required: true, // REDIRECT to onboarding completion
-                            full_name: fullName
-                        });
+                    // Create profile
+                    const { error: profileError } = await supabaseAdmin.from("profiles").insert({
+                        id: userId,
+                        email: email.toLowerCase().trim(),
+                        whatsapp_number: whatsappNumber,
+                        phone_number: paymentContact,
+                        role: 'student',
+                        membership_tier: link.type === 'tier' ? link.target_id : 'silver',
+                        setup_required: true, // REDIRECT to onboarding completion
+                        full_name: fullName
+                    });
 
-                        if (profileError) {
-                            console.error("[LINK_VERIFY] Profile creation failed:", profileError);
-                            return NextResponse.json({ error: "Failed to create profile" }, { status: 500 });
-                        }
+                    if (profileError) {
+                        console.error("[LINK_VERIFY] Profile creation failed:", profileError);
+                        return NextResponse.json({ error: "Failed to create profile" }, { status: 500 });
                     }
                 }
             }
