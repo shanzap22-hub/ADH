@@ -79,6 +79,16 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // Admin API Routes - Force No-Cache (MUST come before general API rule)
+      {
+        source: '/api/admin/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+          },
+        ],
+      },
       // General API Routes - Cache with Stale-While-Revalidate
       {
         source: '/api/:path*',
