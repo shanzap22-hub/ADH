@@ -51,8 +51,34 @@ export async function GET(req: Request) {
             const { data: tempData, error: tempError } = await tempQuery;
             if (tempError) throw tempError;
 
+            // Deduplicate: find all phone numbers that have paid (exist in transactions or verified in payments_temp)
+            const { data: paidTxns } = await supabase.from('transactions').select('whatsapp_number, phone_number');
+            const { data: verifiedPayments } = await supabase.from('payments_temp').select('whatsapp_number').eq('status', 'verified');
+
+            const paidNumbers = new Set<string>();
+
+            const cleanNumber = (num: string) => {
+                if (!num) return "";
+                const digits = num.replace(/\D/g, "");
+                return digits.length > 10 ? digits.slice(-10) : digits;
+            };
+
+            paidTxns?.forEach((t: any) => {
+                if (t.whatsapp_number) paidNumbers.add(cleanNumber(t.whatsapp_number));
+                if (t.phone_number) paidNumbers.add(cleanNumber(t.phone_number));
+            });
+
+            verifiedPayments?.forEach((p: any) => {
+                if (p.whatsapp_number) paidNumbers.add(cleanNumber(p.whatsapp_number));
+            });
+
+            const filteredTempData = (tempData || []).filter((t: any) => {
+                const cleanedWhatsapp = cleanNumber(t.whatsapp_number);
+                return !cleanedWhatsapp || !paidNumbers.has(cleanedWhatsapp);
+            });
+
             // Map to Transaction format
-            transactions = (tempData || []).map((t: any) => ({
+            transactions = filteredTempData.map((t: any) => ({
                 id: t.id,
                 created_at: t.created_at,
                 student_name: "Guest User",
@@ -341,7 +367,8 @@ export async function GET(req: Request) {
             transactions = transactions.filter((t: any) => {
                 const hasProfile = !!t.profiles;
                 const setupRequired = t.profiles?.setup_required === true;
-                const isPendingEmail = (t.student_email || "").toLowerCase().endsWith("@adh.pending");
+                const emailToCheck = t.profiles?.email || t.student_email || "";
+                const isPendingEmail = emailToCheck.toLowerCase().endsWith("@adh.pending");
                 return hasProfile && !setupRequired && !isPendingEmail;
             });
         } else if (status === 'pending_onboarding') {
@@ -349,7 +376,8 @@ export async function GET(req: Request) {
             transactions = transactions.filter((t: any) => {
                 const hasProfile = !!t.profiles;
                 const setupRequired = t.profiles?.setup_required === true;
-                const isPendingEmail = (t.student_email || "").toLowerCase().endsWith("@adh.pending");
+                const emailToCheck = t.profiles?.email || t.student_email || "";
+                const isPendingEmail = emailToCheck.toLowerCase().endsWith("@adh.pending");
                 return !hasProfile || setupRequired || isPendingEmail;
             });
         }
