@@ -128,7 +128,7 @@ export async function middleware(request: NextRequest) {
         '/courses'
     ];
 
-    const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
+    const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path)) && pathname !== '/onboarding/verify-whatsapp';
     const isProtectedApi = pathname.startsWith('/api'); // പബ്ലിക് എപിഐകളെ മുകളിൽ തന്നെ ഒഴിവാക്കിയതിനാൽ ഇവിടെ വരുന്നത് പ്രൊട്ടക്റ്റഡ് ആണ്.
 
     // ലോഗിൻ ചെയ്ത യൂസർ വീണ്ടും ലോഗിൻ പേജിൽ പോയാൽ ഡാഷ്‌ബോർഡിലേക്ക് തിരിച്ചുവിടുന്നു

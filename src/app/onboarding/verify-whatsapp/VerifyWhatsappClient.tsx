@@ -20,38 +20,75 @@ export default function VerifyWhatsappClient() {
     const supabase = createClient()
 
     useEffect(() => {
-        // ലോഗിൻ ചെയ്ത യൂസറുടെ പ്രൊഫൈലിൽ നിന്നും വാട്സാപ്പ് നമ്പർ ഫെച്ച് ചെയ്യുന്നു
-        async function fetchProfile() {
-            setLoading(true)
-            try {
-                const { data: { user } } = await supabase.auth.getUser()
-                if (!user) {
-                    router.push('/login')
-                    return
-                }
+        let isMounted = true;
+        setLoading(true);
 
+        async function loadProfileForUser(user: any) {
+            try {
                 const { data: profile, error: profileError } = await supabase
                     .from('profiles')
-                    .select('whatsapp_number')
+                    .select('whatsapp_number, setup_required')
                     .eq('id', user.id)
-                    .single()
+                    .single();
+
+                if (!isMounted) return;
 
                 if (profileError || !profile) {
-                    setError('പ്രൊഫൈൽ വിവരങ്ങൾ കണ്ടെത്താൻ സാധിച്ചില്ല. ദയവായി അഡ്മിനുമായി ബന്ധപ്പെടുക.')
-                    return
+                    setError('പ്രൊഫൈൽ വിവരങ്ങൾ കണ്ടെത്താൻ സാധിച്ചില്ല. ദയവായി അഡ്മിനുമായി ബന്ധപ്പെടുക.');
+                    setLoading(false);
+                    return;
                 }
 
-                setDbWhatsapp(profile.whatsapp_number || '')
+                // ഒൺബോർഡിംഗ് ഇതിനകം കഴിഞ്ഞതാണെങ്കിൽ ഡാഷ്ബോർഡിലേക്ക് വിടുക
+                if (profile.setup_required === false) {
+                    router.push('/dashboard');
+                    return;
+                }
+
+                setDbWhatsapp(profile.whatsapp_number || '');
+                setLoading(false);
             } catch (err) {
-                console.error(err)
-                setError('പ്രൊഫൈൽ വിവരങ്ങൾ ലോഡ് ചെയ്യുന്നതിൽ തകരാർ സംഭവിച്ചു.')
-            } finally {
-                setLoading(false)
+                if (!isMounted) return;
+                console.error(err);
+                setError('പ്രൊഫൈൽ വിവരങ്ങൾ ലോഡ് ചെയ്യുന്നതിൽ തകരാർ സംഭവിച്ചു.');
+                setLoading(false);
             }
         }
 
-        fetchProfile()
-    }, [router, supabase])
+        // Listen for auth state change (in case of async hash/token parsing)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (session?.user && isMounted) {
+                loadProfileForUser(session.user);
+            }
+        });
+
+        // Initial session check
+        async function checkSession() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user && isMounted) {
+                loadProfileForUser(session.user);
+            } else {
+                // Wait for potential client-side hash parsing
+                setTimeout(async () => {
+                    if (!isMounted) return;
+                    const { data: { session: delayedSession } } = await supabase.auth.getSession();
+                    if (delayedSession?.user && isMounted) {
+                        loadProfileForUser(delayedSession.user);
+                    } else if (isMounted) {
+                        setError('ലോഗിൻ ചെയ്യാൻ സാധിച്ചില്ല. ദയവായി അഡ്മിൻ നൽകിയ ലിങ്ക് വീണ്ടും ഉപയോഗിക്കുക.');
+                        setLoading(false);
+                    }
+                }, 2500);
+            }
+        }
+
+        checkSession();
+
+        return () => {
+            isMounted = false;
+            subscription.unsubscribe();
+        };
+    }, [supabase]);
 
     const handleVerify = async (e: React.FormEvent) => {
         e.preventDefault()
