@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +17,9 @@ export default function VerifyWhatsappClient() {
     const [error, setError] = useState<string | null>(null)
     const [dbWhatsapp, setDbWhatsapp] = useState<string | null>(null)
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const urlToken = searchParams.get('token')
+    const urlEmail = searchParams.get('email')
     const supabase = createClient()
 
     useEffect(() => {
@@ -64,6 +67,24 @@ export default function VerifyWhatsappClient() {
 
         // Initial session check
         async function checkSession() {
+            if (urlToken && urlEmail) {
+                console.log("[VerifyWhatsapp] Token and Email found in URL. Verifying OTP...");
+                const { error: otpError } = await supabase.auth.verifyOtp({
+                    email: urlEmail,
+                    token: urlToken,
+                    type: 'magiclink'
+                });
+                
+                if (otpError) {
+                    console.error("[VerifyWhatsapp] OTP verification failed:", otpError);
+                    setError('ലോഗിൻ ചെയ്യാൻ സാധിച്ചില്ല. ലിങ്ക് കാലാവധി കഴിഞ്ഞതോ ഉപയോഗിച്ചതോ ആകാം.');
+                    setLoading(false);
+                    return;
+                }
+                
+                console.log("[VerifyWhatsapp] OTP verification succeeded. Fetching session...");
+            }
+
             const { data: { session } } = await supabase.auth.getSession();
             if (session?.user && isMounted) {
                 loadProfileForUser(session.user);

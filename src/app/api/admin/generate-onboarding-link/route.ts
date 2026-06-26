@@ -48,9 +48,13 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: error?.message || "Failed to generate magic link" }, { status: 500 });
         }
 
+        const actionUrl = new URL(data.properties.action_link);
+        const token = actionUrl.searchParams.get("token");
+        const customActionLink = `${origin}/onboarding/verify-whatsapp?token=${token}&email=${encodeURIComponent(email)}`;
+
         return NextResponse.json({
             success: true,
-            action_link: data.properties.action_link
+            action_link: customActionLink
         });
 
     } catch (e: any) {
