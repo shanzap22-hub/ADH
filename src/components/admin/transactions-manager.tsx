@@ -208,7 +208,7 @@ export default function TransactionsManager() {
             const url = "/api/admin/transactions";
             const method = isEdit ? "PUT" : "POST";
             const payload = isEdit
-                ? { ...formData, id: selectedTxn.id, amount: Math.round(Number(formData.amount || 0) * 100) }
+                ? { ...formData, id: selectedTxn!.id, amount: Math.round(Number(formData.amount || 0) * 100) }
                 : { ...formData, status: 'verified', amount: Math.round(Number(formData.amount || 0) * 100) };
 
             console.log("[handleSave] Sending payload:", payload);
@@ -256,7 +256,7 @@ export default function TransactionsManager() {
             const res = await fetch("/api/razorpay/refund", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ paymentId: selectedTxn.razorpay_payment_id })
+                body: JSON.stringify({ paymentId: selectedTxn!.razorpay_payment_id })
             });
             const data = await res.json();
             if (data.error) throw new Error(data.error);
@@ -474,8 +474,9 @@ export default function TransactionsManager() {
             {/* Tabs & Table */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
                 <TabsList>
-                    <TabsTrigger value="verified">Paid Transactions</TabsTrigger>
-                    <TabsTrigger value="pending">Drop-offs (Incomplete)</TabsTrigger>
+                    <TabsTrigger value="verified">Onboarded Students</TabsTrigger>
+                    <TabsTrigger value="pending_onboarding">Pending Onboarding</TabsTrigger>
+                    <TabsTrigger value="pending">Drop-offs</TabsTrigger>
                     <TabsTrigger value="refunded">Refunded</TabsTrigger>
                     <TabsTrigger value="all">All Records</TabsTrigger>
                 </TabsList>
@@ -591,7 +592,7 @@ export default function TransactionsManager() {
                                                                         title="Click to view detailed progress"
                                                                     >
                                                                         <div className="font-medium text-blue-600 flex items-center justify-between">
-                                                                            <span>{txn.student_progress.courses_enrolled || 0} Course{txn.student_progress.Programs_enrolled !== 1 ? 's' : ''}</span>
+                                                                            <span>{txn.student_progress.courses_enrolled || 0} Course{txn.student_progress.courses_enrolled !== 1 ? 's' : ''}</span>
                                                                             <Search className="w-3 h-3 opacity-50" />
                                                                         </div>
                                                                         <div className="text-slate-600">
@@ -647,7 +648,7 @@ export default function TransactionsManager() {
 
                                                                     {(() => {
                                                                         const email = txn.profiles?.email || txn.student_email || txn.email || "";
-                                                                        const isPending = txn.profiles?.setup_required || email.endsWith('@adh.pending');
+                                                                        const isPending = (activeTab === 'pending_onboarding' || txn.profiles?.setup_required || email.endsWith('@adh.pending') || !txn.profiles) && email !== "" && txn.status === 'verified';
                                                                         if (!isPending) return null;
                                                                         return (
                                                                             <Button 
@@ -798,7 +799,7 @@ export default function TransactionsManager() {
                     </DialogHeader>
 
                     <div className="py-4 space-y-4">
-                        {selectedProgress?.progress?.course_details?.length > 0 ? (
+                        {selectedProgress?.progress?.course_details && selectedProgress.progress.course_details.length > 0 ? (
                             selectedProgress.progress.course_details.map((course, idx: number) => (
                                 <div key={idx} className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                                     <h4 className="font-medium text-sm text-slate-800 mb-1 line-clamp-2">{course.title}</h4>

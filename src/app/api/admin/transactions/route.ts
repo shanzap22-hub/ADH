@@ -75,9 +75,15 @@ export async function GET(req: Request) {
             if (searchQuery) {
                 query = query.or(`student_name.ilike.%${searchQuery}%,student_email.ilike.%${searchQuery}%,phone_number.ilike.%${searchQuery}%,whatsapp_number.ilike.%${searchQuery}%`);
             }
-            if (status && status !== 'all') {
+            
+            // For both 'verified' and 'pending_onboarding', we query 'verified' status in database
+            // and post-filter after mapping profile onboarding state.
+            if (status === 'pending_onboarding' || status === 'verified') {
+                query = query.eq('status', 'verified');
+            } else if (status && status !== 'all') {
                 query = query.eq('status', status);
             }
+            
             if (startDate) {
                 query = query.gte('created_at', startDate);
             }
@@ -329,6 +335,25 @@ export async function GET(req: Request) {
             }
         }
 
+        // Post-filter for Onboarded vs Pending Onboarding
+        if (status === 'verified') {
+            // Onboarded: Must have profile, setup_required = false, and email not pending
+            transactions = transactions.filter((t: any) => {
+                const hasProfile = !!t.profiles;
+                const setupRequired = t.profiles?.setup_required === true;
+                const isPendingEmail = (t.student_email || "").toLowerCase().endsWith("@adh.pending");
+                return hasProfile && !setupRequired && !isPendingEmail;
+            });
+        } else if (status === 'pending_onboarding') {
+            // Pending Onboarding: No profile OR setup_required = true OR email is pending
+            transactions = transactions.filter((t: any) => {
+                const hasProfile = !!t.profiles;
+                const setupRequired = t.profiles?.setup_required === true;
+                const isPendingEmail = (t.student_email || "").toLowerCase().endsWith("@adh.pending");
+                return !hasProfile || setupRequired || isPendingEmail;
+            });
+        }
+
         return NextResponse.json(transactions);
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });
@@ -408,11 +433,13 @@ export async function POST(req: Request) {
                 created_at: data.created_at
             };
 
-            await fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
+            if (GOOGLE_SCRIPT_URL) {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+            }
 
         } catch (sheetErr) {
             console.error("Sheet Sync Logic Error", sheetErr);

@@ -125,10 +125,15 @@ export async function POST(req: Request) {
         } else {
             // New Student Flow
             // Search by WhatsApp number first (similar to homepage checkouts)
+            const cleanWhatsapp = whatsappNumber.replace(/\D/g, "");
+            const whatsapp10Digit = (cleanWhatsapp.startsWith("91") && cleanWhatsapp.length === 12)
+                ? cleanWhatsapp.slice(2)
+                : (cleanWhatsapp.startsWith("0") ? cleanWhatsapp.slice(1) : cleanWhatsapp);
+
             const { data: profileByWhatsapp } = await supabaseAdmin
                 .from("profiles")
                 .select("id, email")
-                .eq("whatsapp_number", whatsappNumber)
+                .or(`whatsapp_number.eq.${cleanWhatsapp},whatsapp_number.eq.${whatsapp10Digit},whatsapp_number.eq.+${cleanWhatsapp},whatsapp_number.eq.+${whatsapp10Digit}`)
                 .maybeSingle();
 
             if (profileByWhatsapp) {

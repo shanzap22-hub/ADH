@@ -15,6 +15,7 @@ interface PrePaymentModalProps {
 }
 
 export function PrePaymentModal({ isOpen, onClose, onProceed }: PrePaymentModalProps) {
+    const [countryCode, setCountryCode] = useState("+91");
     const [whatsappNumber, setWhatsappNumber] = useState("");
     const [isValidating, setIsValidating] = useState(false);
 
@@ -62,22 +63,29 @@ export function PrePaymentModal({ isOpen, onClose, onProceed }: PrePaymentModalP
     };
 
     const validateAndProceed = () => {
-        // Validate WhatsApp number (10 digits)
+        // Validate WhatsApp number
         const cleanedNumber = whatsappNumber.replace(/\D/g, "");
 
-        if (cleanedNumber.length !== 10) {
-            toast.error("Please enter a valid 10-digit WhatsApp number");
-            return;
-        }
+        if (countryCode === "+91") {
+            if (cleanedNumber.length !== 10) {
+                toast.error("Please enter a valid 10-digit WhatsApp number");
+                return;
+            }
 
-        if (!cleanedNumber.startsWith("6") && !cleanedNumber.startsWith("7") && !cleanedNumber.startsWith("8") && !cleanedNumber.startsWith("9")) {
-            toast.error("Please enter a valid Indian mobile number");
-            return;
+            if (!cleanedNumber.startsWith("6") && !cleanedNumber.startsWith("7") && !cleanedNumber.startsWith("8") && !cleanedNumber.startsWith("9")) {
+                toast.error("Please enter a valid Indian mobile number");
+                return;
+            }
+        } else {
+            if (cleanedNumber.length < 7 || cleanedNumber.length > 15) {
+                toast.error("Please enter a valid WhatsApp number");
+                return;
+            }
         }
 
         setIsValidating(true);
         // Pass coupon code if applied
-        onProceed(cleanedNumber, appliedCoupon ? appliedCoupon.code : undefined);
+        onProceed(countryCode + cleanedNumber, appliedCoupon ? appliedCoupon.code : undefined);
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -105,19 +113,37 @@ export function PrePaymentModal({ isOpen, onClose, onProceed }: PrePaymentModalP
                         <Label htmlFor="whatsapp" className="text-base font-medium">
                             WhatsApp Number
                         </Label>
-                        <div className="relative">
-                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                            <Input
-                                id="whatsapp"
-                                type="tel"
-                                placeholder="9876543210"
-                                value={whatsappNumber}
-                                onChange={(e) => setWhatsappNumber(e.target.value)}
-                                onKeyPress={handleKeyPress}
-                                className="pl-10 text-lg py-6"
-                                maxLength={10}
+                        <div className="flex gap-2">
+                            <select
+                                value={countryCode}
+                                onChange={(e) => setCountryCode(e.target.value)}
+                                className="bg-white border border-slate-200 rounded-md px-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 text-slate-800 font-medium"
                                 disabled={isValidating}
-                            />
+                            >
+                                <option value="+91">🇮🇳 +91</option>
+                                <option value="+971">🇦🇪 +971</option>
+                                <option value="+966">🇸🇦 +966</option>
+                                <option value="+974">🇶🇦 +974</option>
+                                <option value="+968">🇴🇲 +968</option>
+                                <option value="+965">🇰🇼 +965</option>
+                                <option value="+973">🇧🇭 +973</option>
+                                <option value="+1">🇺🇸 +1</option>
+                                <option value="+44">🇬🇧 +44</option>
+                            </select>
+                            <div className="relative flex-grow">
+                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                                <Input
+                                    id="whatsapp"
+                                    type="tel"
+                                    placeholder="9876543210"
+                                    value={whatsappNumber}
+                                    onChange={(e) => setWhatsappNumber(e.target.value)}
+                                    onKeyPress={handleKeyPress}
+                                    className="pl-10 text-lg py-6"
+                                    maxLength={15}
+                                    disabled={isValidating}
+                                />
+                            </div>
                         </div>
                     </div>
 

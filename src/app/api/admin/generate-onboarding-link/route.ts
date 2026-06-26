@@ -1,70 +1,60 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 export async function POST(req: Request) {
     try {
         const { email } = await req.json();
-
         if (!email) {
-            return NextResponse.json(
-                { error: "Email is required" },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: "Email is required" }, { status: 400 });
         }
 
-        const supabase = await createClient();
+        // 1. Authenticate Requesting User
+        const supabaseAuth = await createClient();
+        const { data: { user: currentUser } } = await supabaseAuth.auth.getUser();
+        if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-        // Verify admin access
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        // Initialize admin client to check role and generate link
-        const supabaseAdmin = createAdminClient(
+        // Initialize admin client to check role
+        const supabaseAdmin = createSupabaseClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!
         );
 
+        // Check if admin
         const { data: profile } = await supabaseAdmin
             .from('profiles')
             .select('role')
-            .eq('id', user.id)
+            .eq('id', currentUser.id)
             .single();
 
         if (profile?.role !== 'super_admin' && profile?.role !== 'admin') {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
-        const requestUrl = new URL(req.url);
-        const origin = requestUrl.origin;
+        const origin = new URL(req.url).origin;
+        const redirectUrl = `${origin}/onboarding/verify-whatsapp`;
 
-        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-            type: 'magiclink',
-            email: email,
+        // 2. Generate Magic Link using Supabase Auth Admin API
+        const { data, error } = await supabaseAdmin.auth.admin.generateLink({
+            type: "magiclink",
+            email: email.toLowerCase().trim(),
             options: {
-                redirectTo: `${origin}/onboarding/verify-whatsapp`
+                redirectTo: redirectUrl
             }
         });
 
-        if (linkError || !linkData?.properties?.action_link) {
-            console.error("Generate Magic Link Error", linkError);
-            return NextResponse.json(
-                { error: linkError?.message || "Failed to generate onboarding magic link" },
-                { status: 500 }
-            );
+        if (error || !data || !data.properties || !data.properties.action_link) {
+            console.error("[GENERATE_MAGIC_LINK_ERROR]", error);
+            return NextResponse.json({ error: error?.message || "Failed to generate magic link" }, { status: 500 });
         }
 
         return NextResponse.json({
             success: true,
-            action_link: linkData.properties.action_link
+            action_link: data.properties.action_link
         });
-    } catch (error: any) {
-        console.error("[GENERATE_ONBOARDING_LINK]", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        );
+
+    } catch (e: any) {
+        console.error("[GENERATE_MAGIC_LINK_FATAL]", e);
+        return NextResponse.json({ error: e.message || "Internal server error" }, { status: 500 });
     }
 }

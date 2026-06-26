@@ -183,10 +183,12 @@ export function RazorpayButtonWrapper({ children }: RazorpayButtonWrapperProps) 
                                 // Actually better to redirect to login if auto-login fails
                                 window.location.href = "/login";
                             } else {
+                                sessionStorage.setItem("whatsapp_verified", "true");
                                 // Redirect to dashboard -> middleware sends to onboarding
                                 window.location.href = "/dashboard";
                             }
                         } else {
+                            sessionStorage.setItem("whatsapp_verified", "true");
                             // Existing user - just redirect
                             window.location.href = "/dashboard";
                         }

@@ -41,6 +41,7 @@ export function LinkPayClient({ link, details }: LinkPayClientProps) {
     const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
     const [whatsappNumber, setWhatsappNumber] = useState("");
+    const [countryCode, setCountryCode] = useState("+91");
 
     // OTP states (for existing students)
     const [isOtpSent, setIsOtpSent] = useState(false);
@@ -145,14 +146,33 @@ export function LinkPayClient({ link, details }: LinkPayClientProps) {
         let finalEmail = email;
         let finalWhatsapp = whatsappNumber;
 
+        const cleanedNumber = whatsappNumber.replace(/\D/g, "");
+
         if (isCustomFlow) {
             if (!fullName || !email || !whatsappNumber) {
                 toast.error("Please fill in all details");
                 return;
             }
+
+            if (countryCode === "+91") {
+                if (cleanedNumber.length !== 10) {
+                    toast.error("Please enter a valid 10-digit WhatsApp number");
+                    return;
+                }
+                if (!cleanedNumber.startsWith("6") && !cleanedNumber.startsWith("7") && !cleanedNumber.startsWith("8") && !cleanedNumber.startsWith("9")) {
+                    toast.error("Please enter a valid Indian mobile number");
+                    return;
+                }
+            } else {
+                if (cleanedNumber.length < 7 || cleanedNumber.length > 15) {
+                    toast.error("Please enter a valid WhatsApp number");
+                    return;
+                }
+            }
+
             finalFullName = fullName;
             finalEmail = email;
-            finalWhatsapp = whatsappNumber;
+            finalWhatsapp = countryCode + cleanedNumber;
         } else if (isExistingFlow) {
             if (!isEmailVerified) {
                 toast.error("Please verify your email address first");
@@ -160,16 +180,33 @@ export function LinkPayClient({ link, details }: LinkPayClientProps) {
             }
             finalFullName = fullName;
             finalEmail = email;
-            finalWhatsapp = whatsappNumber;
+            finalWhatsapp = whatsappNumber; // Already verified/prefilled from profile
         } else {
             // New Student Flow
             if (!whatsappNumber) {
                 toast.error("Please enter your WhatsApp number");
                 return;
             }
+
+            if (countryCode === "+91") {
+                if (cleanedNumber.length !== 10) {
+                    toast.error("Please enter a valid 10-digit WhatsApp number");
+                    return;
+                }
+                if (!cleanedNumber.startsWith("6") && !cleanedNumber.startsWith("7") && !cleanedNumber.startsWith("8") && !cleanedNumber.startsWith("9")) {
+                    toast.error("Please enter a valid Indian mobile number");
+                    return;
+                }
+            } else {
+                if (cleanedNumber.length < 7 || cleanedNumber.length > 15) {
+                    toast.error("Please enter a valid WhatsApp number");
+                    return;
+                }
+            }
+
             finalFullName = "Student";
-            finalEmail = `${whatsappNumber}@adh.pending`;
-            finalWhatsapp = whatsappNumber;
+            finalEmail = `${cleanedNumber}@adh.pending`; // Use raw cleaned digits for dummy email address
+            finalWhatsapp = countryCode + cleanedNumber;
         }
 
         setIsProcessing(true);
@@ -269,6 +306,7 @@ export function LinkPayClient({ link, details }: LinkPayClientProps) {
                                     window.location.href = "/login";
                                 }, 2000);
                             } else {
+                                sessionStorage.setItem("whatsapp_verified", "true");
                                 window.location.href = "/dashboard";
                             }
                         } else {
@@ -528,17 +566,35 @@ export function LinkPayClient({ link, details }: LinkPayClientProps) {
 
                                     <div className="space-y-1.5">
                                         <Label htmlFor="user-whatsapp" className="font-semibold text-slate-700 dark:text-slate-300">WhatsApp Number</Label>
-                                        <div className="relative">
-                                            <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                                            <Input
-                                                id="user-whatsapp"
-                                                type="tel"
-                                                placeholder="WhatsApp phone number"
-                                                required
-                                                value={whatsappNumber}
-                                                onChange={(e) => setWhatsappNumber(e.target.value)}
-                                                className="pl-9 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-purple-500"
-                                            />
+                                        <div className="flex gap-2">
+                                            <select
+                                                value={countryCode}
+                                                onChange={(e) => setCountryCode(e.target.value)}
+                                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500 text-slate-800 dark:text-slate-200 font-medium"
+                                                disabled={isProcessing}
+                                            >
+                                                <option value="+91">🇮🇳 +91</option>
+                                                <option value="+971">🇦🇪 +971</option>
+                                                <option value="+966">🇸🇦 +966</option>
+                                                <option value="+974">🇶🇦 +974</option>
+                                                <option value="+968">🇴🇲 +968</option>
+                                                <option value="+965">🇰🇼 +965</option>
+                                                <option value="+973">🇧🇭 +973</option>
+                                                <option value="+1">🇺🇸 +1</option>
+                                                <option value="+44">🇬🇧 +44</option>
+                                            </select>
+                                            <div className="relative flex-grow">
+                                                <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                                                <Input
+                                                    id="user-whatsapp"
+                                                    type="tel"
+                                                    placeholder="WhatsApp phone number"
+                                                    required
+                                                    value={whatsappNumber}
+                                                    onChange={(e) => setWhatsappNumber(e.target.value)}
+                                                    className="pl-9 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-purple-500"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </>
@@ -633,17 +689,35 @@ export function LinkPayClient({ link, details }: LinkPayClientProps) {
                                     {/* New Student Flow: WhatsApp number only */}
                                     <div className="space-y-1.5">
                                         <Label htmlFor="user-whatsapp" className="font-semibold text-slate-700 dark:text-slate-300">WhatsApp Number</Label>
-                                        <div className="relative">
-                                            <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                                            <Input
-                                                id="user-whatsapp"
-                                                type="tel"
-                                                placeholder="WhatsApp phone number"
-                                                required
-                                                value={whatsappNumber}
-                                                onChange={(e) => setWhatsappNumber(e.target.value)}
-                                                className="pl-9 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-purple-500"
-                                            />
+                                        <div className="flex gap-2">
+                                            <select
+                                                value={countryCode}
+                                                onChange={(e) => setCountryCode(e.target.value)}
+                                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500 text-slate-800 dark:text-slate-200 font-medium"
+                                                disabled={isProcessing}
+                                            >
+                                                <option value="+91">🇮🇳 +91</option>
+                                                <option value="+971">🇦🇪 +971</option>
+                                                <option value="+966">🇸🇦 +966</option>
+                                                <option value="+974">🇶🇦 +974</option>
+                                                <option value="+968">🇴🇲 +968</option>
+                                                <option value="+965">🇰🇼 +965</option>
+                                                <option value="+973">🇧🇭 +973</option>
+                                                <option value="+1">🇺🇸 +1</option>
+                                                <option value="+44">🇬🇧 +44</option>
+                                            </select>
+                                            <div className="relative flex-grow">
+                                                <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                                                <Input
+                                                    id="user-whatsapp"
+                                                    type="tel"
+                                                    placeholder="WhatsApp phone number"
+                                                    required
+                                                    value={whatsappNumber}
+                                                    onChange={(e) => setWhatsappNumber(e.target.value)}
+                                                    className="pl-9 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-purple-500"
+                                                />
+                                            </div>
                                         </div>
                                         <p className="text-[10px] text-muted-foreground leading-normal">
                                             Enter your WhatsApp number to initiate your program registration.
