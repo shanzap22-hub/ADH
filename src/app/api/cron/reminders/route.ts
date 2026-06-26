@@ -43,7 +43,7 @@ export async function GET(req: Request) {
                     start_time, 
                     meet_link,
                     user_id, instructor_id,
-                    student:profiles!bookings_user_id_fkey(email, full_name, phone, mobile, contact_number, whatsapp_number),
+                    student:profiles!bookings_user_id_fkey(email, full_name, phone_number, whatsapp_number),
                     instructor:profiles!bookings_instructor_id_fkey(email, full_name)
                 `)
                 .eq('status', 'confirmed')
@@ -72,7 +72,7 @@ export async function GET(req: Request) {
                     const s: any = booking.student;
                     const i: any = booking.instructor;
                     
-                    const sPhone = s ? (s.phone || s.mobile || s.contact_number || s.whatsapp_number || "N/A") : "N/A";
+                    const sPhone = s ? (s.phone_number || s.whatsapp_number || "N/A") : "N/A";
                     const studentDetails = s ? { name: s.full_name, email: s.email, phone: sPhone } : undefined;
 
                     const emailPromises: Promise<any>[] = [];

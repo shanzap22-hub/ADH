@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { format, differenceInDays, subDays } from "date-fns";
-import { Calendar as CalendarIcon, Loader2, Plus, Edit, Filter, Search, RefreshCcw, AlertTriangle, FileSpreadsheet, User } from "lucide-react";
+import { Calendar as CalendarIcon, Loader2, Plus, Edit, Filter, Search, RefreshCcw, AlertTriangle, FileSpreadsheet, User, Key, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -59,9 +59,11 @@ interface Transaction {
     notes?: string;
     profiles?: {
         full_name: string;
+        email?: string;
         phone_number?: string;
         whatsapp_number?: string;
         gamification_score?: number;
+        setup_required?: boolean;
     };
     student_progress?: {
         courses_enrolled: number;
@@ -114,6 +116,12 @@ export default function TransactionsManager() {
 
     // Selection for Edit/Refund
     const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
+
+    // Magic Link Dialog State
+    const [magicLink, setMagicLink] = useState<string>("");
+    const [isMagicLinkOpen, setIsMagicLinkOpen] = useState(false);
+    const [generatingLinkTxnId, setGeneratingLinkTxnId] = useState<string | null>(null);
+    const [copied, setCopied] = useState(false);
 
     // Form Data
     const [formData, setFormData] = useState({
@@ -297,6 +305,27 @@ export default function TransactionsManager() {
         } catch (error: any) {
             toast.dismiss(toastId);
             toast.error("Export Failed: " + error.message);
+        }
+    }
+
+    async function handleGenerateOnboardingLink(email: string, txnId: string) {
+        setGeneratingLinkTxnId(txnId);
+        setCopied(false);
+        try {
+            const res = await fetch("/api/admin/generate-onboarding-link", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+
+            setMagicLink(data.action_link);
+            setIsMagicLinkOpen(true);
+        } catch (error: any) {
+            toast.error(error.message || "Failed to generate link");
+        } finally {
+            setGeneratingLinkTxnId(null);
         }
     }
 
@@ -615,6 +644,28 @@ export default function TransactionsManager() {
                                                                             <RefreshCcw className="h-4 w-4" />
                                                                         </Button>
                                                                     )}
+
+                                                                    {(() => {
+                                                                        const email = txn.profiles?.email || txn.student_email || txn.email || "";
+                                                                        const isPending = txn.profiles?.setup_required || email.endsWith('@adh.pending');
+                                                                        if (!isPending) return null;
+                                                                        return (
+                                                                            <Button 
+                                                                                variant="ghost" 
+                                                                                size="sm" 
+                                                                                title="Generate Onboarding Link" 
+                                                                                className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                                                                onClick={() => handleGenerateOnboardingLink(email, txn.id)}
+                                                                                disabled={generatingLinkTxnId === txn.id}
+                                                                            >
+                                                                                {generatingLinkTxnId === txn.id ? (
+                                                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                                                ) : (
+                                                                                    <Key className="h-4 w-4" />
+                                                                                )}
+                                                                            </Button>
+                                                                        );
+                                                                    })()}
                                                                 </div>
                                                             </TableCell>
                                                         </TableRow>
@@ -812,6 +863,53 @@ export default function TransactionsManager() {
                         >
                             {isRefunding ? <Loader2 className="h-4 w-4 animate-spin" /> : "Initiate Refund"}
                         </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* MAGIC LINK DIALOG */}
+            <Dialog open={isMagicLinkOpen} onOpenChange={setIsMagicLinkOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Key className="h-5 w-5 text-amber-500" />
+                            Onboarding Magic Link
+                        </DialogTitle>
+                        <DialogDescription>
+                            This is a secure, single-use login link for the student. Send this link to the student so they can complete their onboarding.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div className="flex gap-2">
+                            <Input
+                                readOnly
+                                value={magicLink}
+                                className="font-mono text-xs bg-slate-50 border-slate-200 select-all"
+                            />
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    navigator.clipboard.writeText(magicLink);
+                                    setCopied(true);
+                                    toast.success("Link copied to clipboard!");
+                                    setTimeout(() => setCopied(false), 2000);
+                                }}
+                                className="shrink-0"
+                            >
+                                {copied ? <span className="text-green-600">Copied!</span> : <Copy className="h-4 w-4" />}
+                            </Button>
+                        </div>
+                        <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700 space-y-1">
+                            <p className="font-bold">Instructions for student:</p>
+                            <ol className="list-decimal pl-4 space-y-1">
+                                <li>Click the link to log in automatically.</li>
+                                <li>Verify their WhatsApp number on the verification screen.</li>
+                                <li>Complete the onboarding form and set their permanent email & password.</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={() => setIsMagicLinkOpen(false)}>Done</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

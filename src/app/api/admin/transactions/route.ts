@@ -115,7 +115,7 @@ export async function GET(req: Request) {
                 if (manualEmails.length > 0) {
                     const { data: emailProfiles } = await supabase
                         .from('profiles')
-                        .select('id, email, membership_tier, phone_number, whatsapp_number, full_name, gamification_score')
+                        .select('id, email, membership_tier, phone_number, whatsapp_number, full_name, gamification_score, setup_required')
                         .in('email', manualEmails);
 
                     if (emailProfiles) {
@@ -151,7 +151,7 @@ export async function GET(req: Request) {
                         try {
                             const { data: fetchedProfiles } = await supabase
                                 .from('profiles')
-                                .select('id, email, membership_tier, phone_number, whatsapp_number, full_name, gamification_score')
+                                .select('id, email, membership_tier, phone_number, whatsapp_number, full_name, gamification_score, setup_required')
                                 .in('id', uniqueIds as string[]);
                             profiles = fetchedProfiles || [];
 
@@ -182,7 +182,7 @@ export async function GET(req: Request) {
 
                     const uniquePlans = Array.from(new Set(plans));
 
-                    const tierProgramsMap = new Map<string, string[]>(); // tier -> [course_id, ...]
+                    const tierCoursesMap = new Map<string, string[]>(); // tier -> [course_id, ...]
 
                     if (uniquePlans.length > 0) {
                         // Also fetch Program titles for later mapping inside loop
@@ -200,9 +200,9 @@ export async function GET(req: Request) {
                     }
 
                     // Fetch ALL programs Info (Titles and total Modules)
-                    // Efficiently: Get all course_ids from tierProgramsMap
+                    // Efficiently: Get all course_ids from tierCoursesMap
                     const allCourseIds = new Set<string>();
-                    tierProgramsMap.forEach((ids) => ids.forEach(id => allCourseIds.add(id)));
+                    tierCoursesMap.forEach((ids) => ids.forEach(id => allCourseIds.add(id)));
 
                     const courseInfoMap = new Map<string, { title: string, totalChapters: number }>();
                     const chapterToCourseMap = new Map<string, string>(); // chapter_id -> course_id (for progress mapping)

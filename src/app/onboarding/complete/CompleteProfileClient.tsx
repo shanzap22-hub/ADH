@@ -55,6 +55,16 @@ export default function CompleteProfilePage() {
 
             // Pre-fill Logic
             const isDummyEmail = user.email?.includes("adh.pending");
+
+            // Enforce WhatsApp verification for pending/dummy users
+            if (isDummyEmail) {
+                const isVerified = sessionStorage.getItem("whatsapp_verified") === "true";
+                if (!isVerified) {
+                    router.push("/onboarding/verify-whatsapp");
+                    return;
+                }
+            }
+
             const existingName = metadata.full_name === "Student" ? "" : (metadata.full_name || "");
 
             // Fetch existing profile

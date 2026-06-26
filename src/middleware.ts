@@ -82,6 +82,7 @@ export async function middleware(request: NextRequest) {
         const setupRequired = user.user_metadata?.setup_required;
         const allowedSetupPaths = [
             '/onboarding/complete',
+            '/onboarding/verify-whatsapp',
             '/api/user/complete-profile',
             '/api/auth/send-otp',
             '/api/auth/verify-otp'
