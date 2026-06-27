@@ -70,37 +70,41 @@ export async function POST(request: Request) {
     // Problem: Guest checkout creates a transaction with temp email and NULL user_id.
     // Fix: Find those orphaned transactions using phone/whatsapp and LINK them to this user.
     try {
-        // Find transactions with matching phone/whatsapp AND (user_id is NULL OR email contains 'adh.pending')
+        // Find transactions with matching phone/whatsapp
         // Improvement: Use loose matching (last 10 digits) for Phone/WA to handle +91 vs 91 vs 0
         const cleanPhone = contactNumber.replace(/\D/g, '').slice(-10);
         const cleanWA = whatsappNumber.replace(/\D/g, '').slice(-10);
 
-        const { data: orphans, error: orphanError } = await supabaseAdmin
+        const { data: matchingTxns, error: orphanError } = await supabaseAdmin
             .from('transactions')
-            .select('id')
-            .or(`whatsapp_number.ilike.%${cleanWA},phone_number.ilike.%${cleanPhone}`)
-            .is('user_id', null);
+            .select('id, user_id, student_email')
+            .or(`whatsapp_number.ilike.%${cleanWA},phone_number.ilike.%${cleanPhone}`);
 
-        if (orphans && orphans.length > 0) {
-            console.log(`[AUTO-LINK] Found ${orphans.length} orphaned transactions for ${fullName}. Linking now...`);
+        if (matchingTxns && matchingTxns.length > 0) {
+            // Filter: (1) user_id is null, OR (2) user_id matches user.id, OR (3) email ends with @adh.pending
+            const toUpdateIds = matchingTxns
+                .filter((t: any) => !t.user_id || t.user_id === user.id || (t.student_email && t.student_email.toLowerCase().endsWith('@adh.pending')))
+                .map((t: any) => t.id);
 
-            const orphanIds = orphans.map((t: any) => t.id);
+            if (toUpdateIds.length > 0) {
+                console.log(`[AUTO-LINK] Found ${toUpdateIds.length} transactions for ${fullName}. Linking/Updating now...`);
 
-            // Update them all
-            const { error: linkError } = await supabaseAdmin
-                .from('transactions')
-                .update({
-                    user_id: user.id,
-                    student_email: email,       // Updates the temp email to REAL email
-                    student_name: fullName,
-                    phone_number: contactNumber,
-                    whatsapp_number: whatsappNumber,
-                    updated_at: new Date().toISOString()
-                })
-                .in('id', orphanIds);
+                // Update them all
+                const { error: linkError } = await supabaseAdmin
+                    .from('transactions')
+                    .update({
+                        user_id: user.id,
+                        student_email: email,       // Updates the temp email to REAL email
+                        student_name: fullName,
+                        phone_number: contactNumber,
+                        whatsapp_number: whatsappNumber,
+                        updated_at: new Date().toISOString()
+                    })
+                    .in('id', toUpdateIds);
 
-            if (linkError) console.error("[AUTO-LINK] Failed to link transactions:", linkError);
-            else console.log("[AUTO-LINK] Successfully linked transactions.");
+                if (linkError) console.error("[AUTO-LINK] Failed to link transactions:", linkError);
+                else console.log("[AUTO-LINK] Successfully linked/updated transactions.");
+            }
         }
     } catch (linkErr) {
         console.error("[AUTO-LINK] Exception during linking:", linkErr);

@@ -471,12 +471,7 @@ export function AIChatInterface({ onBack, onClose, isFloating = false }: AIChatI
             </div>
 
             {/* Input Area */}
-            <div className={cn(
-                "p-4 border-t bg-white dark:bg-slate-900 shrink-0",
-                isFloating
-                    ? "pb-[calc(env(safe-area-inset-bottom)+1rem)] md:pb-6"
-                    : "pb-[calc(env(safe-area-inset-bottom)+5.5rem)] md:pb-6"
-            )}>
+            <div className="p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] md:pb-6 border-t bg-white dark:bg-slate-900 shrink-0">
                 <div className="max-w-3xl mx-auto space-y-2">
 
                     {/* Image Preview Area */}
@@ -531,6 +526,8 @@ export function AIChatInterface({ onBack, onClose, isFloating = false }: AIChatI
                                 value={input}
                                 autoComplete="on"
                                 autoCorrect="on"
+                                autocorrect="on"
+                                autoCapitalize="sentences"
                                 spellCheck={true}
                                 onChange={(e) => setInput(e.target.value)}
                                 placeholder={imageUrl || localImagePreview ? "Add a description about the issue..." : "Type your message..."}

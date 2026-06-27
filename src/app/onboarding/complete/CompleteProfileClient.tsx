@@ -92,7 +92,7 @@ export default function CompleteProfilePage() {
                 email: finalEmail,
                 fullName: finalName,
                 whatsappNumber: (profile?.whatsapp_number || "").replace(/^\+91/, ""),
-                contactNumber: "",
+                contactNumber: profile?.phone_number || "",
                 password: initialPassword
             }));
 
@@ -217,7 +217,7 @@ export default function CompleteProfilePage() {
             }
 
             toast.success("Profile updated! Welcome to the dashboard.");
-            router.push("/dashboard");
+            router.push("/dashboard?new_onboard=true");
             router.refresh();
         } catch (error: any) {
             toast.error(error.message);

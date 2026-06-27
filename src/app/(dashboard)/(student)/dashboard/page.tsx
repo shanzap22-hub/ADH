@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { OnboardingAppPopup } from "@/components/dashboard/OnboardingAppPopup";
 
 // force-dynamic: user-specific data
 export const dynamic = "force-dynamic";
@@ -64,7 +65,13 @@ const LiveSessionsBanner = nextDynamic(
 );
 
 // ── Page ──────────────────────────────────────────────────────────
-export default async function Dashboard() {
+interface DashboardProps {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function Dashboard({ searchParams }: DashboardProps) {
+    const params = await searchParams;
+    const showAppPopup = params.new_onboard === "true";
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return redirect("/");
@@ -324,6 +331,7 @@ export default async function Dashboard() {
                     </div>
                 </div>
             </div>
+            <OnboardingAppPopup show={showAppPopup} />
         </div>
     );
 }

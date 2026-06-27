@@ -82,6 +82,13 @@ export const VimeoVideoPlayer = ({
                 if (onProgressRef.current) {
                     onProgressRef.current(data.seconds);
                 }
+                
+                // If watched >= 95%, auto-trigger completion (just like Bunny player)
+                if (data.duration && (data.seconds / data.duration) >= 0.95) {
+                    if (onEndRef.current) {
+                        onEndRef.current();
+                    }
+                }
             });
 
             player.on("pause", () => {

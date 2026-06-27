@@ -53,8 +53,18 @@ export const YoutubeVideoPlayer = ({
         progressIntervalRef.current = setInterval(() => {
             if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
                 const currentTime = playerRef.current.getCurrentTime();
+                const duration = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : 0;
+                
                 if (onProgressRef.current) {
                     onProgressRef.current(currentTime);
+                }
+
+                // If watched >= 95%, auto-trigger completion (just like Bunny player)
+                if (duration > 0 && (currentTime / duration) >= 0.95) {
+                    stopProgressTracking();
+                    if (onEndRef.current) {
+                        onEndRef.current();
+                    }
                 }
             }
         }, 1000); // 1 സെക്കൻഡിൽ പ്രോഗ്രസ്സ് ട്രാക്ക് ചെയ്യുന്നു

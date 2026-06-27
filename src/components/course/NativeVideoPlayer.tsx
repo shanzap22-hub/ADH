@@ -40,7 +40,14 @@ export const NativeVideoPlayer = ({
 
     const handleTimeUpdate = () => {
         if (videoRef.current && isReady) {
-            onProgress?.(videoRef.current.currentTime);
+            const currentTime = videoRef.current.currentTime;
+            const duration = videoRef.current.duration;
+            onProgress?.(currentTime);
+            
+            // If watched >= 95%, auto-trigger completion (just like Bunny player)
+            if (duration > 0 && (currentTime / duration) >= 0.95) {
+                onEnd?.();
+            }
         }
     };
 

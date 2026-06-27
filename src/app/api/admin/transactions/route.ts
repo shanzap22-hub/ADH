@@ -162,14 +162,13 @@ export async function GET(req: Request) {
 
                 if (uniqueIds.length > 0) {
 
-                    // 1. Fetch Progress Data (Completed Modules)
+                    // 1. Fetch Progress Data (All Modules Watched/Completed)
                     let progressData: any[] = [];
                     try {
                         const { data: progress } = await supabase
                             .from('user_progress')
-                            .select('user_id, is_completed, chapter_id')
-                            .in('user_id', uniqueIds as string[])
-                            .eq('is_completed', true);
+                            .select('user_id, is_completed, chapter_id, last_played_second')
+                            .in('user_id', uniqueIds as string[]);
                         progressData = progress || [];
                     } catch (e) {
                         console.error("Progress fetch error", e);
@@ -253,8 +252,9 @@ export async function GET(req: Request) {
                         // Fetch Chapters for counts and mapping
                         const { data: allChapters } = await supabase
                             .from('chapters')
-                            .select('id, course_id') // We need ID to map progress to course
-                            .in('course_id', Array.from(allCourseIds));
+                            .select('id, course_id, title, video_url') // We need ID, title, and video_url
+                            .in('course_id', Array.from(allCourseIds))
+                            .order('position', { ascending: true });
 
                         allChapters?.forEach((ch: any) => {
                             // Update total count
@@ -315,16 +315,31 @@ export async function GET(req: Request) {
                             totalAvailableChapters += courseTotal;
 
                             // Calculate completed for this course
-                            const courseCompletedCount = userProgress.filter((p: any) => chapterToCourseMap.get(p.chapter_id) === courseId).length;
+                            const courseCompletedCount = userProgress.filter((p: any) => chapterToCourseMap.get(p.chapter_id) === courseId && p.is_completed).length;
 
                             totalCompletedChapters += courseCompletedCount;
+
+                            // Build detailed chapters list
+                            const courseChapters = (allChapters || [])
+                                .filter((ch: any) => ch.course_id === courseId)
+                                .map((ch: any) => {
+                                    const progress = userProgress.find((p: any) => p.chapter_id === ch.id);
+                                    return {
+                                        id: ch.id,
+                                        title: ch.title,
+                                        is_completed: progress?.is_completed || false,
+                                        last_played_second: progress?.last_played_second || 0,
+                                        video_url: ch.video_url || null
+                                    };
+                                });
 
                             courseDetails.push({
                                 id: courseId,
                                 title: info?.title || "Unknown Course",
                                 total_chapters: courseTotal,
                                 completed_chapters: courseCompletedCount,
-                                percentage: courseTotal > 0 ? Math.round((courseCompletedCount / courseTotal) * 100) : 0
+                                percentage: courseTotal > 0 ? Math.round((courseCompletedCount / courseTotal) * 100) : 0,
+                                chapters: courseChapters
                             });
                         });
 

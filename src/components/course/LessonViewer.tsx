@@ -105,8 +105,7 @@ export const LessonViewer = ({
             console.warn("[LessonViewer] Supabase sync failed:", error);
         }
     }, [courseId, chapterId, unitId]);
-
-    // വീഡിയോ കണ്ടുകൊണ്ടിരിക്കുമ്പോൾ വിളിക്കുന്ന ഫംഗ്ഷൻ (Option A: 15-second background sync)
+    // വീഡിയോ കണ്ടുകൊണ്ടിരിക്കുമ്പോൾ വിളിക്കുന്ന ഫംഗ്ഷൻ (Optimized: No background DB write timer to prevent Supabase overuse)
     const handleProgress = useCallback((seconds: number) => {
         currentProgressSecondsRef.current = seconds;
         
@@ -114,13 +113,7 @@ export const LessonViewer = ({
         if (typeof window !== "undefined") {
             localStorage.setItem(getStorageKey(), Math.floor(seconds).toString());
         }
-        
-        // 2. ഓരോ 15 സെക്കൻഡിലും ബാക്ക്ഗ്രൗണ്ടിൽ ഡാറ്റാബേസിലേക്ക് സിങ്ക് ചെയ്യുന്നു
-        const now = Date.now();
-        if (now - lastDbSaveTimeRef.current >= 15000) {
-            syncProgressToDb(seconds);
-        }
-    }, [getStorageKey, syncProgressToDb]);
+    }, [getStorageKey]);
 
     // വീഡിയോ pause ചെയ്യുമ്പോൾ ഉടൻ തന്നെ ഡാറ്റാബേസിലേക്ക് സിങ്ക് ചെയ്യുന്നു
     const handlePause = useCallback(() => {
@@ -150,24 +143,30 @@ export const LessonViewer = ({
         }
     }, [courseId, chapterId, unitId, isCompleted, onComplete, router, getStorageKey, syncProgressToDb]);
 
-    // ആപ്പ് ബാക്ക്ഗ്രൗണ്ടിലേക്ക് മാറുമ്പോൾ (tab switch/home screen) ഉടൻ തന്നെ സിങ്ക് ചെയ്യുക
+    // ആപ്പ് ബാക്ക്ഗ്രൗണ്ടിലേക്ക് മാറുമ്പോഴോ ടാബ് അടയ്ക്കുമ്പോഴോ ഉടൻ തന്നെ സിങ്ക് ചെയ്യുക (resilient sync)
     useEffect(() => {
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === "hidden") {
-                syncProgressToDb(currentProgressSecondsRef.current);
-            }
-        };
-        document.addEventListener("visibilitychange", handleVisibilityChange);
-        return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-    }, [syncProgressToDb]);
-
-    // കോഴ്സ് പേജിൽ നിന്നും മറ്റൊരു പേജിലേക്ക് നാവിഗേറ്റ് ചെയ്യുമ്പോൾ അവസാന പ്രോഗ്രസ്സ് സേവ് ചെയ്യും
-    useEffect(() => {
-        return () => {
+        const handleSync = () => {
             syncProgressToDb(currentProgressSecondsRef.current);
         };
-    }, [syncProgressToDb]);
+        
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "hidden") {
+                handleSync();
+            }
+        };
 
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        window.addEventListener("pagehide", handleSync);
+        window.addEventListener("beforeunload", handleSync);
+        
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+            window.removeEventListener("pagehide", handleSync);
+            window.removeEventListener("beforeunload", handleSync);
+            // Component unmount ചെയ്യുമ്പോൾ അവസാന പ്രോഗ്രസ്സ് സിങ്ക് ചെയ്യുക
+            handleSync();
+        };
+    }, [syncProgressToDb]);
     useEffect(() => {
         const handleResize = () => {
             setIsDesktop(window.innerWidth >= 1024);

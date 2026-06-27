@@ -75,6 +75,13 @@ interface Transaction {
             completed_chapters: number;
             total_chapters: number;
             percentage: number;
+            chapters?: Array<{
+                id: string;
+                title: string;
+                is_completed: boolean;
+                last_played_second: number;
+                video_url: string | null;
+            }>;
         }>;
     };
 }
@@ -801,20 +808,60 @@ export default function TransactionsManager() {
                     <div className="py-4 space-y-4">
                         {selectedProgress?.progress?.course_details && selectedProgress.progress.course_details.length > 0 ? (
                             selectedProgress.progress.course_details.map((course, idx: number) => (
-                                <div key={idx} className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                    <h4 className="font-medium text-sm text-slate-800 mb-1 line-clamp-2">{course.title}</h4>
-                                    <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-                                        <span>{course.completed_chapters} / {course.total_chapters} Modules</span>
-                                        <span className={course.percentage === 100 ? "text-green-600 font-bold" : "text-blue-600 font-semibold"}>
-                                            {course.percentage}%
-                                        </span>
+                                <div key={idx} className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-3">
+                                    <div>
+                                        <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-1 line-clamp-2">{course.title}</h4>
+                                        <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+                                            <span>{course.completed_chapters} / {course.total_chapters} Modules</span>
+                                            <span className={course.percentage === 100 ? "text-green-600 font-bold" : "text-blue-600 font-semibold"}>
+                                                {course.percentage}%
+                                            </span>
+                                        </div>
+                                        {/* Progress Bar */}
+                                        <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full ${course.percentage === 100 ? 'bg-green-500' : 'bg-blue-500'}`}
+                                                style={{ width: `${course.percentage}%` }}
+                                            />
+                                        </div>
                                     </div>
-                                    {/* Progress Bar */}
-                                    <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full ${course.percentage === 100 ? 'bg-green-500' : 'bg-blue-500'}`}
-                                            style={{ width: `${course.percentage}%` }}
-                                        />
+
+                                    {/* Detailed Chapters List */}
+                                    <div className="border-t border-slate-200/60 pt-3 space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                                        {course.chapters && course.chapters.length > 0 ? (
+                                            course.chapters.map((ch, cIdx: number) => {
+                                                const seconds = ch.last_played_second || 0;
+                                                const mins = Math.floor(seconds / 60);
+                                                const secs = seconds % 60;
+                                                const timeStr = seconds > 0 ? `${mins}m ${secs}s` : "";
+
+                                                return (
+                                                    <div key={cIdx} className="flex items-center justify-between text-[11px] py-1 border-b border-slate-100 last:border-0 hover:bg-slate-100/50 px-1.5 rounded transition-colors">
+                                                        <div className="flex items-center gap-2 truncate max-w-[65%]">
+                                                            {ch.is_completed ? (
+                                                                <span className="text-green-500 font-bold shrink-0 text-xs">✓</span>
+                                                            ) : (
+                                                                <span className="text-slate-300 font-bold shrink-0 text-xs">•</span>
+                                                            )}
+                                                            <span className="text-slate-700 dark:text-slate-300 truncate" title={ch.title}>
+                                                                {ch.title}
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-right text-slate-500 shrink-0 font-medium">
+                                                            {ch.is_completed ? (
+                                                                <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded text-[10px] border border-green-100">Completed</span>
+                                                            ) : seconds > 0 ? (
+                                                                <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded text-[10px] border border-amber-100">Watched: {timeStr}</span>
+                                                            ) : (
+                                                                <span className="text-slate-400">Not started</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                        ) : (
+                                            <div className="text-[10px] text-slate-400 text-center py-2">No chapters found.</div>
+                                        )}
                                     </div>
                                 </div>
                             ))
