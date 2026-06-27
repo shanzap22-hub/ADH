@@ -233,10 +233,9 @@ export async function GET(req: Request) {
                     // Fetch ALL programs Info (Titles and total Modules)
                     // Efficiently: Get all course_ids from tierCoursesMap
                     const allCourseIds = new Set<string>();
-                    tierCoursesMap.forEach((ids) => ids.forEach(id => allCourseIds.add(id)));
-
-                    const courseInfoMap = new Map<string, { title: string, totalChapters: number }>();
+                    tierCoursesMap.forEach((ids) => ids.forEach(id => allCourseIds.add(id)));                    const courseInfoMap = new Map<string, { title: string, totalChapters: number }>();
                     const chapterToCourseMap = new Map<string, string>(); // chapter_id -> course_id (for progress mapping)
+                    let allChapters: any[] = [];
 
                     if (allCourseIds.size > 0) {
                         // Fetch Titles
@@ -250,11 +249,13 @@ export async function GET(req: Request) {
                         });
 
                         // Fetch Chapters for counts and mapping
-                        const { data: allChapters } = await supabase
+                        const { data: chaptersRes } = await supabase
                             .from('chapters')
                             .select('id, course_id, title, video_url') // We need ID, title, and video_url
                             .in('course_id', Array.from(allCourseIds))
                             .order('position', { ascending: true });
+
+                        allChapters = chaptersRes || [];
 
                         allChapters?.forEach((ch: any) => {
                             // Update total count
@@ -266,7 +267,6 @@ export async function GET(req: Request) {
                             chapterToCourseMap.set(ch.id, ch.course_id);
                         });
                     }
-
                     // Map Transaction Data
                     transactions = transactions.map((t: any) => {
                         let profile = null;
